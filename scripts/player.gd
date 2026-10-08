@@ -1,0 +1,438 @@
+extends CharacterBody3D
+class_name Player
+
+const SPEED = 5.0
+const SPRINT_SPEED = 9.0
+const CROUCH_SPEED = 2.5
+const JUMP_VELOCITY = 4.5
+
+# FOV
+const NORMAL_FOV = 75.0
+const SPRINT_FOV = 95.0
+const FOV_SPEED = 8.0
+
+@onready var camera = $head/Camera3D
+@onready var footsteps: AudioStreamPlayer3D = $footsteps
+@onready var flashlight: AudioStreamPlayer3D = %flashlight
+@onready var light: SpotLight3D = %light
+@onready var raycast: RayCast3D = $head/Camera3D/RayCast3D
+@onready var grab: AudioStreamPlayer3D = $grab
+@onready var hand: Node3D = %hand
+@onready var collision_shape: CollisionShape3D = $CollisionShape3D
+
+var current_interactable: Node = null
+var mouse_sensitivity = 0.001
+var pitch = 0.0
+var is_flashlight_on = false
+var is_crouching = false
+
+# Footsteps
+var footstep_cooldown = 0.0
+
+@export_group("Footstep Audio")
+@export var walking_footstep_volume_db := -30.0
+@export var sprinting_footstep_volume_db := -25.0
+@export var crouching_footstep_volume_db := -40.0
+
+# Headbob
+var headbob_time = 0.0
+var headbob_amount = 0.2
+var headbob_speed = 10.0
+var camera_default_pos: Vector3
+
+# Crouch
+const CROUCH_HEIGHT = -0.6
+const CROUCH_COLLIDER_HEIGHT = 1.2
+const CROUCH_TRANSITION_SPEED = 8.0
+var crouch_offset := 0.0
+var _standing_collider_height := 0.0
+var _standing_collider_y := 0.0
+var _crouching_collider_y := 0.0
+
+# Grab
+var grabbed_object: RigidBody3D = null
+
+@export_group("Held Object")
+@export var held_object_clearance_radius := 0.4
+
+var _held_object_clearance_shape := SphereShape3D.new()
+
+func _ready():
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	camera_default_pos = camera.position
+	camera.fov = NORMAL_FOV
+	light.visible = false
+
+	# Keep this player's collider independent if the scene is instantiated
+	# more than once, then remember the standing dimensions.
+	collision_shape.shape = collision_shape.shape.duplicate()
+	var capsule := collision_shape.shape as CapsuleShape3D
+	_standing_collider_height = capsule.height
+	_standing_collider_y = collision_shape.position.y
+	_crouching_collider_y = _standing_collider_y - (
+		_standing_collider_height - CROUCH_COLLIDER_HEIGHT
+	) * 0.5
+	_held_object_clearance_shape.radius = held_object_clearance_radius
+
+func _input(event):
+	if event is InputEventMouseMotion:
+		# Rotate player left/right
+		rotate_y(-event.relative.x * mouse_sensitivity)
+
+		# Rotate camera up/down
+		pitch -= event.relative.y * mouse_sensitivity
+		pitch = clamp(pitch, deg_to_rad(-90), deg_to_rad(90))
+		camera.rotation.x = pitch
+	
+	# Left click - drop object or use it on something
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		if grabbed_object:
+			# Use the held object when aiming at a compatible target.
+			if raycast.is_colliding():
+				var use_target := _find_item_use_target(raycast.get_collider())
+				if use_target and grabbed_object.has_method("use"):
+					var item_to_use := grabbed_object
+					grabbed_object = null
+
+					if current_interactable and current_interactable.has_method("hide_outline"):
+						current_interactable.hide_outline()
+					current_interactable = null
+
+					item_to_use.use(use_target)
+					return
+			
+			# If we didn't use it on anything, drop it
+			drop_object()
+
+func _physics_process(delta: float) -> void:
+	# Gravity
+	if not is_on_floor():
+		velocity += get_gravity() * delta
+
+	# Stay crouched when there is not enough room to safely stand up.
+	if Input.is_action_pressed("Crouch"):
+		is_crouching = true
+	elif is_crouching and _can_stand_up():
+		is_crouching = false
+
+	_update_crouch_collision(delta)
+
+	# Jump
+	if Input.is_action_just_pressed("Jump") and is_on_floor() and !is_crouching:
+		velocity.y = JUMP_VELOCITY
+
+	# Speed
+	var current_speed = SPEED
+
+	if is_crouching:
+		current_speed = CROUCH_SPEED
+	elif Input.is_action_pressed("Sprint"):
+		current_speed = SPRINT_SPEED
+
+	# Flashlight
+	if Input.is_action_just_pressed("Flashlight"):
+		is_flashlight_on = !is_flashlight_on
+		light.visible = is_flashlight_on
+		flashlight.pitch_scale = randf_range(0.9, 1.1)
+		flashlight.play()
+
+	# Movement
+	var input_dir := Input.get_vector("Left", "Right", "Forward", "Backward")
+
+	var direction := (
+		transform.basis * Vector3(input_dir.x, 0, input_dir.y)
+	).normalized()
+
+	if direction:
+		velocity.x = direction.x * current_speed
+		velocity.z = direction.z * current_speed
+	else:
+		velocity.x = move_toward(velocity.x, 0, current_speed)
+		velocity.z = move_toward(velocity.z, 0, current_speed)
+
+	move_and_slide()
+
+	# Smooth crouch transition
+	var target_offset = 0.0
+
+	if is_crouching:
+		target_offset = CROUCH_HEIGHT
+
+	crouch_offset = lerpf(
+		crouch_offset,
+		target_offset,
+		delta * CROUCH_TRANSITION_SPEED
+	)
+
+	var target_camera_pos = camera_default_pos
+	target_camera_pos.y += crouch_offset
+
+	# Headbob
+	var horizontal_speed = Vector2(velocity.x, velocity.z).length()
+	var moving: bool = horizontal_speed > 0.1
+
+	if moving and is_on_floor():
+		var bob_speed = headbob_speed
+
+		if is_crouching:
+			bob_speed *= 0.5
+
+		headbob_time += delta * bob_speed * max(horizontal_speed / SPEED, 0.5)
+
+		camera.position.y = target_camera_pos.y + sin(headbob_time) * headbob_amount
+		camera.position.x = target_camera_pos.x + cos(headbob_time * 0.5) * headbob_amount * 0.5
+	else:
+		camera.position = camera.position.lerp(target_camera_pos, delta * 10.0)
+
+	# Sprint FOV Effect
+	var target_fov = NORMAL_FOV
+
+	if Input.is_action_pressed("Sprint") and moving and !is_crouching:
+		target_fov = SPRINT_FOV
+
+	camera.fov = lerpf(camera.fov, target_fov, delta * FOV_SPEED)
+
+	# Footsteps
+	footstep_cooldown -= delta
+
+	if moving and is_on_floor():
+		if footstep_cooldown <= 0.0:
+			footsteps.pitch_scale = randf_range(0.9, 1.1)
+	
+			if is_crouching:
+				footsteps.volume_db = crouching_footstep_volume_db
+				footstep_cooldown = 0.7
+			elif Input.is_action_pressed("Sprint"):
+				footsteps.volume_db = sprinting_footstep_volume_db
+				footstep_cooldown = 0.28
+			else:
+				footsteps.volume_db = walking_footstep_volume_db
+				footstep_cooldown = 0.45
+
+			footsteps.play()
+
+	if grabbed_object:
+		_update_held_object_position()
+	
+	# ===== INTERACTION & GRAB =====
+	_update_interaction()
+
+
+func _update_crouch_collision(delta: float) -> void:
+	var capsule := collision_shape.shape as CapsuleShape3D
+	var target_height := (
+		CROUCH_COLLIDER_HEIGHT if is_crouching else _standing_collider_height
+	)
+	var target_y := _crouching_collider_y if is_crouching else _standing_collider_y
+	var blend := clampf(delta * CROUCH_TRANSITION_SPEED, 0.0, 1.0)
+
+	capsule.height = lerpf(capsule.height, target_height, blend)
+	collision_shape.position.y = lerpf(collision_shape.position.y, target_y, blend)
+
+
+func _can_stand_up() -> bool:
+	var capsule := collision_shape.shape as CapsuleShape3D
+	var current_top := collision_shape.position.y + capsule.height * 0.5
+	var standing_top := _standing_collider_y + _standing_collider_height * 0.5
+	var check_radius := capsule.radius * 0.75
+	var offsets: Array[Vector3] = [
+		Vector3.ZERO,
+		Vector3(check_radius, 0.0, 0.0),
+		Vector3(-check_radius, 0.0, 0.0),
+		Vector3(0.0, 0.0, check_radius),
+		Vector3(0.0, 0.0, -check_radius),
+	]
+	var space_state := get_world_3d().direct_space_state
+
+	for offset in offsets:
+		var ray_start: Vector3 = global_transform * (offset + Vector3.UP * current_top)
+		var ray_end: Vector3 = global_transform * (offset + Vector3.UP * (standing_top + 0.05))
+		var query := PhysicsRayQueryParameters3D.create(
+			ray_start,
+			ray_end,
+			collision_mask,
+			[get_rid()]
+		)
+		if not space_state.intersect_ray(query).is_empty():
+			return false
+
+	return true
+
+func _update_interaction() -> void:
+	var new_interactable: Node = null
+	
+	if raycast.is_colliding():
+		var collider = raycast.get_collider()
+
+		if grabbed_object:
+			new_interactable = _find_item_use_target(collider)
+		else:
+			# Check for grabable objects first.
+			var grabable: Node = null
+			var temp = collider
+			while temp:
+				if temp.is_in_group("grabable"):
+					grabable = temp
+					break
+				temp = temp.get_parent()
+			
+			# Check for interactable objects (generator, etc.).
+			var interactable: Node = null
+			temp = collider
+			while temp:
+				if temp.has_method("interact"):
+					interactable = temp
+					break
+				temp = temp.get_parent()
+			
+			if grabable:
+				new_interactable = grabable
+			elif interactable:
+				new_interactable = interactable
+	
+	# Only update if the interactable changed
+	if new_interactable != current_interactable:
+		# Hide old outline
+		if current_interactable and current_interactable.has_method("hide_outline"):
+			current_interactable.hide_outline()
+		
+		# Show new outline
+		current_interactable = new_interactable
+		if current_interactable and current_interactable.has_method("show_outline"):
+			current_interactable.show_outline()
+	
+	# ===== INTERACT BUTTON =====
+	if Input.is_action_just_pressed("Interact"):
+		# If we're holding something, drop it
+		if grabbed_object:
+			drop_object()
+		# Otherwise, try to interact with what we're looking at
+		elif current_interactable and current_interactable.has_method("interact"):
+			current_interactable.interact()
+		# Or try to grab something
+		elif not grabbed_object:
+			try_grab()
+
+
+func _find_item_use_target(collider: Node) -> Node:
+	var target := collider
+	while target:
+		if target.is_in_group("generator") and target.has_method("fueled"):
+			return target
+		target = target.get_parent()
+
+	return null
+
+func try_grab() -> void:
+	if not raycast.is_colliding():
+		return
+	
+	var collider = raycast.get_collider()
+	
+	# Check if the collider is in the "grabable" group
+	if collider.is_in_group("grabable"):
+		var rigid_body = collider as RigidBody3D
+		if rigid_body:
+			# Store the original parent BEFORE reparenting
+			var original_parent = rigid_body.get_parent()
+			
+			# Call the grab method on the object
+			if rigid_body.has_method("grab"):
+				rigid_body.grab()
+			
+			# Store the grabbed object
+			grabbed_object = rigid_body
+			
+			# Play grab sound
+			grab.pitch_scale = randf_range(0.9, 1.1)
+			grab.play()
+			
+			# Remove from current parent
+			if rigid_body.get_parent():
+				rigid_body.get_parent().remove_child(rigid_body)
+			
+			# Add to hand
+			hand.add_child(rigid_body)
+			
+			# Reset position and rotation relative to hand
+			rigid_body.position = Vector3.ZERO
+			rigid_body.rotation = Vector3.ZERO
+			
+			# Store original parent for later
+			rigid_body.set_meta("original_parent", original_parent)
+			
+			# Hide outline immediately after grabbing
+			if current_interactable and current_interactable.has_method("hide_outline"):
+				current_interactable.hide_outline()
+			current_interactable = null
+
+func drop_object() -> void:
+	if not grabbed_object:
+		return
+
+	var desired_drop_position = global_position + -global_transform.basis.z * 2.0
+	desired_drop_position.y += 0.5
+	var safe_drop_position := _get_safe_held_object_position(desired_drop_position)
+	
+	# Get the original parent or use the current scene as fallback
+	var original_parent = grabbed_object.get_meta("original_parent", null)
+	
+	# If no original parent was stored, or it's been removed, use the current scene
+	if not original_parent or not is_instance_valid(original_parent):
+		original_parent = get_tree().current_scene
+	
+	# Remove from hand first
+	if grabbed_object.get_parent() == hand:
+		hand.remove_child(grabbed_object)
+	else:
+		# If it's not in hand, remove from wherever it is
+		if grabbed_object.get_parent():
+			grabbed_object.get_parent().remove_child(grabbed_object)
+	
+	# Add to the original parent
+	original_parent.add_child(grabbed_object)
+	
+	# Position the object before re-enabling physics so it cannot briefly
+	# overlap a wall during the reparent operation.
+	grabbed_object.global_position = safe_drop_position
+
+	if grabbed_object.has_method("drop"):
+		grabbed_object.drop()
+	
+	# Re-enable physics (in case the object's drop() method didn't do it)
+	grabbed_object.freeze = false
+	grabbed_object.gravity_scale = 1.0
+	
+	# Apply a small throw force
+	var throw_force = -global_transform.basis.z * 5.0 + Vector3.UP * 2.0
+	grabbed_object.apply_central_impulse(throw_force)
+	
+	# Clear the meta and reference
+	if grabbed_object.has_meta("original_parent"):
+		grabbed_object.remove_meta("original_parent")
+	
+	grabbed_object = null
+
+
+func _update_held_object_position() -> void:
+	grabbed_object.global_position = _get_safe_held_object_position(hand.global_position)
+
+
+func _get_safe_held_object_position(desired_position: Vector3) -> Vector3:
+	var origin: Vector3 = camera.global_position
+	var motion: Vector3 = desired_position - origin
+	if motion.length_squared() < 0.0001:
+		return desired_position
+
+	var exclusions: Array[RID] = [get_rid(), grabbed_object.get_rid()]
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = _held_object_clearance_shape
+	query.transform = Transform3D(Basis.IDENTITY, origin)
+	query.motion = motion
+	query.collision_mask = collision_mask
+	query.exclude = exclusions
+	query.collide_with_areas = false
+
+	var cast_result: PackedFloat32Array = get_world_3d().direct_space_state.cast_motion(query)
+	var safe_fraction: float = clampf(cast_result[0], 0.0, 1.0)
+	return origin + motion * safe_fraction

@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://bp14ip73v07ow"
+path="res://.godot/imported/jusatti890-scream-horror-sfx-490916 (1).mp3-faa1511e87d74b31956625d43a12a015.mp3str"
+
+[deps]
+
+source_file="res://assets/ambience/jusatti890-scream-horror-sfx-490916 (1).mp3"
+dest_files=["res://.godot/imported/jusatti890-scream-horror-sfx-490916 (1).mp3-faa1511e87d74b31956625d43a12a015.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

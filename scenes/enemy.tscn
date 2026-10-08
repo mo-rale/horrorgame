@@ -1,0 +1,77 @@
+[gd_scene format=3 uid="uid://bb13ne5cuslgi"]
+
+[ext_resource type="Script" uid="uid://cndcvc1pbpj00" path="res://scripts/enemy.gd" id="1_4ra3w"]
+[ext_resource type="Texture2D" uid="uid://be7rtqu1t0jy6" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Stains/Horror_Stain_09-128x128.png" id="2_5uy6h"]
+[ext_resource type="AudioStream" uid="uid://cwal04uoyu0bd" path="res://assets/ambience/data_pion-st3-footstep-sfx-323056.mp3" id="3_c4w8v"]
+[ext_resource type="AudioStream" uid="uid://cvoq83aj73x3" path="res://assets/ambience/freesound_community-jumpscare-68730.mp3" id="4_5uy6h"]
+[ext_resource type="AudioStream" uid="uid://b5307ijbvw7jo" path="res://assets/sfx/freesound_community-creepy-whispering-6690.mp3" id="5_xwavj"]
+[ext_resource type="AudioStream" uid="uid://bc73iqh7ocvoe" path="res://assets/sfx/freesound_community-four_voices_whispering-6943.mp3" id="6_nenq2"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5uy6h"]
+albedo_texture = ExtResource("2_5uy6h")
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_c4w8v"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xwavj"]
+emission_enabled = true
+emission = Color(1, 1, 1, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_nenq2"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_md484"]
+radius = 0.35
+height = 1.8
+
+[sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_md484"]
+playback_mode = 1
+streams_count = 2
+stream_0/stream = ExtResource("5_xwavj")
+stream_1/stream = ExtResource("6_nenq2")
+
+[node name="Enemy" type="CharacterBody3D" unique_id=2092863591]
+script = ExtResource("1_4ra3w")
+max_spotting_distance = 30.0
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1785696522]
+material_override = SubResource("StandardMaterial3D_5uy6h")
+mesh = SubResource("CapsuleMesh_c4w8v")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="." unique_id=1109025261]
+transform = Transform3D(0.24, 0, 0, 0, 0.24, 0, 0, 0, 0.24, 0.10947999, 0.482189, -0.41437903)
+material_override = SubResource("StandardMaterial3D_xwavj")
+mesh = SubResource("SphereMesh_nenq2")
+
+[node name="MeshInstance3D3" type="MeshInstance3D" parent="." unique_id=350946928]
+transform = Transform3D(0.24, 0, 0, 0, 0.24, 0, 0, 0, 0.24, -0.113794744, 0.482189, -0.4159135)
+material_override = SubResource("StandardMaterial3D_xwavj")
+mesh = SubResource("SphereMesh_nenq2")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2090277364]
+shape = SubResource("CapsuleShape3D_md484")
+
+[node name="footsteps" type="AudioStreamPlayer3D" parent="." unique_id=2035661241]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7891059, 0)
+stream = ExtResource("3_c4w8v")
+unit_size = 6.27
+
+[node name="Eye" type="Node3D" parent="." unique_id=1294757651]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4071742, 0)
+
+[node name="EyeRayCast" type="RayCast3D" parent="Eye" unique_id=1196210461]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 0.00019200245, -1, 0, 1, 0.00019200245, 0, 0, -0.4437003)
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="." unique_id=1812258825]
+unique_name_in_owner = true
+path_desired_distance = 0.6
+target_desired_distance = 1.0
+radius = 0.4
+height = 1.8
+
+[node name="chasing" type="AudioStreamPlayer3D" parent="." unique_id=1047996043]
+stream = ExtResource("4_5uy6h")
+volume_db = -23.925
+
+[node name="roaming" type="AudioStreamPlayer3D" parent="." unique_id=595245994]
+stream = SubResource("AudioStreamRandomizer_md484")
