@@ -43,8 +43,8 @@ var _state: State = State.ROAMING
 @export var heartbeat_duration_max := 7.0
 @export var seen_vanish_delay := 0.75
 @export var vanish_hidden_time := 3.0
-@export var vanish_reappear_distance_min := 18.0
-@export var vanish_reappear_distance_max := 28.0
+@export var vanish_reappear_distance_min := 30.0
+@export var vanish_reappear_distance_max := 45.0
 
 @export_group("Chasing")
 @export var chasing_speed := 6.0
