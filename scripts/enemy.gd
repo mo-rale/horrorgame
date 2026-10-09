@@ -27,7 +27,6 @@ var _state: State = State.ROAMING
 @export_group("Stalking")
 @export_range(0.0, 1.0) var stalking_chance := 0.65
 @export var stalking_speed := 5.0
-@export var stalking_start_distance := 8.0
 @export var stalking_follow_distance := 12.0
 @export var stalking_path_update_delay := 0.5
 @export var stalking_cooldown_time := 25.0
@@ -187,7 +186,13 @@ func _enter_state(new_state: State, data := {}) -> void:
 			_player_last_seen_position = player.global_position
 			# Stalking starts as a supernatural appearance directly behind the
 			# player. Following after this point still uses the navigation mesh.
-			global_position = _pick_stalking_target()
+			var stalking_teleport_position := _pick_stalking_target()
+			global_position = stalking_teleport_position
+			if OS.is_debug_build():
+				print(
+					"[Enemy] STALKING chosen — teleported behind player to ",
+					stalking_teleport_position
+				)
 			_stop_moving()
 			_play_stalking_sound()
 
@@ -221,10 +226,8 @@ func _update_roaming(_delta: float) -> void:
 		_travel_to_random_position()
 	
 	if is_player_in_view():
-		var distance_to_player := global_position.distance_to(player.global_position)
 		var can_stalk := (
-			distance_to_player >= stalking_start_distance
-			and _stalking_cooldown <= 0.0
+			_stalking_cooldown <= 0.0
 			and randf() <= stalking_chance
 		)
 		_enter_state(State.STALKING if can_stalk else State.CHASING)
