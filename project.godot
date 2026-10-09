@@ -11,9 +11,13 @@ config_version=5
 [application]
 
 config/name="horror"
-run/main_scene="uid://spe0dypb165t"
+run/main_scene="res://scenes/main_menu.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
+
+[autoload]
+
+Settings="*res://scripts/settings.gd"
 
 [input]
 

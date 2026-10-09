@@ -9,6 +9,9 @@ extends Node3D
 @onready var play_again_button: Button = %PlayAgainButton
 @onready var pause_screen: CanvasLayer = $PauseScreen
 @onready var resume_button: Button = %ResumeButton
+@onready var pause_master_slider: HSlider = %PauseMasterSlider
+@onready var pause_music_slider: HSlider = %PauseMusicSlider
+@onready var pause_sfx_slider: HSlider = %PauseSFXSlider
 @onready var objective_label: Label = %ObjectiveLabel
 @onready var fuel_label: Label = %FuelLabel
 @onready var controls_label: Label = %ControlsLabel
@@ -34,6 +37,11 @@ func _ready() -> void:
 	restart_button.pressed.connect(_restart_game)
 	play_again_button.pressed.connect(_restart_game)
 	resume_button.pressed.connect(_resume_game)
+	%MainMenuButton.pressed.connect(_return_to_main_menu)
+	%QuitButton.pressed.connect(get_tree().quit)
+	_setup_volume_slider(pause_master_slider, "Master")
+	_setup_volume_slider(pause_music_slider, "Music")
+	_setup_volume_slider(pause_sfx_slider, "SFX")
 	_on_fuel_changed(generator.get_current_fuel(), generator.get_required_fuel())
 	_fade_controls_after_delay()
 	start_random_screeches()
@@ -128,6 +136,18 @@ func _set_player_paused(paused: bool) -> void:
 func _resume_game() -> void:
 	if player_paused and not game_ended:
 		_set_player_paused(false)
+
+
+func _setup_volume_slider(slider: HSlider, bus_name: String) -> void:
+	slider.value = Settings.get_volume(bus_name) * 100.0
+	slider.value_changed.connect(
+		func(value: float) -> void: Settings.set_volume(bus_name, value / 100.0)
+	)
+
+
+func _return_to_main_menu() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
 
 
 func _restart_game() -> void:

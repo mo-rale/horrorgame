@@ -1,0 +1,152 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/main_menu.gd" id="1_menu"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.008, 0.01, 0.012, 1)
+
+[node name="Vignette" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.04, 0, 0, 0.35)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Content" type="VBoxContainer" parent="Center"]
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+theme_override_constants/separation = 28
+alignment = 1
+
+[node name="Title" type="Label" parent="Center/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.06, 0.06, 1)
+theme_override_font_sizes/font_size = 72
+text = "HORROR"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="Center/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.55, 0.55, 1)
+theme_override_font_sizes/font_size = 16
+text = "RESTORE THE POWER. SURVIVE THE DARKNESS."
+horizontal_alignment = 1
+
+[node name="MainButtons" type="VBoxContainer" parent="Center/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="PlayButton" type="Button" parent="Center/Content/MainButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(400, 58)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "PLAY"
+
+[node name="SettingsButton" type="Button" parent="Center/Content/MainButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(400, 58)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "SETTINGS"
+
+[node name="QuitButton" type="Button" parent="Center/Content/MainButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(400, 58)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "QUIT"
+
+[node name="SettingsPanel" type="VBoxContainer" parent="Center/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Heading" type="Label" parent="Center/Content/SettingsPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "AUDIO"
+horizontal_alignment = 1
+
+[node name="MasterLabel" type="Label" parent="Center/Content/SettingsPanel"]
+layout_mode = 2
+text = "MASTER VOLUME"
+
+[node name="MasterSlider" type="HSlider" parent="Center/Content/SettingsPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(400, 34)
+layout_mode = 2
+step = 1.0
+
+[node name="MusicLabel" type="Label" parent="Center/Content/SettingsPanel"]
+layout_mode = 2
+text = "AMBIENCE VOLUME"
+
+[node name="MusicSlider" type="HSlider" parent="Center/Content/SettingsPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(400, 34)
+layout_mode = 2
+step = 1.0
+
+[node name="SFXLabel" type="Label" parent="Center/Content/SettingsPanel"]
+layout_mode = 2
+text = "EFFECTS VOLUME"
+
+[node name="SFXSlider" type="HSlider" parent="Center/Content/SettingsPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(400, 34)
+layout_mode = 2
+step = 1.0
+
+[node name="BackButton" type="Button" parent="Center/Content/SettingsPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(400, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "BACK  [ESC]"
+
+[node name="Version" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -120.0
+offset_top = -38.0
+offset_right = -18.0
+offset_bottom = -18.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.35, 0.35, 0.35, 1)
+text = "EARLY BUILD"
+horizontal_alignment = 2

@@ -160,12 +160,14 @@ emission_energy_multiplier = 14.01
 script = ExtResource("1_rqoq6")
 
 [node name="start" type="AudioStreamPlayer3D" parent="." unique_id=843954103]
+bus = &"SFX"
 stream = ExtResource("3_kgmdj")
 volume_db = -16.448
 unit_size = 50.14
 max_distance = 25.0
 
 [node name="running" type="AudioStreamPlayer3D" parent="." unique_id=387564882]
+bus = &"SFX"
 stream = ExtResource("4_ionxw")
 volume_db = -16.448
 unit_size = 100.0
@@ -216,6 +218,7 @@ font_size = 72
 outline_size = 0
 
 [node name="error" type="AudioStreamPlayer3D" parent="." unique_id=112436191]
+bus = &"SFX"
 stream = ExtResource("6_kgmdj")
 
 [node name="gas_detect_area" type="Area3D" parent="." unique_id=1566144464]
@@ -240,6 +243,7 @@ material_override = SubResource("StandardMaterial3D_kgmdj")
 mesh = SubResource("CapsuleMesh_ionxw")
 
 [node name="correct" type="AudioStreamPlayer3D" parent="." unique_id=1298501296]
+bus = &"SFX"
 stream = ExtResource("7_ionxw")
 volume_db = -13.458
 pitch_scale = 1.34

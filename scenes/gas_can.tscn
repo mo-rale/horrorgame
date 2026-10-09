@@ -139,6 +139,7 @@ font = ExtResource("3_mecvi")
 font_size = 59
 
 [node name="collide" type="AudioStreamPlayer3D" parent="." unique_id=249784047]
+bus = &"SFX"
 stream = SubResource("AudioStreamMP3_bruxi")
 volume_db = -2.991
 unit_size = 5.33

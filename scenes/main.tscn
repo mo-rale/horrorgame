@@ -111,16 +111,19 @@ script = ExtResource("1_tbgi4")
 environment = SubResource("Environment_tefeu")
 
 [node name="ambience" type="AudioStreamPlayer" parent="." unique_id=446867308]
+bus = &"Music"
 stream = ExtResource("4_jyhfs")
 volume_db = -10.035
 autoplay = true
 
 [node name="ambience2" type="AudioStreamPlayer" parent="." unique_id=833737640]
+bus = &"Music"
 stream = ExtResource("3_tefeu")
 volume_db = -10.035
 autoplay = true
 
 [node name="Screeching" type="AudioStreamPlayer" parent="." unique_id=1403991640]
+bus = &"Music"
 stream = SubResource("AudioStreamRandomizer_85g3d")
 volume_db = -17.278
 mix_target = 1
@@ -448,6 +451,57 @@ custom_minimum_size = Vector2(240, 52)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "RESUME  [ESC]"
+
+[node name="AudioHeading" type="Label" parent="PauseScreen/CenterContainer/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 16
+text = "AUDIO"
+horizontal_alignment = 1
+
+[node name="MasterLabel" type="Label" parent="PauseScreen/CenterContainer/Content"]
+layout_mode = 2
+text = "MASTER VOLUME"
+
+[node name="PauseMasterSlider" type="HSlider" parent="PauseScreen/CenterContainer/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 30)
+layout_mode = 2
+step = 1.0
+
+[node name="MusicLabel" type="Label" parent="PauseScreen/CenterContainer/Content"]
+layout_mode = 2
+text = "AMBIENCE VOLUME"
+
+[node name="PauseMusicSlider" type="HSlider" parent="PauseScreen/CenterContainer/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 30)
+layout_mode = 2
+step = 1.0
+
+[node name="SFXLabel" type="Label" parent="PauseScreen/CenterContainer/Content"]
+layout_mode = 2
+text = "EFFECTS VOLUME"
+
+[node name="PauseSFXSlider" type="HSlider" parent="PauseScreen/CenterContainer/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 30)
+layout_mode = 2
+step = 1.0
+
+[node name="MainMenuButton" type="Button" parent="PauseScreen/CenterContainer/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 46)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "MAIN MENU"
+
+[node name="QuitButton" type="Button" parent="PauseScreen/CenterContainer/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 46)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "QUIT"
 
 [node name="ObjectiveHUD" type="CanvasLayer" parent="." unique_id=410981786]
 layer = 10
