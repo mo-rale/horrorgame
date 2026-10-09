@@ -5,9 +5,9 @@ class_name Enemy
 signal reached_player
 
 # ── States ───────────────────────────────────────────────────────────────
-enum State { ROAMING, INVESTIGATING, STALKING, VANISHING, CHASING, SEARCHING }
+enum State { DORMANT, ROAMING, INVESTIGATING, STALKING, VANISHING, CHASING, SEARCHING }
 
-var _state: State = State.ROAMING
+var _state: State = State.DORMANT
 
 # ── Tunables ─────────────────────────────────────────────────────────────
 @export_group("Detection")
@@ -125,6 +125,8 @@ var _map_synchronized := false
 func _ready() -> void:
 	randomize()
 	add_to_group("enemy")
+	visible = false
+	_collision_shape.set_deferred("disabled", true)
 	_footstep_base_volume_db = _footsteps.volume_db
 	var enemy_capsule := _collision_shape.shape as CapsuleShape3D
 	if enemy_capsule:
@@ -136,10 +138,10 @@ func _ready() -> void:
 	)
 	print("[Enemy] First stalking event scheduled in %.1f seconds" % _stalking_cooldown)
 	_nav_map = get_world_3d().get_navigation_map()
-	_sync_map_then_start_roaming()
+	_sync_map_then_start_dormant()
 
 
-func _sync_map_then_start_roaming() -> void:
+func _sync_map_then_start_dormant() -> void:
 	# Wait until the NavigationServer has actually finished building this
 	# map at least once. A fixed frame-count wait is not reliable here;
 	# map_get_iteration_id() is the engine's own ground truth for "ready".
@@ -147,13 +149,13 @@ func _sync_map_then_start_roaming() -> void:
 		await get_tree().process_frame
 	
 	_map_synchronized = true
-	_enter_state(State.ROAMING)
+	_enter_state(State.DORMANT)
 
 
 func reset_after_navigation_rebuild() -> void:
 	# The level replaces its navigation region during startup. Clear any path
 	# calculated from the old map, snap onto the rebuilt mesh, and create a
-	# fresh roaming target so the agent cannot remain in a finished-path state.
+	# fresh dormant state so the next stalking event starts from clean data.
 	_nav_map = get_world_3d().get_navigation_map()
 	_map_synchronized = false
 	velocity = Vector3.ZERO
@@ -175,7 +177,7 @@ func reset_after_navigation_rebuild() -> void:
 	global_position = _root_position_from_nav_point(nav_point)
 	navigation_agent.target_position = global_position
 	_map_synchronized = true
-	_enter_state(State.ROAMING)
+	_enter_state(State.DORMANT)
 	print("[Enemy] Navigation reset after level rebuild at ", global_position)
 
 
@@ -186,11 +188,14 @@ func _physics_process(delta: float) -> void:
 	_detection_grace_timer = maxf(_detection_grace_timer - delta, 0.0)
 	if (
 		_stalking_cooldown <= 0.0
-		and _state not in [State.STALKING, State.VANISHING]
+		and _state == State.DORMANT
 	):
 		_try_start_stalking()
 	
 	match _state:
+		State.DORMANT:
+			velocity = Vector3.ZERO
+			return
 		State.ROAMING:
 			_update_roaming(delta)
 		State.INVESTIGATING:
@@ -207,6 +212,8 @@ func _physics_process(delta: float) -> void:
 			_update_chasing(delta)
 		State.SEARCHING:
 			_update_searching(delta)
+	if _state == State.DORMANT:
+		return
 	
 	_move_along_path(delta)
 
@@ -215,8 +222,8 @@ func _physics_process(delta: float) -> void:
 
 func _enter_state(new_state: State, data := {}) -> void:
 	# VANISHING owns its complete hide/relocate/restore lifecycle. Ignore all
-	# external transitions until that sequence safely returns to roaming.
-	if _state == State.VANISHING and new_state != State.ROAMING:
+	# external transitions until that sequence safely returns to dormancy.
+	if _state == State.VANISHING and new_state != State.DORMANT:
 		print("[Enemy] State transition suppressed — stalker is vanishing")
 		return
 
@@ -247,6 +254,16 @@ func _enter_state(new_state: State, data := {}) -> void:
 	_state = new_state
 	
 	match _state:
+		State.DORMANT:
+			_stop_moving()
+			visible = false
+			_collision_shape.set_deferred("disabled", true)
+			_footsteps.stop()
+			_stalking.stop()
+			_chasing.stop()
+			_roaming.stop()
+			print("[Enemy] DORMANT — hidden until the next stalking event")
+
 		State.ROAMING:
 			_travel_to_random_position()
 			_play_roaming_sound()
@@ -254,7 +271,7 @@ func _enter_state(new_state: State, data := {}) -> void:
 		State.INVESTIGATING:
 			if not data.has("sound_position"):
 				printerr(name + ": entered Investigating without sound_position.")
-				_enter_state(State.ROAMING)
+				_enter_state(State.DORMANT)
 				return
 			_heard_position = NavigationServer3D.map_get_closest_point(
 				_nav_map,
@@ -266,7 +283,7 @@ func _enter_state(new_state: State, data := {}) -> void:
 		State.STALKING:
 			if not data.has("teleport_position"):
 				_stalking_cooldown = stalking_blocked_retry_delay
-				_enter_state(State.ROAMING)
+				_enter_state(State.DORMANT)
 				return
 			_stalking_path_timer = 0.0
 			_heartbeat_delay_timer = randf_range(
@@ -339,7 +356,7 @@ func _update_investigating(delta: float) -> void:
 
 	_investigation_timer -= delta
 	if _investigation_timer <= 0.0:
-		_enter_state(State.ROAMING)
+		_enter_state(State.DORMANT)
 		return
 
 	# Stay near the source and look for the player until the investigation
@@ -460,9 +477,7 @@ func _update_chasing(delta: float) -> void:
 			navigation_agent.target_desired_distance + 0.25
 		)
 		if reached_last_seen or _chase_timer <= 0.0:
-			_enter_state(State.SEARCHING, {
-				"player_last_seen_position": _player_last_seen_position
-			})
+			_enter_state(State.DORMANT)
 			return
 
 	if can_see_player and global_position.distance_to(player.global_position) <= catching_distance:
@@ -473,7 +488,7 @@ func _update_searching(delta: float) -> void:
 	_search_timer -= delta
 	
 	if _search_timer <= 0.0:
-		_enter_state(State.ROAMING)
+		_enter_state(State.DORMANT)
 		return
 	
 	if navigation_agent.is_navigation_finished():
@@ -612,23 +627,10 @@ func _play_seen_sound() -> void:
 		_seen.play()
 
 
-func hear_noise(sound_position: Vector3, hearing_distance: float) -> void:
-	if not _map_synchronized or _state in [
-		State.STALKING,
-		State.VANISHING,
-		State.CHASING,
-	]:
-		return
-	var distance_to_sound := global_position.distance_to(sound_position)
-	if distance_to_sound > hearing_distance:
-		return
-
-	# Hearing gives the enemy an approximate source rather than perfect
-	# knowledge through walls. Distant sounds create more uncertainty.
-	var distance_ratio := clampf(distance_to_sound / maxf(hearing_distance, 0.01), 0.0, 1.0)
-	var uncertainty := hearing_position_uncertainty * distance_ratio
-	var estimated_position := sound_position + _random_point_in_circle(uncertainty)
-	_enter_state(State.INVESTIGATING, {"sound_position": estimated_position})
+func hear_noise(_sound_position: Vector3, _hearing_distance: float) -> void:
+	# The stalking-only design does not reveal or redirect the enemy through
+	# footsteps, thrown cans, or generator sounds.
+	return
 
 
 func _try_start_stalking() -> void:
@@ -844,30 +846,7 @@ func _delay_then_vanish(sequence_id: int) -> void:
 	):
 		return
 
-	var relocation := _find_safe_vanish_destination()
-	while not bool(relocation["found"]):
-		print(
-			"[Enemy] VANISHING remains hidden — no safe distant relocation; retrying in %.1f seconds"
-			% vanish_relocation_retry_delay
-		)
-		await get_tree().create_timer(vanish_relocation_retry_delay, false).timeout
-		if (
-			not is_inside_tree()
-			or _state != State.VANISHING
-			or sequence_id != _vanish_sequence_id
-		):
-			return
-		relocation = _find_safe_vanish_destination()
-
-	global_position = relocation["position"]
-	visible = true
-	_collision_shape.set_deferred("disabled", false)
-	_detection_grace_timer = post_vanish_detection_grace
-	print(
-		"[Enemy] STALKER reappeared — detection disabled for %.1f seconds"
-		% post_vanish_detection_grace
-	)
-	_enter_state(State.ROAMING)
+	_enter_state(State.DORMANT)
 
 
 func _find_safe_vanish_destination() -> Dictionary:
