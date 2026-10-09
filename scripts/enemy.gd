@@ -492,7 +492,7 @@ func _pick_stalking_target() -> Vector3:
 func _is_player_looking_at_enemy() -> bool:
 	if not is_instance_valid(player.camera):
 		return false
-	var camera_to_enemy := _eye.global_position - player.camera.global_position
+	var camera_to_enemy: Vector3 = _eye.global_position - player.camera.global_position
 	if camera_to_enemy.length_squared() < 0.001:
 		return true
 	var player_forward := -player.camera.global_basis.z.normalized()
