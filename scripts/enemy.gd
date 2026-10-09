@@ -88,6 +88,7 @@ var _heartbeat_active := false
 var _footstep_base_volume_db := 0.0
 var _stalking_clearance_shape := CapsuleShape3D.new()
 var _detection_grace_timer := 0.0
+var _vanish_sequence_id := 0
 
 # ── Chasing state ────────────────────────────────────────────────────────
 var _chase_timer := 0.0
@@ -231,6 +232,11 @@ func _enter_state(new_state: State, data := {}) -> void:
 			)
 			_heartbeat_attack_timer = 0.0
 			_heartbeat_active = false
+			# Invalidate any older disappearance timer and always restore the
+			# physical/visual state before beginning a new stalking cycle.
+			_vanish_sequence_id += 1
+			visible = true
+			_collision_shape.set_deferred("disabled", false)
 			_player_last_seen_position = player.global_position
 			# Stalking starts as a supernatural appearance directly behind the
 			# player. Following after this point still uses the navigation mesh.
@@ -242,12 +248,14 @@ func _enter_state(new_state: State, data := {}) -> void:
 				"[Enemy] STALKING chosen — teleported behind player to ",
 				stalking_teleport_position
 			)
+			print("[Enemy] STALKER visibility restored: ", visible)
 			velocity = Vector3.ZERO
 			_play_stalking_sound()
 
 		State.VANISHING:
 			_stop_moving()
-			_delay_then_vanish()
+			_vanish_sequence_id += 1
+			_delay_then_vanish(_vanish_sequence_id)
 		
 		State.CHASING:
 			_chase_timer = chase_max_time
@@ -676,11 +684,15 @@ func _face_player() -> void:
 		look_at(player_position, Vector3.UP)
 
 
-func _delay_then_vanish() -> void:
+func _delay_then_vanish(sequence_id: int) -> void:
 	# Hold still for a brief, readable moment after the player notices the
 	# stalker. The sound and disappearance happen together after the delay.
 	await get_tree().create_timer(seen_vanish_delay, false).timeout
-	if not is_inside_tree() or _state != State.VANISHING:
+	if (
+		not is_inside_tree()
+		or _state != State.VANISHING
+		or sequence_id != _vanish_sequence_id
+	):
 		return
 
 	_play_seen_sound()
@@ -688,7 +700,11 @@ func _delay_then_vanish() -> void:
 	_collision_shape.set_deferred("disabled", true)
 
 	await get_tree().create_timer(vanish_hidden_time, false).timeout
-	if not is_inside_tree() or _state != State.VANISHING:
+	if (
+		not is_inside_tree()
+		or _state != State.VANISHING
+		or sequence_id != _vanish_sequence_id
+	):
 		return
 
 	global_position = _pick_vanish_destination()
