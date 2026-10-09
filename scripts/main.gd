@@ -1,8 +1,12 @@
 extends Node3D
 
+const LevelMapScript = preload("res://scripts/level_map.gd")
+
 @onready var screeching: AudioStreamPlayer = $Screeching
 @onready var enemy: Enemy = $Enemy
+@onready var player: Player = $player
 @onready var generator: Node3D = $Generator
+@onready var navigation_region: NavigationRegion3D = $NavigationRegion3D
 @onready var game_over_screen: CanvasLayer = $GameOverScreen
 @onready var restart_button: Button = %RestartButton
 @onready var victory_screen: CanvasLayer = $VictoryScreen
@@ -19,6 +23,7 @@ extends Node3D
 
 var game_ended := false
 var player_paused := false
+var _level_map: Node3D
 
 @export_group("Ending")
 @export var victory_screen_delay := 4.0
@@ -32,6 +37,7 @@ func _ready() -> void:
 			child.process_mode = Node.PROCESS_MODE_PAUSABLE
 
 	randomize()
+	_rebuild_level_and_randomize_fuel()
 	Settings.apply_brightness(world_environment.environment)
 	enemy.reached_player.connect(_on_enemy_reached_player)
 	generator.generator_started.connect(_on_generator_started)
@@ -49,6 +55,80 @@ func _ready() -> void:
 	_on_fuel_changed(generator.get_current_fuel(), generator.get_required_fuel())
 	_fade_controls_after_delay()
 	start_random_screeches()
+
+
+func _rebuild_level_and_randomize_fuel() -> void:
+	enemy.set_physics_process(false)
+	player.set_physics_process(false)
+
+	_level_map = LevelMapScript.new()
+	_level_map.name = "LevelMap"
+	add_child(_level_map)
+	var gas_spawn_points: Array[Marker3D] = _level_map.rebuild(navigation_region)
+
+	player.global_position = _level_map.player_spawn
+	player.velocity = Vector3.ZERO
+	enemy.global_position = _level_map.enemy_spawn
+	enemy.velocity = Vector3.ZERO
+	generator.global_position = _level_map.generator_spawn
+	_freeze_gas_cans()
+
+	# NavigationServer applies a freshly baked map on the following sync.
+	# Gameplay begins after that update so the enemy never uses the old map.
+	_enable_level_after_navigation_sync(gas_spawn_points)
+
+
+func _enable_level_after_navigation_sync(gas_spawn_points: Array[Marker3D]) -> void:
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	if game_ended:
+		return
+	_randomize_gas_can_spawns(gas_spawn_points)
+	enemy.set_physics_process(true)
+	player.set_physics_process(true)
+	print("[Map] Rebuilt industrial layout; gas cans randomized across safe spawn points")
+
+
+func _freeze_gas_cans() -> void:
+	for node in get_tree().get_nodes_in_group("gas_can"):
+		var gas_can := node as RigidBody3D
+		gas_can.freeze = true
+		gas_can.linear_velocity = Vector3.ZERO
+		gas_can.angular_velocity = Vector3.ZERO
+
+
+func _randomize_gas_can_spawns(spawn_points: Array[Marker3D]) -> void:
+	var gas_cans := get_tree().get_nodes_in_group("gas_can")
+	var available_spawns: Array[Marker3D] = []
+	var navigation_map := navigation_region.get_navigation_map()
+	for spawn_point in spawn_points:
+		var path := NavigationServer3D.map_get_path(
+			navigation_map,
+			generator.global_position,
+			spawn_point.global_position,
+			true
+		)
+		if not path.is_empty():
+			available_spawns.append(spawn_point)
+
+	if available_spawns.size() < gas_cans.size():
+		push_warning(
+			"Only %d connected gas spawns were found; using the authored safe list"
+			% available_spawns.size()
+		)
+		available_spawns = spawn_points.duplicate()
+	available_spawns.shuffle()
+
+	for index in mini(gas_cans.size(), available_spawns.size()):
+		var gas_can := gas_cans[index] as RigidBody3D
+		var spawn_point := available_spawns[index]
+		gas_can.freeze = true
+		gas_can.linear_velocity = Vector3.ZERO
+		gas_can.angular_velocity = Vector3.ZERO
+		gas_can.global_position = spawn_point.global_position
+		gas_can.rotation = Vector3(0.0, randf_range(0.0, TAU), 0.0)
+		gas_can.freeze = false
+		print("[Map] %s spawned at %s" % [gas_can.name, gas_can.global_position])
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
