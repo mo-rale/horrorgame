@@ -31,6 +31,8 @@ var _state: State = State.ROAMING
 @export var stalking_max_nav_snap_distance := 2.5
 @export var stalking_blocked_retry_delay := 3.0
 @export var stalking_path_update_delay := 0.5
+@export var stalking_follow_distance := 3.5
+@export var stalking_follow_max_nav_snap_distance := 3.0
 @export var stalking_cooldown_time := 25.0
 @export var initial_stalking_delay_min := 8.0
 @export var initial_stalking_delay_max := 15.0
@@ -251,6 +253,7 @@ func _enter_state(new_state: State, data := {}) -> void:
 			var stalking_teleport_position: Vector3 = data["teleport_position"]
 			global_position = stalking_teleport_position
 			_stalking_follow_target = stalking_teleport_position
+			_update_stalking_follow_path()
 			_face_player()
 			print(
 				"[Enemy] STALKING chosen — teleported behind player to ",
@@ -349,10 +352,7 @@ func _update_stalking(delta: float) -> void:
 	# around obstacles, but being caught in view still makes it vanish.
 	if _stalking_path_timer <= 0.0:
 		_stalking_path_timer = stalking_path_update_delay
-		var placement := _find_safe_stalking_teleport()
-		if bool(placement["found"]):
-			_stalking_follow_target = placement["position"]
-			travel_to_position(_stalking_follow_target, stalking_speed)
+		_update_stalking_follow_path()
 
 
 func _move_stalking(delta: float) -> void:
@@ -569,6 +569,73 @@ func _try_start_stalking() -> void:
 		return
 
 	_enter_state(State.STALKING, {"teleport_position": placement["position"]})
+
+
+func _update_stalking_follow_path() -> void:
+	var placement := _find_stalking_follow_target()
+	if not bool(placement["found"]):
+		return
+	_stalking_follow_target = placement["position"]
+	travel_to_position(_stalking_follow_target, stalking_speed)
+
+
+func _find_stalking_follow_target() -> Dictionary:
+	# Following is intentionally less restrictive than the initial teleport.
+	# The enemy is already in the world, so it only needs a reachable navmesh
+	# point behind the player; walls are handled by the generated path.
+	var behind_direction := player.global_basis.z.normalized()
+	var angle_offsets: Array[float] = [0.0, -0.35, 0.35, -0.7, 0.7, -1.05, 1.05]
+
+	for angle in angle_offsets:
+		var direction := behind_direction.rotated(Vector3.UP, angle)
+		var requested_point := (
+			player.global_position + direction * stalking_follow_distance
+		)
+		var nav_point := NavigationServer3D.map_get_closest_point(
+			_nav_map,
+			requested_point
+		)
+		var horizontal_snap_error := Vector2(
+			nav_point.x - requested_point.x,
+			nav_point.z - requested_point.z
+		).length()
+		if horizontal_snap_error > stalking_follow_max_nav_snap_distance:
+			continue
+
+		var path := NavigationServer3D.map_get_path(
+			_nav_map,
+			global_position,
+			nav_point,
+			true
+		)
+		if path.is_empty():
+			continue
+
+		return {
+			"found": true,
+			"position": _root_position_from_nav_point(nav_point),
+		}
+
+	# Narrow corridors may have no navmesh point at the preferred offset.
+	# Continue following through the corridor instead of leaving the old
+	# teleport position as the active target.
+	var player_nav_point := NavigationServer3D.map_get_closest_point(
+		_nav_map,
+		player.global_position
+	)
+	var fallback_path := NavigationServer3D.map_get_path(
+		_nav_map,
+		global_position,
+		player_nav_point,
+		true
+	)
+	if not fallback_path.is_empty():
+		return {
+			"found": true,
+			"position": _root_position_from_nav_point(player_nav_point),
+		}
+
+	return {"found": false, "position": Vector3.ZERO}
 
 
 func _find_safe_stalking_teleport() -> Dictionary:
