@@ -37,6 +37,7 @@ var _state: State = State.ROAMING
 @export var heartbeat_delay_max := 14.0
 @export var heartbeat_duration_min := 5.0
 @export var heartbeat_duration_max := 7.0
+@export var seen_vanish_delay := 0.75
 @export var vanish_hidden_time := 3.0
 @export var vanish_reappear_distance_min := 18.0
 @export var vanish_reappear_distance_max := 28.0
@@ -208,10 +209,7 @@ func _enter_state(new_state: State, data := {}) -> void:
 
 		State.VANISHING:
 			_stop_moving()
-			visible = false
-			_collision_shape.set_deferred("disabled", true)
-			_play_seen_sound()
-			_vanish_then_resume_roaming()
+			_delay_then_vanish()
 		
 		State.CHASING:
 			_chase_timer = chase_max_time
@@ -507,9 +505,19 @@ func _stop_moving() -> void:
 	velocity = Vector3.ZERO
 
 
-func _vanish_then_resume_roaming() -> void:
+func _delay_then_vanish() -> void:
+	# Hold still for a brief, readable moment after the player notices the
+	# stalker. The sound and disappearance happen together after the delay.
+	await get_tree().create_timer(seen_vanish_delay, false).timeout
+	if not is_inside_tree() or _state != State.VANISHING:
+		return
+
+	_play_seen_sound()
+	visible = false
+	_collision_shape.set_deferred("disabled", true)
+
 	await get_tree().create_timer(vanish_hidden_time, false).timeout
-	if not is_inside_tree():
+	if not is_inside_tree() or _state != State.VANISHING:
 		return
 
 	global_position = _pick_vanish_destination()
