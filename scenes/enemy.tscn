@@ -4,8 +4,10 @@
 [ext_resource type="Texture2D" uid="uid://be7rtqu1t0jy6" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Stains/Horror_Stain_09-128x128.png" id="2_5uy6h"]
 [ext_resource type="AudioStream" uid="uid://cwal04uoyu0bd" path="res://assets/ambience/data_pion-st3-footstep-sfx-323056.mp3" id="3_c4w8v"]
 [ext_resource type="AudioStream" uid="uid://cvoq83aj73x3" path="res://assets/ambience/freesound_community-jumpscare-68730.mp3" id="4_5uy6h"]
-[ext_resource type="AudioStream" uid="uid://b5307ijbvw7jo" path="res://assets/sfx/freesound_community-creepy-whispering-6690.mp3" id="5_xwavj"]
-[ext_resource type="AudioStream" uid="uid://bc73iqh7ocvoe" path="res://assets/sfx/freesound_community-four_voices_whispering-6943.mp3" id="6_nenq2"]
+[ext_resource type="AudioStream" uid="uid://b5307ijbvw7jo" path="res://assets/sfx/enemy/creepy_whispiring.mp3" id="5_xwavj"]
+[ext_resource type="AudioStream" uid="uid://bc73iqh7ocvoe" path="res://assets/sfx/enemy/creepyWhispiring2.mp3" id="6_nenq2"]
+[ext_resource type="AudioStream" uid="uid://bqdw12u8q1yu6" path="res://assets/sfx/enemy/enemyStalking.mp3" id="7_stalk"]
+[ext_resource type="AudioStream" uid="uid://cnlmvjrhkpfbv" path="res://assets/sfx/enemy/enemySeen.mp3" id="8_seen"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5uy6h"]
 albedo_texture = ExtResource("2_5uy6h")
@@ -50,7 +52,6 @@ mesh = SubResource("SphereMesh_nenq2")
 shape = SubResource("CapsuleShape3D_md484")
 
 [node name="footsteps" type="AudioStreamPlayer3D" parent="." unique_id=2035661241]
-bus = &"SFX"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7891059, 0)
 stream = ExtResource("3_c4w8v")
 unit_size = 6.27
@@ -66,15 +67,22 @@ transform = Transform3D(1, 0, 0, 0, 0.00019200245, -1, 0, 1, 0.00019200245, 0, 0
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="." unique_id=1812258825]
 unique_name_in_owner = true
 path_desired_distance = 0.6
-target_desired_distance = 1.0
-radius = 0.4
 height = 1.8
+radius = 0.4
 
 [node name="chasing" type="AudioStreamPlayer3D" parent="." unique_id=1047996043]
-bus = &"SFX"
 stream = ExtResource("4_5uy6h")
 volume_db = -23.925
 
 [node name="roaming" type="AudioStreamPlayer3D" parent="." unique_id=595245994]
-bus = &"SFX"
 stream = SubResource("AudioStreamRandomizer_md484")
+
+[node name="stalking" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("7_stalk")
+volume_db = -10.0
+max_distance = 25.0
+
+[node name="seen" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("8_seen")
+volume_db = -8.0
+max_distance = 30.0

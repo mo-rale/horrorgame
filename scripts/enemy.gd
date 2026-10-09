@@ -5,7 +5,7 @@ class_name Enemy
 signal reached_player
 
 # ── States ───────────────────────────────────────────────────────────────
-enum State { ROAMING, INVESTIGATING, CHASING, SEARCHING }
+enum State { ROAMING, INVESTIGATING, STALKING, CHASING, SEARCHING }
 
 var _state: State = State.ROAMING
 
@@ -23,6 +23,21 @@ var _state: State = State.ROAMING
 @export var investigation_time := 6.0
 @export var investigation_turn_speed := 0.8
 @export var hearing_position_uncertainty := 2.0
+
+@export_group("Stalking")
+@export_range(0.0, 1.0) var stalking_chance := 0.65
+@export var stalking_speed := 2.6
+@export var stalking_start_distance := 8.0
+@export var stalking_follow_distance := 12.0
+@export var stalking_chase_distance := 5.5
+@export var stalking_duration_min := 10.0
+@export var stalking_duration_max := 18.0
+@export var stalking_lost_sight_time := 3.0
+@export var stalking_path_update_delay := 0.5
+@export var stalking_cooldown_time := 25.0
+@export var watched_before_chase := 1.75
+@export_range(-1.0, 1.0) var player_look_dot_threshold := 0.82
+@export var stalking_footstep_volume_db := -12.0
 
 @export_group("Chasing")
 @export var chasing_speed := 6.0
@@ -56,6 +71,15 @@ var _distance_since_last_step := 0.0
 var _investigation_timer := 0.0
 var _heard_position := Vector3.ZERO
 
+# ── Stalking state ──────────────────────────────────────────────────────
+var _stalking_timer := 0.0
+var _stalking_lost_sight_timer := 0.0
+var _stalking_path_timer := 0.0
+var _stalking_cooldown := 0.0
+var _watched_timer := 0.0
+var _seen_sound_played := false
+var _footstep_base_volume_db := 0.0
+
 # ── Chasing state ────────────────────────────────────────────────────────
 var _chase_timer := 0.0
 var _update_path_timer := 0.0
@@ -76,12 +100,15 @@ var _map_synchronized := false
 @onready var _footsteps: AudioStreamPlayer3D = $footsteps
 @onready var _chasing: AudioStreamPlayer3D = $chasing
 @onready var _roaming: AudioStreamPlayer3D = $roaming
+@onready var _stalking: AudioStreamPlayer3D = $stalking
+@onready var _seen: AudioStreamPlayer3D = $seen
 @onready var ray_cast_3d: RayCast3D = %EyeRayCast
 @onready var generator: Node3D = get_tree().get_first_node_in_group("generator")
 
 func _ready() -> void:
 	randomize()
 	add_to_group("enemy")
+	_footstep_base_volume_db = _footsteps.volume_db
 	_nav_map = get_world_3d().get_navigation_map()
 	_sync_map_then_start_roaming()
 
@@ -100,12 +127,15 @@ func _sync_map_then_start_roaming() -> void:
 func _physics_process(delta: float) -> void:
 	if not _map_synchronized:
 		return
+	_stalking_cooldown = maxf(_stalking_cooldown - delta, 0.0)
 	
 	match _state:
 		State.ROAMING:
 			_update_roaming(delta)
 		State.INVESTIGATING:
 			_update_investigating(delta)
+		State.STALKING:
+			_update_stalking(delta)
 		State.CHASING:
 			_update_chasing(delta)
 		State.SEARCHING:
@@ -117,6 +147,8 @@ func _physics_process(delta: float) -> void:
 # ── State transition ─────────────────────────────────────────────────────
 
 func _enter_state(new_state: State, data := {}) -> void:
+	if _state == State.STALKING and new_state != State.STALKING:
+		_stalking.stop()
 	_state = new_state
 	
 	match _state:
@@ -135,6 +167,17 @@ func _enter_state(new_state: State, data := {}) -> void:
 			)
 			_investigation_timer = investigation_time
 			travel_to_position(_heard_position, investigating_speed)
+
+		State.STALKING:
+			_stalking_timer = randf_range(stalking_duration_min, stalking_duration_max)
+			_stalking_lost_sight_timer = stalking_lost_sight_time
+			_stalking_path_timer = 0.0
+			_stalking_cooldown = stalking_cooldown_time
+			_watched_timer = 0.0
+			_seen_sound_played = false
+			_player_last_seen_position = player.global_position
+			travel_to_position(_pick_stalking_target(), stalking_speed)
+			_play_stalking_sound()
 		
 		State.CHASING:
 			_chase_timer = chase_max_time
@@ -159,7 +202,13 @@ func _update_roaming(_delta: float) -> void:
 		_travel_to_random_position()
 	
 	if is_player_in_view():
-		_enter_state(State.CHASING)
+		var distance_to_player := global_position.distance_to(player.global_position)
+		var can_stalk := (
+			distance_to_player >= stalking_start_distance
+			and _stalking_cooldown <= 0.0
+			and randf() <= stalking_chance
+		)
+		_enter_state(State.STALKING if can_stalk else State.CHASING)
 
 
 func _update_investigating(delta: float) -> void:
@@ -177,6 +226,67 @@ func _update_investigating(delta: float) -> void:
 	if navigation_agent.is_navigation_finished():
 		velocity = Vector3.ZERO
 		rotate_y(investigation_turn_speed * delta)
+
+
+func _update_stalking(delta: float) -> void:
+	_stalking_timer -= delta
+	_stalking_path_timer -= delta
+
+	var distance_to_player := global_position.distance_to(player.global_position)
+	var has_line_of_sight := (
+		distance_to_player <= max_spotting_distance
+		and not is_line_of_sight_broken()
+	)
+
+	if has_line_of_sight:
+		_player_last_seen_position = player.global_position
+		_stalking_lost_sight_timer = stalking_lost_sight_time
+	else:
+		_stalking_lost_sight_timer -= delta
+
+	if _stalking_lost_sight_timer <= 0.0:
+		_enter_state(State.SEARCHING, {
+			"player_last_seen_position": _player_last_seen_position
+		})
+		return
+
+	if _stalking_timer <= 0.0:
+		if has_line_of_sight:
+			_enter_state(State.CHASING)
+		else:
+			_enter_state(State.SEARCHING, {
+				"player_last_seen_position": _player_last_seen_position
+			})
+		return
+
+	var player_is_watching := has_line_of_sight and _is_player_looking_at_enemy()
+	if player_is_watching:
+		_stop_moving()
+		_watched_timer += delta
+		if not _seen_sound_played:
+			_seen_sound_played = true
+			_play_seen_sound()
+
+		if (
+			player.is_flashlight_on
+			or _watched_timer >= watched_before_chase
+			or distance_to_player <= stalking_chase_distance
+		):
+			_enter_state(State.CHASING)
+		return
+
+	_watched_timer = maxf(_watched_timer - delta * 0.5, 0.0)
+	var player_horizontal_speed := Vector2(player.velocity.x, player.velocity.z).length()
+	if has_line_of_sight and (
+		distance_to_player <= stalking_chase_distance
+		or player_horizontal_speed > 7.0
+	):
+		_enter_state(State.CHASING)
+		return
+
+	if has_line_of_sight and _stalking_path_timer <= 0.0:
+		_stalking_path_timer = stalking_path_update_delay
+		travel_to_position(_pick_stalking_target(), stalking_speed)
 
 
 func _update_chasing(delta: float) -> void:
@@ -321,6 +431,11 @@ func _play_footstep() -> void:
 	if _footsteps == null:
 		return
 	_footsteps.pitch_scale = randf_range(footstep_pitch_min, footstep_pitch_max)
+	_footsteps.volume_db = (
+		stalking_footstep_volume_db
+		if _state == State.STALKING
+		else _footstep_base_volume_db
+	)
 	_footsteps.play()
 
 
@@ -338,8 +453,20 @@ func _play_roaming_sound() -> void:
 	_roaming.play()
 
 
+func _play_stalking_sound() -> void:
+	if _stalking and not _stalking.playing:
+		_stalking.pitch_scale = randf_range(0.95, 1.05)
+		_stalking.play()
+
+
+func _play_seen_sound() -> void:
+	if _seen:
+		_seen.pitch_scale = randf_range(0.97, 1.03)
+		_seen.play()
+
+
 func hear_noise(sound_position: Vector3, hearing_distance: float) -> void:
-	if not _map_synchronized or _state == State.CHASING:
+	if not _map_synchronized or _state in [State.STALKING, State.CHASING]:
 		return
 	var distance_to_sound := global_position.distance_to(sound_position)
 	if distance_to_sound > hearing_distance:
@@ -351,6 +478,30 @@ func hear_noise(sound_position: Vector3, hearing_distance: float) -> void:
 	var uncertainty := hearing_position_uncertainty * distance_ratio
 	var estimated_position := sound_position + _random_point_in_circle(uncertainty)
 	_enter_state(State.INVESTIGATING, {"sound_position": estimated_position})
+
+
+func _pick_stalking_target() -> Vector3:
+	# Favor the space behind the player. The navigation mesh decides the
+	# actual route, so the enemy still has to walk around walls and doors.
+	var behind_player := player.global_position + (
+		player.global_basis.z.normalized() * stalking_follow_distance
+	)
+	return NavigationServer3D.map_get_closest_point(_nav_map, behind_player)
+
+
+func _is_player_looking_at_enemy() -> bool:
+	if not is_instance_valid(player.camera):
+		return false
+	var camera_to_enemy := _eye.global_position - player.camera.global_position
+	if camera_to_enemy.length_squared() < 0.001:
+		return true
+	var player_forward := -player.camera.global_basis.z.normalized()
+	return player_forward.dot(camera_to_enemy.normalized()) >= player_look_dot_threshold
+
+
+func _stop_moving() -> void:
+	navigation_agent.target_position = global_position
+	velocity = Vector3.ZERO
 
 
 func travel_to_position(wanted_position: Vector3, speed: float, _play_run_anim := false) -> void:
