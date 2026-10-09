@@ -27,7 +27,8 @@ var _state: State = State.ROAMING
 @export_group("Stalking")
 @export var stalking_speed := 5.0
 @export var stalking_follow_distance := 12.0
-@export var stalking_min_teleport_distance := 6.0
+@export var stalking_teleport_distance := 7.0
+@export var stalking_min_teleport_distance := 5.0
 @export var stalking_max_nav_snap_distance := 2.5
 @export var stalking_blocked_retry_delay := 3.0
 @export var stalking_path_update_delay := 0.5
@@ -519,9 +520,9 @@ func _find_safe_stalking_teleport() -> Dictionary:
 	var behind_direction := player.global_basis.z.normalized()
 	var angle_offsets: Array[float] = [0.0, -0.35, 0.35, -0.7, 0.7, -1.05, 1.05]
 	var distances: Array[float] = [
-		stalking_follow_distance,
-		maxf(stalking_follow_distance * 0.8, stalking_min_teleport_distance),
-		maxf(stalking_follow_distance * 0.6, stalking_min_teleport_distance),
+		stalking_min_teleport_distance,
+		maxf(stalking_teleport_distance - 1.0, stalking_min_teleport_distance),
+		maxf(stalking_teleport_distance, stalking_min_teleport_distance),
 	]
 
 	for distance in distances:
@@ -547,7 +548,10 @@ func _find_safe_stalking_teleport() -> Dictionary:
 				continue
 
 			var root_position := _root_position_from_nav_point(nav_point)
-			if _has_stalking_clearance(root_position):
+			if (
+				_has_stalking_clearance(root_position)
+				and _has_clear_teleport_line(root_position)
+			):
 				return {"found": true, "position": root_position}
 
 	return {"found": false, "position": Vector3.ZERO}
@@ -572,6 +576,23 @@ func _has_stalking_clearance(root_position: Vector3) -> bool:
 	query.collide_with_areas = false
 	query.collide_with_bodies = true
 	return get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
+
+
+func _has_clear_teleport_line(root_position: Vector3) -> bool:
+	# A destination can be physically empty while still sitting outside the
+	# player's room on the other side of a wall. Reject any candidate when
+	# solid geometry separates it from the player's body center.
+	var ray_start := player.global_position + Vector3.UP
+	var ray_end := root_position
+	var query := PhysicsRayQueryParameters3D.create(
+		ray_start,
+		ray_end,
+		collision_mask,
+		[player.get_rid(), get_rid()]
+	)
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	return get_world_3d().direct_space_state.intersect_ray(query).is_empty()
 
 
 func _is_player_looking_at_enemy() -> bool:
