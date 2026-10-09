@@ -87,21 +87,47 @@ func _enable_level_after_navigation_sync(
 	# CSG geometry finishes its collision/mesh update after entering the tree.
 	# Baking before this frame can produce an empty navigation mesh.
 	await get_tree().physics_frame
+	navigation_region.set_navigation_map(get_world_3d().get_navigation_map())
+	navigation_map = navigation_region.get_navigation_map()
 	navigation_region.bake_navigation_mesh(false)
 	var wait_frames := 0
+	var closest_owner := RID()
 	while wait_frames < 120:
 		await get_tree().physics_frame
 		wait_frames += 1
+		closest_owner = NavigationServer3D.map_get_closest_point_owner(
+			navigation_map,
+			enemy.global_position
+		)
 		if (
 			navigation_mesh.get_polygon_count() > 0
 			and NavigationServer3D.map_get_iteration_id(navigation_map) > previous_iteration
+			and closest_owner.is_valid()
 		):
 			break
+
+	# A region can finish baking before its RID update reaches the map. Force
+	# one clean re-registration, then wait for a real queryable point.
+	if not closest_owner.is_valid() and navigation_mesh.get_polygon_count() > 0:
+		navigation_region.enabled = false
+		await get_tree().physics_frame
+		navigation_region.enabled = true
+		for _retry in 30:
+			await get_tree().physics_frame
+			wait_frames += 1
+			closest_owner = NavigationServer3D.map_get_closest_point_owner(
+				navigation_map,
+				enemy.global_position
+			)
+			if closest_owner.is_valid():
+				break
 
 	if game_ended:
 		return
 	if navigation_mesh.get_polygon_count() == 0:
 		push_error("Level navigation bake produced no polygons; enemy cannot move")
+	elif not closest_owner.is_valid():
+		push_error("Level navigation region did not register on the world map")
 	else:
 		enemy.reset_after_navigation_rebuild()
 	_randomize_gas_can_spawns(gas_spawn_points)
