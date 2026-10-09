@@ -1,0 +1,251 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/level_map.gd" id="1_map"]
+[ext_resource type="Texture2D" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Metal/Horror_Metal_01-128x128.png" id="2_wall"]
+[ext_resource type="Texture2D" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Floor/Horror_Floor_02-128x128.png" id="3_floor"]
+
+[sub_resource type="StandardMaterial3D" id="WallMaterial"]
+albedo_texture = ExtResource("2_wall")
+uv1_scale = Vector3(0.35, 0.35, 0.35)
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="FloorMaterial"]
+albedo_texture = ExtResource("3_floor")
+uv1_scale = Vector3(0.3, 0.3, 0.3)
+uv1_triplanar = true
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_map"]
+agent_height = 1.8
+agent_radius = 0.45
+agent_max_climb = 0.4
+agent_max_slope = 45.0
+cell_size = 0.25
+cell_height = 0.25
+filter_baking_aabb = AABB(-30, -0.5, -10, 60, 3, 68)
+
+[node name="LevelMap" type="Node3D"]
+script = ExtResource("1_map")
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
+navigation_mesh = SubResource("NavigationMesh_map")
+
+[node name="Floor" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(0, -0.1, 24)
+material_override = SubResource("FloorMaterial")
+use_collision = true
+size = Vector3(60, 0.2, 68)
+
+[node name="WestBoundary" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(-30, 2.5, 24)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(0.8, 5, 68)
+
+[node name="EastBoundary" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(30, 2.5, 24)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(0.8, 5, 68)
+
+[node name="SouthBoundary" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(0, 2.5, -10)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(60, 5, 0.8)
+
+[node name="NorthBoundary" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(0, 2.5, 58)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(60, 5, 0.8)
+
+[node name="GeneratorDividerWest" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(-17, 2.5, 8)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(26, 5, 0.8)
+
+[node name="GeneratorDividerEast" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(17, 2.5, 8)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(26, 5, 0.8)
+
+[node name="SouthWestRoomLower" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(-12, 2.5, -6.5)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(0.8, 5, 7)
+
+[node name="SouthWestRoomUpper" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(-12, 2.5, 4.5)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(0.8, 5, 7)
+
+[node name="SouthEastRoomLower" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(12, 2.5, -6.5)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(0.8, 5, 7)
+
+[node name="SouthEastRoomUpper" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(12, 2.5, 4.5)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(0.8, 5, 7)
+
+[node name="MidDividerWest" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(-20, 2.5, 28)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(20, 5, 0.8)
+
+[node name="MidDividerCenter" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(3, 2.5, 28)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(14, 5, 0.8)
+
+[node name="MidDividerEast" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(23, 2.5, 28)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(14, 5, 0.8)
+
+[node name="WestInnerLowerA" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(-12, 2.5, 11)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(0.8, 5, 6)
+
+[node name="WestInnerLowerB" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(-12, 2.5, 20)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(0.8, 5, 4)
+
+[node name="WestInnerUpperA" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(-12, 2.5, 38.5)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(0.8, 5, 9)
+
+[node name="WestInnerUpperB" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(-12, 2.5, 53.5)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(0.8, 5, 9)
+
+[node name="EastInnerLowerA" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(12, 2.5, 12.5)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(0.8, 5, 9)
+
+[node name="EastInnerLowerB" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(12, 2.5, 25.5)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(0.8, 5, 9)
+
+[node name="EastInnerUpperA" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(12, 2.5, 43.5)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(0.8, 5, 7)
+
+[node name="EastInnerUpperB" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(12, 2.5, 54.5)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(0.8, 5, 7)
+
+[node name="NorthDividerWestOuter" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(-26, 2.5, 45)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(8, 5, 0.8)
+
+[node name="NorthDividerWestInner" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(-12, 2.5, 45)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(12, 5, 0.8)
+
+[node name="NorthDividerEastInner" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(12, 2.5, 45)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(12, 5, 0.8)
+
+[node name="NorthDividerEastOuter" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(26, 2.5, 45)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(8, 5, 0.8)
+
+[node name="CentralScreenLower" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(0, 2.5, 17)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(0.8, 5, 10)
+
+[node name="CentralScreenUpper" type="CSGBox3D" parent="NavigationRegion3D"]
+position = Vector3(0, 2.5, 36.5)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(0.8, 5, 9)
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="PlayerSpawn" type="Marker3D" parent="SpawnPoints"]
+unique_name_in_owner = true
+position = Vector3(0, 0.05, 52)
+
+[node name="EnemySpawn" type="Marker3D" parent="SpawnPoints"]
+unique_name_in_owner = true
+position = Vector3(-23, 0.95, 35)
+
+[node name="GeneratorSpawn" type="Marker3D" parent="SpawnPoints"]
+unique_name_in_owner = true
+position = Vector3(0, 1, -4)
+
+[node name="GasSpawnPoints" type="Node3D" parent="."]
+unique_name_in_owner = true
+
+[node name="GasSpawn01" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
+position = Vector3(-23, 0.75, -4)
+
+[node name="GasSpawn02" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
+position = Vector3(-18, 0.75, 4)
+
+[node name="GasSpawn03" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
+position = Vector3(20, 0.75, -4)
+
+[node name="GasSpawn04" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
+position = Vector3(22, 0.75, 14)
+
+[node name="GasSpawn05" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
+position = Vector3(-23, 0.75, 18)
+
+[node name="GasSpawn06" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
+position = Vector3(-20, 0.75, 35)
+
+[node name="GasSpawn07" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
+position = Vector3(-22, 0.75, 51)
+
+[node name="GasSpawn08" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
+position = Vector3(-5, 0.75, 23)
+
+[node name="GasSpawn09" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
+position = Vector3(5, 0.75, 35)
+
+[node name="GasSpawn10" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
+position = Vector3(21, 0.75, 35)
+
+[node name="GasSpawn11" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
+position = Vector3(21, 0.75, 51)
+
+[node name="GasSpawn12" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
+position = Vector3(-5, 0.75, 13)

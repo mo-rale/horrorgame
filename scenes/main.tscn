@@ -12,6 +12,7 @@
 [ext_resource type="Texture2D" uid="uid://d00ce3nseedgu" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Metal/Horror_Metal_01-128x128.png" id="9_85g3d"]
 [ext_resource type="PackedScene" uid="uid://cp861k7cohx8e" path="res://scenes/gas_can.tscn" id="11_ya4ey"]
 [ext_resource type="PackedScene" uid="uid://bb13ne5cuslgi" path="res://scenes/enemy.tscn" id="12_eb6dy"]
+[ext_resource type="PackedScene" path="res://scenes/level_map.tscn" id="13_level_map"]
 
 [sub_resource type="Environment" id="Environment_tefeu"]
 background_mode = 1
@@ -171,6 +172,7 @@ transform = Transform3D(0.9999945, 0.00032698133, 0.003322762, -0.00032288526, 0
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.740276, 1.5547175, 14.806274)
 
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=626495198]
+visible = false
 navigation_mesh = SubResource("NavigationMesh_ya4ey")
 
 [node name="small" type="CSGBox3D" parent="NavigationRegion3D" unique_id=426157165]
@@ -314,6 +316,8 @@ mesh = SubResource("PlaneMesh_o6xl0")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/MeshInstance3D/StaticBody3D" unique_id=565760113]
 shape = SubResource("ConcavePolygonShape3D_tipki")
+
+[node name="LevelMap" parent="." instance=ExtResource("13_level_map")]
 
 [node name="Enemy" parent="." unique_id=2092863591 instance=ExtResource("12_eb6dy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -43.175453, 0.94865406, 65.44176)

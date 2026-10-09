@@ -1,12 +1,10 @@
 extends Node3D
 
-const LevelMapScript = preload("res://scripts/level_map.gd")
-
 @onready var screeching: AudioStreamPlayer = $Screeching
 @onready var enemy: Enemy = $Enemy
 @onready var player: Player = $player
 @onready var generator: Node3D = $Generator
-@onready var navigation_region: NavigationRegion3D = $NavigationRegion3D
+@onready var navigation_region: NavigationRegion3D = $LevelMap/NavigationRegion3D
 @onready var game_over_screen: CanvasLayer = $GameOverScreen
 @onready var restart_button: Button = %RestartButton
 @onready var victory_screen: CanvasLayer = $VictoryScreen
@@ -23,7 +21,7 @@ const LevelMapScript = preload("res://scripts/level_map.gd")
 
 var game_ended := false
 var player_paused := false
-var _level_map: Node3D
+@onready var _level_map: Node3D = $LevelMap
 
 @export_group("Ending")
 @export var victory_screen_delay := 4.0
@@ -61,9 +59,9 @@ func _rebuild_level_and_randomize_fuel() -> void:
 	enemy.set_physics_process(false)
 	player.set_physics_process(false)
 
-	_level_map = LevelMapScript.new()
-	_level_map.name = "LevelMap"
-	add_child(_level_map)
+	var legacy_map := get_node_or_null("NavigationRegion3D")
+	if legacy_map:
+		legacy_map.queue_free()
 	var gas_spawn_points: Array[Marker3D] = _level_map.rebuild(navigation_region)
 
 	player.global_position = _level_map.player_spawn
