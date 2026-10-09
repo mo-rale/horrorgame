@@ -95,26 +95,39 @@ func _enable_level_after_navigation_sync(
 	while wait_frames < 120:
 		await get_tree().physics_frame
 		wait_frames += 1
+		var current_iteration := NavigationServer3D.map_get_iteration_id(
+			navigation_map
+		)
+		if (
+			navigation_mesh.get_polygon_count() == 0
+			or current_iteration == 0
+			or current_iteration <= previous_iteration
+		):
+			continue
 		closest_owner = NavigationServer3D.map_get_closest_point_owner(
 			navigation_map,
 			enemy.global_position
 		)
-		if (
-			navigation_mesh.get_polygon_count() > 0
-			and NavigationServer3D.map_get_iteration_id(navigation_map) > previous_iteration
-			and closest_owner.is_valid()
-		):
+		if closest_owner.is_valid():
 			break
 
 	# A region can finish baking before its RID update reaches the map. Force
 	# one clean re-registration, then wait for a real queryable point.
 	if not closest_owner.is_valid() and navigation_mesh.get_polygon_count() > 0:
+		var refresh_iteration := NavigationServer3D.map_get_iteration_id(
+			navigation_map
+		)
 		navigation_region.enabled = false
 		await get_tree().physics_frame
 		navigation_region.enabled = true
 		for _retry in 30:
 			await get_tree().physics_frame
 			wait_frames += 1
+			var current_iteration := NavigationServer3D.map_get_iteration_id(
+				navigation_map
+			)
+			if current_iteration == 0 or current_iteration <= refresh_iteration:
+				continue
 			closest_owner = NavigationServer3D.map_get_closest_point_owner(
 				navigation_map,
 				enemy.global_position
