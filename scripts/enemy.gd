@@ -44,6 +44,7 @@ var _state: State = State.ROAMING
 @export var vanish_hidden_time := 3.0
 @export var vanish_reappear_distance_min := 30.0
 @export var vanish_reappear_distance_max := 45.0
+@export var post_vanish_detection_grace := 5.0
 
 @export_group("Chasing")
 @export var chasing_speed := 6.0
@@ -86,6 +87,7 @@ var _heartbeat_attack_timer := 0.0
 var _heartbeat_active := false
 var _footstep_base_volume_db := 0.0
 var _stalking_clearance_shape := CapsuleShape3D.new()
+var _detection_grace_timer := 0.0
 
 # ── Chasing state ────────────────────────────────────────────────────────
 var _chase_timer := 0.0
@@ -145,6 +147,7 @@ func _physics_process(delta: float) -> void:
 	if not _map_synchronized:
 		return
 	_stalking_cooldown = maxf(_stalking_cooldown - delta, 0.0)
+	_detection_grace_timer = maxf(_detection_grace_timer - delta, 0.0)
 	if (
 		_stalking_cooldown <= 0.0
 		and _state not in [State.STALKING, State.VANISHING]
@@ -175,6 +178,12 @@ func _physics_process(delta: float) -> void:
 # ── State transition ─────────────────────────────────────────────────────
 
 func _enter_state(new_state: State, data := {}) -> void:
+	# A chase must never begin while the stalker is still hidden or in the
+	# middle of its disappearance sequence.
+	if new_state == State.CHASING and (_state == State.VANISHING or not visible):
+		print("[Enemy] CHASING suppressed — stalker is still vanishing")
+		return
+
 	# One-shot behavior sounds do not stop automatically when the state
 	# changes. Clean them up so an old chase scream cannot leak into a
 	# stalking disappearance.
@@ -266,12 +275,12 @@ func _update_roaming(_delta: float) -> void:
 	if navigation_agent.is_navigation_finished():
 		_travel_to_random_position()
 
-	if is_player_in_view():
+	if _detection_grace_timer <= 0.0 and is_player_in_view():
 		_enter_state(State.CHASING)
 
 
 func _update_investigating(delta: float) -> void:
-	if is_player_in_view():
+	if _detection_grace_timer <= 0.0 and is_player_in_view():
 		_enter_state(State.CHASING)
 		return
 
@@ -393,7 +402,7 @@ func _update_searching(delta: float) -> void:
 	if navigation_agent.is_navigation_finished():
 		_go_to_position_around_last_seen()
 	
-	if is_player_in_view():
+	if _detection_grace_timer <= 0.0 and is_player_in_view():
 		_enter_state(State.CHASING)
 
 
@@ -685,6 +694,11 @@ func _delay_then_vanish() -> void:
 	global_position = _pick_vanish_destination()
 	visible = true
 	_collision_shape.set_deferred("disabled", false)
+	_detection_grace_timer = post_vanish_detection_grace
+	print(
+		"[Enemy] STALKER reappeared — detection disabled for %.1f seconds"
+		% post_vanish_detection_grace
+	)
 	_enter_state(State.ROAMING)
 
 
