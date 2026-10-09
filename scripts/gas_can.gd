@@ -14,6 +14,8 @@ var collision_cooldown := false
 @export var minimum_impact_speed := 0.8
 @export var full_volume_impact_speed := 7.0
 @export var collision_cooldown_time := 0.35
+@export var quiet_impact_noise_radius := 6.0
+@export var loud_impact_noise_radius := 18.0
 
 var _collision_base_volume_db := 0.0
 
@@ -99,6 +101,12 @@ func _on_body_entered(_body: Node) -> void:
 	collide.pitch_scale = randf_range(0.85, 1.15)
 	collide.volume_db = _collision_base_volume_db + lerpf(-6.0, 0.0, impact_strength)
 	collide.play()
+	get_tree().call_group(
+		"enemy",
+		"hear_noise",
+		global_position,
+		lerpf(quiet_impact_noise_radius, loud_impact_noise_radius, impact_strength)
+	)
 
 	collision_cooldown = true
 	await get_tree().create_timer(collision_cooldown_time).timeout

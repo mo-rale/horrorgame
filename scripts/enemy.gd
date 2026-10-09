@@ -5,7 +5,7 @@ class_name Enemy
 signal reached_player
 
 # ── States ───────────────────────────────────────────────────────────────
-enum State { ROAMING, CHASING, SEARCHING }
+enum State { ROAMING, INVESTIGATING, CHASING, SEARCHING }
 
 var _state: State = State.ROAMING
 
@@ -17,6 +17,12 @@ var _state: State = State.ROAMING
 @export_group("Roaming")
 @export var roaming_speed := 2.0
 @export var roam_radius := 15.0
+
+@export_group("Investigating")
+@export var investigating_speed := 3.5
+@export var investigation_time := 6.0
+@export var investigation_turn_speed := 0.8
+@export var hearing_position_uncertainty := 2.0
 
 @export_group("Chasing")
 @export var chasing_speed := 6.0
@@ -46,6 +52,10 @@ var _wall_steer_timer := 0.0
 # ── Footstep state ───────────────────────────────────────────────────────
 var _distance_since_last_step := 0.0
 
+# ── Investigation state ─────────────────────────────────────────────────
+var _investigation_timer := 0.0
+var _heard_position := Vector3.ZERO
+
 # ── Chasing state ────────────────────────────────────────────────────────
 var _chase_timer := 0.0
 var _update_path_timer := 0.0
@@ -71,6 +81,7 @@ var _map_synchronized := false
 
 func _ready() -> void:
 	randomize()
+	add_to_group("enemy")
 	_nav_map = get_world_3d().get_navigation_map()
 	_sync_map_then_start_roaming()
 
@@ -93,6 +104,8 @@ func _physics_process(delta: float) -> void:
 	match _state:
 		State.ROAMING:
 			_update_roaming(delta)
+		State.INVESTIGATING:
+			_update_investigating(delta)
 		State.CHASING:
 			_update_chasing(delta)
 		State.SEARCHING:
@@ -110,6 +123,18 @@ func _enter_state(new_state: State, data := {}) -> void:
 		State.ROAMING:
 			_travel_to_random_position()
 			_play_roaming_sound()
+
+		State.INVESTIGATING:
+			if not data.has("sound_position"):
+				printerr(name + ": entered Investigating without sound_position.")
+				_enter_state(State.ROAMING)
+				return
+			_heard_position = NavigationServer3D.map_get_closest_point(
+				_nav_map,
+				data["sound_position"]
+			)
+			_investigation_timer = investigation_time
+			travel_to_position(_heard_position, investigating_speed)
 		
 		State.CHASING:
 			_chase_timer = chase_max_time
@@ -135,6 +160,23 @@ func _update_roaming(_delta: float) -> void:
 	
 	if is_player_in_view():
 		_enter_state(State.CHASING)
+
+
+func _update_investigating(delta: float) -> void:
+	if is_player_in_view():
+		_enter_state(State.CHASING)
+		return
+
+	_investigation_timer -= delta
+	if _investigation_timer <= 0.0:
+		_enter_state(State.ROAMING)
+		return
+
+	# Stay near the source and look for the player until the investigation
+	# timer expires. A newer sound can redirect us through hear_noise().
+	if navigation_agent.is_navigation_finished():
+		velocity = Vector3.ZERO
+		rotate_y(investigation_turn_speed * delta)
 
 
 func _update_chasing(delta: float) -> void:
@@ -294,6 +336,21 @@ func _play_roaming_sound() -> void:
 	# _roaming's Stream is an AudioStreamRandomizer, so .play() automatically
 	# picks one of its variations - no manual pitch/clip selection needed here.
 	_roaming.play()
+
+
+func hear_noise(sound_position: Vector3, hearing_distance: float) -> void:
+	if not _map_synchronized or _state == State.CHASING:
+		return
+	var distance_to_sound := global_position.distance_to(sound_position)
+	if distance_to_sound > hearing_distance:
+		return
+
+	# Hearing gives the enemy an approximate source rather than perfect
+	# knowledge through walls. Distant sounds create more uncertainty.
+	var distance_ratio := clampf(distance_to_sound / maxf(hearing_distance, 0.01), 0.0, 1.0)
+	var uncertainty := hearing_position_uncertainty * distance_ratio
+	var estimated_position := sound_position + _random_point_in_circle(uncertainty)
+	_enter_state(State.INVESTIGATING, {"sound_position": estimated_position})
 
 
 func travel_to_position(wanted_position: Vector3, speed: float, _play_run_anim := false) -> void:

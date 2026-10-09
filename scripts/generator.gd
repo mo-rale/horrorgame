@@ -20,6 +20,11 @@ var fuel := 0
 var can_interact := true  # Cooldown flag
 var is_outline_visible := false  # Track outline state to prevent flickering
 
+@export_group("Enemy Hearing")
+@export var fuel_insert_noise_radius := 8.0
+@export var error_noise_radius := 18.0
+@export var startup_noise_radius := 35.0
+
 func _ready() -> void:
 	light.visible = false
 	outline.visible = false
@@ -45,6 +50,7 @@ func fueled():
 	if fuel < REQUIRED_FUEL:
 		fuel += 1
 		correct.play()
+		_emit_noise(fuel_insert_noise_radius)
 		_update_fuel_display()
 		fuel_changed.emit(fuel, REQUIRED_FUEL)
 
@@ -78,6 +84,7 @@ func interact() -> void:
 		fuelcount.text = "NOT ENOUGH FUEL!"
 		fuelcount.modulate = Color.RED
 		error.play()
+		_emit_noise(error_noise_radius)
 		# Wait for error sound to finish
 		await error.finished
 		can_interact = true  # End cooldown
@@ -90,6 +97,7 @@ func interact() -> void:
 		hide_outline()
 		
 		start.play()
+		_emit_noise(startup_noise_radius)
 		await get_tree().create_timer(2.0).timeout
 		light.visible = true
 		smoke.emitting = true
@@ -107,3 +115,7 @@ func _on_gas_detect_area_body_entered(body: Node) -> void:
 func _on_gas_detect_area_body_exited(body: Node) -> void:
 	# Optional: Handle when fuel leaves the area
 	pass
+
+
+func _emit_noise(noise_radius: float) -> void:
+	get_tree().call_group("enemy", "hear_noise", global_position, noise_radius)

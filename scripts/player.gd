@@ -33,6 +33,9 @@ var footstep_cooldown = 0.0
 @export var walking_footstep_volume_db := -30.0
 @export var sprinting_footstep_volume_db := -25.0
 @export var crouching_footstep_volume_db := -40.0
+@export var walking_noise_radius := 7.0
+@export var sprinting_noise_radius := 14.0
+@export var crouching_noise_radius := 2.0
 
 # Headbob
 var headbob_time = 0.0
@@ -199,18 +202,22 @@ func _physics_process(delta: float) -> void:
 	if moving and is_on_floor():
 		if footstep_cooldown <= 0.0:
 			footsteps.pitch_scale = randf_range(0.9, 1.1)
+			var noise_radius := walking_noise_radius
 	
 			if is_crouching:
 				footsteps.volume_db = crouching_footstep_volume_db
 				footstep_cooldown = 0.7
+				noise_radius = crouching_noise_radius
 			elif Input.is_action_pressed("Sprint"):
 				footsteps.volume_db = sprinting_footstep_volume_db
 				footstep_cooldown = 0.28
+				noise_radius = sprinting_noise_radius
 			else:
 				footsteps.volume_db = walking_footstep_volume_db
 				footstep_cooldown = 0.45
 
 			footsteps.play()
+			_emit_noise(noise_radius)
 
 	if grabbed_object:
 		_update_held_object_position()
@@ -437,3 +444,7 @@ func _get_safe_held_object_position(desired_position: Vector3) -> Vector3:
 	var cast_result: PackedFloat32Array = get_world_3d().direct_space_state.cast_motion(query)
 	var safe_fraction: float = clampf(cast_result[0], 0.0, 1.0)
 	return origin + motion * safe_fraction
+
+
+func _emit_noise(noise_radius: float) -> void:
+	get_tree().call_group("enemy", "hear_noise", global_position, noise_radius)
