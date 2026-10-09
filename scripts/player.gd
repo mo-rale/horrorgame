@@ -11,7 +11,7 @@ const NORMAL_FOV = 75.0
 const SPRINT_FOV = 95.0
 const FOV_SPEED = 8.0
 
-@onready var camera = $head/Camera3D
+@onready var camera: Camera3D = $head/Camera3D
 @onready var footsteps: AudioStreamPlayer3D = $footsteps
 @onready var flashlight: AudioStreamPlayer3D = %flashlight
 @onready var light: SpotLight3D = %light

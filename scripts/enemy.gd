@@ -495,7 +495,7 @@ func _is_player_looking_at_enemy() -> bool:
 	var camera_to_enemy: Vector3 = _eye.global_position - player.camera.global_position
 	if camera_to_enemy.length_squared() < 0.001:
 		return true
-	var player_forward := -player.camera.global_basis.z.normalized()
+	var player_forward: Vector3 = -player.camera.global_basis.z.normalized()
 	return player_forward.dot(camera_to_enemy.normalized()) >= player_look_dot_threshold
 
 
