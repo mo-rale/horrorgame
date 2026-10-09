@@ -80,6 +80,7 @@ var _heard_position := Vector3.ZERO
 # ── Stalking state ──────────────────────────────────────────────────────
 var _stalking_path_timer := 0.0
 var _stalking_cooldown := 0.0
+var _stalking_follow_target := Vector3.ZERO
 var _heartbeat_delay_timer := 0.0
 var _heartbeat_attack_timer := 0.0
 var _heartbeat_active := false
@@ -157,6 +158,9 @@ func _physics_process(delta: float) -> void:
 			_update_investigating(delta)
 		State.STALKING:
 			_update_stalking(delta)
+			if _state == State.STALKING:
+				_move_stalking(delta)
+			return
 		State.VANISHING:
 			velocity = Vector3.ZERO
 			return
@@ -166,8 +170,6 @@ func _physics_process(delta: float) -> void:
 			_update_searching(delta)
 	
 	_move_along_path(delta)
-	if _state == State.STALKING:
-		_face_player()
 
 
 # ── State transition ─────────────────────────────────────────────────────
@@ -225,12 +227,13 @@ func _enter_state(new_state: State, data := {}) -> void:
 			# player. Following after this point still uses the navigation mesh.
 			var stalking_teleport_position: Vector3 = data["teleport_position"]
 			global_position = stalking_teleport_position
+			_stalking_follow_target = stalking_teleport_position
 			_face_player()
 			print(
 				"[Enemy] STALKING chosen — teleported behind player to ",
 				stalking_teleport_position
 			)
-			travel_to_position(_pick_stalking_target(), stalking_speed)
+			velocity = Vector3.ZERO
 			_play_stalking_sound()
 
 		State.VANISHING:
@@ -317,7 +320,30 @@ func _update_stalking(delta: float) -> void:
 	# around obstacles, but being caught in view still makes it vanish.
 	if _stalking_path_timer <= 0.0:
 		_stalking_path_timer = stalking_path_update_delay
-		travel_to_position(_pick_stalking_target(), stalking_speed)
+		_stalking_follow_target = _pick_stalking_target()
+
+
+func _move_stalking(_delta: float) -> void:
+	var to_target := _stalking_follow_target - global_position
+	to_target.y = 0.0
+	var distance_to_target := to_target.length()
+
+	if distance_to_target <= 0.15:
+		velocity = Vector3.ZERO
+		move_and_slide()
+		_face_player()
+		return
+
+	var position_before_move := global_position
+	velocity = to_target.normalized() * stalking_speed
+	move_and_slide()
+	_face_player()
+
+	var distance_moved := Vector2(
+		global_position.x - position_before_move.x,
+		global_position.z - position_before_move.z
+	).length()
+	_update_footsteps(distance_moved)
 
 
 func _update_chasing(delta: float) -> void:
