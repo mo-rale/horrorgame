@@ -117,7 +117,6 @@ var _map_synchronized := false
 @onready var _eye_ray_cast: RayCast3D = %EyeRayCast
 @onready var _footsteps: AudioStreamPlayer3D = $footsteps
 @onready var _chasing: AudioStreamPlayer3D = $chasing
-@onready var _roaming: AudioStreamPlayer3D = $roaming
 @onready var _stalking: AudioStreamPlayer3D = $stalking
 @onready var _seen: AudioStreamPlayer3D = $seen
 @onready var _collision_shape: CollisionShape3D = $CollisionShape3D
@@ -243,8 +242,6 @@ func _enter_state(new_state: State, data := {}) -> void:
 	# stalking disappearance.
 	if new_state != State.CHASING:
 		_chasing.stop()
-	if new_state != State.ROAMING:
-		_roaming.stop()
 	if new_state == State.VANISHING:
 		_footsteps.stop()
 		_stalking.stop()
@@ -268,12 +265,10 @@ func _enter_state(new_state: State, data := {}) -> void:
 			_footsteps.stop()
 			_stalking.stop()
 			_chasing.stop()
-			_roaming.stop()
 			print("[Enemy] DORMANT — hidden until the next stalking event")
 
 		State.ROAMING:
 			_travel_to_random_position()
-			_play_roaming_sound()
 
 		State.INVESTIGATING:
 			if not data.has("sound_position"):
@@ -648,14 +643,6 @@ func _play_scream_chase() -> void:
 	if _chasing == null:
 		return
 	_chasing.play()
-
-
-func _play_roaming_sound() -> void:
-	if _roaming == null:
-		return
-	# _roaming's Stream is an AudioStreamRandomizer, so .play() automatically
-	# picks one of its variations - no manual pitch/clip selection needed here.
-	_roaming.play()
 
 
 func _play_stalking_sound() -> void:

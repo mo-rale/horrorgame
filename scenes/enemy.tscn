@@ -24,11 +24,12 @@ emission = Color(1, 1, 1, 1)
 radius = 0.35
 height = 1.8
 
-[sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_md484"]
+[sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_c4w8v"]
 playback_mode = 1
-streams_count = 2
+streams_count = 3
 stream_0/stream = ExtResource("5_xwavj")
 stream_1/stream = ExtResource("6_nenq2")
+stream_2/stream = ExtResource("7_stalk")
 
 [node name="Enemy" type="CharacterBody3D" unique_id=2092863591]
 script = ExtResource("1_4ra3w")
@@ -74,15 +75,12 @@ radius = 0.4
 stream = ExtResource("4_5uy6h")
 volume_db = -23.925
 
-[node name="roaming" type="AudioStreamPlayer3D" parent="." unique_id=595245994]
-stream = SubResource("AudioStreamRandomizer_md484")
-
-[node name="stalking" type="AudioStreamPlayer3D" parent="."]
-stream = ExtResource("7_stalk")
+[node name="stalking" type="AudioStreamPlayer3D" parent="." unique_id=611098715]
+stream = SubResource("AudioStreamRandomizer_c4w8v")
 volume_db = -10.0
 max_distance = 25.0
 
-[node name="seen" type="AudioStreamPlayer3D" parent="."]
+[node name="seen" type="AudioStreamPlayer3D" parent="." unique_id=1366341573]
 stream = ExtResource("8_seen")
 volume_db = -8.0
 max_distance = 30.0
