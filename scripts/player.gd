@@ -17,6 +17,7 @@ const FOV_SPEED = 8.0
 @onready var light: SpotLight3D = %light
 @onready var raycast: RayCast3D = $head/Camera3D/RayCast3D
 @onready var grab: AudioStreamPlayer3D = $grab
+@onready var heartbeat: AudioStreamPlayer = $heartbeat
 @onready var hand: Node3D = %hand
 @onready var collision_shape: CollisionShape3D = $CollisionShape3D
 
@@ -66,6 +67,10 @@ func _ready():
 	camera_default_pos = camera.position
 	camera.fov = NORMAL_FOV
 	light.visible = false
+	if heartbeat.stream:
+		heartbeat.stream = heartbeat.stream.duplicate()
+		if heartbeat.stream is AudioStreamMP3:
+			(heartbeat.stream as AudioStreamMP3).loop = true
 
 	# Keep this player's collider independent if the scene is instantiated
 	# more than once, then remember the standing dimensions.
@@ -448,3 +453,12 @@ func _get_safe_held_object_position(desired_position: Vector3) -> Vector3:
 
 func _emit_noise(noise_radius: float) -> void:
 	get_tree().call_group("enemy", "hear_noise", global_position, noise_radius)
+
+
+func start_stalking_heartbeat() -> void:
+	if not heartbeat.playing:
+		heartbeat.play()
+
+
+func stop_stalking_heartbeat() -> void:
+	heartbeat.stop()

@@ -26,17 +26,17 @@ var _state: State = State.ROAMING
 
 @export_group("Stalking")
 @export_range(0.0, 1.0) var stalking_chance := 0.65
-@export var stalking_speed := 2.6
+@export var stalking_speed := 5.0
 @export var stalking_start_distance := 8.0
 @export var stalking_follow_distance := 12.0
-@export var stalking_chase_distance := 5.5
-@export var stalking_duration_min := 10.0
-@export var stalking_duration_max := 18.0
-@export var stalking_lost_sight_time := 3.0
 @export var stalking_path_update_delay := 0.5
 @export var stalking_cooldown_time := 25.0
 @export_range(-1.0, 1.0) var player_look_dot_threshold := 0.82
 @export var stalking_footstep_volume_db := -12.0
+@export var heartbeat_delay_min := 8.0
+@export var heartbeat_delay_max := 14.0
+@export var heartbeat_duration_min := 5.0
+@export var heartbeat_duration_max := 7.0
 @export var vanish_hidden_time := 3.0
 @export var vanish_reappear_distance_min := 18.0
 @export var vanish_reappear_distance_max := 28.0
@@ -74,10 +74,11 @@ var _investigation_timer := 0.0
 var _heard_position := Vector3.ZERO
 
 # ── Stalking state ──────────────────────────────────────────────────────
-var _stalking_timer := 0.0
-var _stalking_lost_sight_timer := 0.0
 var _stalking_path_timer := 0.0
 var _stalking_cooldown := 0.0
+var _heartbeat_delay_timer := 0.0
+var _heartbeat_attack_timer := 0.0
+var _heartbeat_active := false
 var _footstep_base_volume_db := 0.0
 
 # ── Chasing state ────────────────────────────────────────────────────────
@@ -153,6 +154,8 @@ func _physics_process(delta: float) -> void:
 func _enter_state(new_state: State, data := {}) -> void:
 	if _state == State.STALKING and new_state != State.STALKING:
 		_stalking.stop()
+		if is_instance_valid(player):
+			player.stop_stalking_heartbeat()
 	_state = new_state
 	
 	match _state:
@@ -173,12 +176,19 @@ func _enter_state(new_state: State, data := {}) -> void:
 			travel_to_position(_heard_position, investigating_speed)
 
 		State.STALKING:
-			_stalking_timer = randf_range(stalking_duration_min, stalking_duration_max)
-			_stalking_lost_sight_timer = stalking_lost_sight_time
 			_stalking_path_timer = 0.0
 			_stalking_cooldown = stalking_cooldown_time
+			_heartbeat_delay_timer = randf_range(
+				heartbeat_delay_min,
+				maxf(heartbeat_delay_max, heartbeat_delay_min)
+			)
+			_heartbeat_attack_timer = 0.0
+			_heartbeat_active = false
 			_player_last_seen_position = player.global_position
-			travel_to_position(_pick_stalking_target(), stalking_speed)
+			# Stalking starts as a supernatural appearance directly behind the
+			# player. Following after this point still uses the navigation mesh.
+			global_position = _pick_stalking_target()
+			_stop_moving()
 			_play_stalking_sound()
 
 		State.VANISHING:
@@ -238,7 +248,6 @@ func _update_investigating(delta: float) -> void:
 
 
 func _update_stalking(delta: float) -> void:
-	_stalking_timer -= delta
 	_stalking_path_timer -= delta
 
 	var distance_to_player := global_position.distance_to(player.global_position)
@@ -247,41 +256,29 @@ func _update_stalking(delta: float) -> void:
 		and not is_line_of_sight_broken()
 	)
 
-	if has_line_of_sight:
-		_player_last_seen_position = player.global_position
-		_stalking_lost_sight_timer = stalking_lost_sight_time
-	else:
-		_stalking_lost_sight_timer -= delta
-
-	if _stalking_lost_sight_timer <= 0.0:
-		_enter_state(State.SEARCHING, {
-			"player_last_seen_position": _player_last_seen_position
-		})
-		return
-
-	if _stalking_timer <= 0.0:
-		if has_line_of_sight:
-			_enter_state(State.CHASING)
-		else:
-			_enter_state(State.SEARCHING, {
-				"player_last_seen_position": _player_last_seen_position
-			})
-		return
-
 	var player_is_watching := has_line_of_sight and _is_player_looking_at_enemy()
 	if player_is_watching:
 		_enter_state(State.VANISHING)
 		return
 
-	var player_horizontal_speed := Vector2(player.velocity.x, player.velocity.z).length()
-	if has_line_of_sight and (
-		distance_to_player <= stalking_chase_distance
-		or player_horizontal_speed > 7.0
-	):
-		_enter_state(State.CHASING)
-		return
+	if _heartbeat_active:
+		_heartbeat_attack_timer -= delta
+		if _heartbeat_attack_timer <= 0.0:
+			_enter_state(State.CHASING)
+			return
+	else:
+		_heartbeat_delay_timer -= delta
+		if _heartbeat_delay_timer <= 0.0:
+			_heartbeat_active = true
+			_heartbeat_attack_timer = randf_range(
+				heartbeat_duration_min,
+				maxf(heartbeat_duration_max, heartbeat_duration_min)
+			)
+			player.start_stalking_heartbeat()
 
-	if has_line_of_sight and _stalking_path_timer <= 0.0:
+	# The stalker continually follows the player's back. It can navigate
+	# around obstacles, but being caught in view still makes it vanish.
+	if _stalking_path_timer <= 0.0:
 		_stalking_path_timer = stalking_path_update_delay
 		travel_to_position(_pick_stalking_target(), stalking_speed)
 
