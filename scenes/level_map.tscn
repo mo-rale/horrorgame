@@ -1,251 +1,339 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene format=3 uid="uid://dvuhqut63xyl0"]
 
-[ext_resource type="Script" path="res://scripts/level_map.gd" id="1_map"]
-[ext_resource type="Texture2D" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Metal/Horror_Metal_01-128x128.png" id="2_wall"]
-[ext_resource type="Texture2D" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Floor/Horror_Floor_02-128x128.png" id="3_floor"]
+[ext_resource type="Script" uid="uid://b7e6t4f133m6o" path="res://scripts/level_map.gd" id="1_map"]
+[ext_resource type="Texture2D" uid="uid://d00ce3nseedgu" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Metal/Horror_Metal_01-128x128.png" id="2_wall"]
+[ext_resource type="Texture2D" uid="uid://1tvy76uxxie6" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Floor/Horror_Floor_02-128x128.png" id="3_floor"]
+[ext_resource type="Texture2D" uid="uid://dexlksps0v6q0" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Metal/Horror_Metal_13-128x128.png" id="5_4mfww"]
+[ext_resource type="Texture2D" uid="uid://dp5j2nhd4ijsl" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Metal/Horror_Metal_05-128x128.png" id="5_28enl"]
+[ext_resource type="Texture2D" uid="uid://dggyyol7vsuy6" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Metal/Horror_Metal_02-128x128.png" id="6_ublle"]
 
-[sub_resource type="StandardMaterial3D" id="WallMaterial"]
-albedo_texture = ExtResource("2_wall")
-uv1_scale = Vector3(0.35, 0.35, 0.35)
-uv1_triplanar = true
+[sub_resource type="NavigationMesh" id="NavigationMesh_map"]
+vertices = PackedVector3Array(-12, 0.5, -2.25, -12, 0.5, 0.5, -11, 0.5, 0.75, -11, 0.5, -2.5, 11, 0.5, 0.75, 12, 0.5, 0.5, 12, 0.5, -2.25, 11, 0.5, -2.5, 3.75, 0.5, 7, -11, 0.5, 7, -3.5, 0.5, 7, -3.25, 0.5, 8.5, -0.5, 0.5, 11.5, 0.5, 0.5, 11.5, 3.5, 0.5, 8.5, -4.75, 0.5, -9, 11, 0.5, -9, -4.5, 0.5, -9.5, -11, 0.5, -9, 11, 0.5, 7, -13, 0.5, -2.5, -13, 0.5, 0.75, -29, 0.5, -9, -29, 0.5, 7, -13, 0.5, 7, -13, 0.5, -9, 13, 0.5, 0.75, 13, 0.5, -2.5, 29, 0.5, 7, 29, 0.5, -9, 13, 0.5, 7, 13, 0.5, -9, -12, 0.5, 14.75, -12, 0.5, 17.5, -11.25, 0.5, 17.5, -11, 0.5, 14.5, -3.5, 0.5, 9, -11, 0.5, 9, -11, 0.5, 18, -1, 0.5, 18, -1, 0.5, 11.75, 3.75, 0.5, 9, 1, 0.5, 11.75, 1, 0.5, 15.5, 11, 0.5, 15.5, 11, 0.5, 9, -13, 0.5, 17.75, -13, 0.5, 14.5, -29, 0.5, 9, -12, 0.5, 27, -12, 0.5, 22.75, -13, 0.5, 22.5, -29, 0.5, 27, -13, 0.5, 9, 13, 0.5, 28, 15.5, 0.5, 28, 15.75, 0.5, 27, 13, 0.5, 20.75, 12, 0.5, 17.75, 12, 0.5, 20.5, 13, 0.5, 17.5, 29, 0.5, 9, 13, 0.5, 9, 29, 0.5, 27, 10.5, 0.5, 27, 10.75, 0.5, 28, 11, 0.5, 28, 11, 0.5, 20.75, 11, 0.5, 17.5, 1, 0.5, 22.5, 0, 0.5, 22.75, 0, 0.5, 27, -1, 0.5, 22.5, -4.25, 0.5, 27, -11, 0.5, 22.5, -9.5, 0.5, 27, -9.25, 0.5, 28, -4.5, 0.5, 28, -11, 0.5, 43.5, -12, 0.5, 43.75, -12, 0.5, 44, -5.5, 0.5, 44, -1, 0.5, 31.75, 0, 0.5, 31.5, 0, 0.5, 29, -4.25, 0.5, 29, -9.5, 0.5, 29, -11, 0.5, 33.75, -12, 0.5, 29, -12, 0.5, 33.5, -1, 0.5, 41.5, -5.25, 0.5, 44.5, -0.5, 0.5, 41.75, 10.5, 0.5, 29, 11, 0.5, 30.5, 1, 0.5, 31.75, 1, 0.5, 41.25, 5.5, 0.5, 44.25, 11, 0.5, 39.75, 11, 0.5, 44, 12, 0.5, 39.5, 12, 0.5, 30.75, 15.75, 0.5, 29, 13, 0.5, 30.5, 13, 0.5, 39.75, 21.75, 0.5, 44, 29, 0.5, 44, 29, 0.5, 29, 18.5, 0.5, 44, 18.75, 0.5, 45, 21.5, 0.5, 45, 13, 0.5, 44, -13, 0.5, 43.5, -18.25, 0.5, 44, -21.25, 0.5, 45, -18.5, 0.5, 45, -21.5, 0.5, 44, -13, 0.5, 33.75, -29, 0.5, 29, -29, 0.5, 44, -12, 0.5, 46, -12, 0.5, 48.5, -11, 0.5, 48.75, -5.5, 0.5, 46, 11, 0.5, 50.75, 12, 0.5, 50.5, 12, 0.5, 47.75, 11, 0.5, 47.5, 5.75, 0.5, 46, 0.75, 0.5, 41.75, 11, 0.5, 46, 11, 0.5, 57, -11, 0.5, 57, -13, 0.5, 48.75, -18.25, 0.5, 46, -21.5, 0.5, 46, -29, 0.5, 46, -29, 0.5, 57, -13, 0.5, 57, 13, 0.5, 50.75, 13, 0.5, 47.5, 21.75, 0.5, 46, 18.5, 0.5, 46, 29, 0.5, 57, 29, 0.5, 46, 13, 0.5, 57, 13, 0.5, 46)
+polygons = [PackedInt32Array(0, 3, 1), PackedInt32Array(1, 3, 2), PackedInt32Array(6, 5, 4), PackedInt32Array(6, 4, 7), PackedInt32Array(7, 4, 8), PackedInt32Array(10, 9, 2), PackedInt32Array(12, 11, 13), PackedInt32Array(13, 11, 10), PackedInt32Array(13, 10, 14), PackedInt32Array(14, 10, 8), PackedInt32Array(2, 3, 15), PackedInt32Array(15, 17, 16), PackedInt32Array(10, 2, 8), PackedInt32Array(8, 2, 15), PackedInt32Array(8, 15, 7), PackedInt32Array(7, 15, 16), PackedInt32Array(3, 18, 15), PackedInt32Array(4, 19, 8), PackedInt32Array(1, 21, 0), PackedInt32Array(0, 21, 20), PackedInt32Array(21, 23, 20), PackedInt32Array(20, 23, 22), PackedInt32Array(21, 24, 23), PackedInt32Array(22, 25, 20), PackedInt32Array(6, 27, 5), PackedInt32Array(5, 27, 26), PackedInt32Array(26, 27, 28), PackedInt32Array(28, 27, 29), PackedInt32Array(28, 30, 26), PackedInt32Array(27, 31, 29), PackedInt32Array(33, 32, 34), PackedInt32Array(34, 32, 35), PackedInt32Array(35, 37, 36), PackedInt32Array(34, 35, 38), PackedInt32Array(38, 35, 39), PackedInt32Array(39, 35, 40), PackedInt32Array(40, 35, 36), PackedInt32Array(40, 36, 12), PackedInt32Array(12, 36, 11), PackedInt32Array(42, 13, 41), PackedInt32Array(41, 13, 14), PackedInt32Array(42, 41, 43), PackedInt32Array(43, 41, 45), PackedInt32Array(43, 45, 44), PackedInt32Array(33, 46, 32), PackedInt32Array(32, 46, 47), PackedInt32Array(48, 47, 46), PackedInt32Array(50, 49, 51), PackedInt32Array(51, 49, 52), PackedInt32Array(51, 52, 46), PackedInt32Array(46, 52, 48), PackedInt32Array(48, 53, 47), PackedInt32Array(55, 54, 56), PackedInt32Array(56, 54, 57), PackedInt32Array(57, 59, 58), PackedInt32Array(58, 60, 57), PackedInt32Array(57, 60, 56), PackedInt32Array(60, 62, 56), PackedInt32Array(56, 62, 63), PackedInt32Array(63, 62, 61), PackedInt32Array(65, 64, 66), PackedInt32Array(66, 64, 67), PackedInt32Array(59, 67, 58), PackedInt32Array(58, 67, 68), PackedInt32Array(44, 68, 43), PackedInt32Array(43, 68, 69), PackedInt32Array(69, 68, 64), PackedInt32Array(70, 69, 71), PackedInt32Array(71, 69, 64), PackedInt32Array(68, 67, 64), PackedInt32Array(70, 71, 72), PackedInt32Array(72, 71, 73), PackedInt32Array(50, 74, 49), PackedInt32Array(49, 74, 75), PackedInt32Array(75, 74, 73), PackedInt32Array(73, 74, 72), PackedInt32Array(72, 74, 38), PackedInt32Array(72, 38, 39), PackedInt32Array(76, 75, 77), PackedInt32Array(77, 75, 73), PackedInt32Array(79, 78, 80), PackedInt32Array(80, 78, 81), PackedInt32Array(83, 82, 84), PackedInt32Array(84, 82, 85), PackedInt32Array(87, 86, 85), PackedInt32Array(89, 88, 87), PackedInt32Array(87, 88, 86), PackedInt32Array(81, 78, 90), PackedInt32Array(90, 78, 87), PackedInt32Array(90, 87, 82), PackedInt32Array(82, 87, 85), PackedInt32Array(77, 85, 76), PackedInt32Array(76, 85, 86), PackedInt32Array(81, 90, 91), PackedInt32Array(91, 90, 92), PackedInt32Array(65, 66, 93), PackedInt32Array(93, 66, 94), PackedInt32Array(93, 94, 95), PackedInt32Array(95, 94, 98), PackedInt32Array(95, 98, 96), PackedInt32Array(96, 98, 97), PackedInt32Array(83, 84, 95), PackedInt32Array(95, 84, 93), PackedInt32Array(98, 99, 97), PackedInt32Array(100, 98, 101), PackedInt32Array(101, 98, 94), PackedInt32Array(55, 102, 54), PackedInt32Array(54, 102, 103), PackedInt32Array(103, 102, 104), PackedInt32Array(104, 102, 105), PackedInt32Array(105, 102, 106), PackedInt32Array(106, 102, 107), PackedInt32Array(110, 109, 108), PackedInt32Array(110, 108, 105), PackedInt32Array(105, 108, 104), PackedInt32Array(108, 111, 104), PackedInt32Array(101, 103, 100), PackedInt32Array(100, 103, 104), PackedInt32Array(79, 80, 112), PackedInt32Array(112, 80, 113), PackedInt32Array(114, 116, 115), PackedInt32Array(115, 116, 113), PackedInt32Array(117, 116, 88), PackedInt32Array(88, 116, 119), PackedInt32Array(88, 119, 118), PackedInt32Array(88, 89, 117), PackedInt32Array(113, 116, 112), PackedInt32Array(112, 116, 117), PackedInt32Array(121, 120, 122), PackedInt32Array(122, 120, 123), PackedInt32Array(125, 124, 126), PackedInt32Array(126, 124, 127), PackedInt32Array(128, 127, 124), PackedInt32Array(129, 96, 97), PackedInt32Array(128, 130, 127), PackedInt32Array(124, 131, 128), PackedInt32Array(128, 131, 123), PackedInt32Array(123, 131, 122), PackedInt32Array(122, 131, 132), PackedInt32Array(129, 97, 92), PackedInt32Array(92, 97, 128), PackedInt32Array(92, 128, 91), PackedInt32Array(91, 128, 123), PackedInt32Array(121, 133, 120), PackedInt32Array(120, 133, 134), PackedInt32Array(114, 115, 134), PackedInt32Array(114, 134, 135), PackedInt32Array(135, 134, 133), PackedInt32Array(133, 138, 135), PackedInt32Array(135, 138, 136), PackedInt32Array(136, 138, 137), PackedInt32Array(126, 140, 125), PackedInt32Array(125, 140, 139), PackedInt32Array(110, 141, 109), PackedInt32Array(109, 141, 142), PackedInt32Array(140, 142, 139), PackedInt32Array(139, 142, 141), PackedInt32Array(139, 141, 145), PackedInt32Array(145, 141, 144), PackedInt32Array(145, 144, 143), PackedInt32Array(140, 146, 142)]
+agent_height = 1.8
+agent_radius = 0.45
+agent_max_climb = 0.4
+filter_baking_aabb = AABB(-30, -0.5, -10, 60, 3, 68)
 
 [sub_resource type="StandardMaterial3D" id="FloorMaterial"]
 albedo_texture = ExtResource("3_floor")
 uv1_scale = Vector3(0.3, 0.3, 0.3)
 uv1_triplanar = true
 
-[sub_resource type="NavigationMesh" id="NavigationMesh_map"]
-agent_height = 1.8
-agent_radius = 0.45
-agent_max_climb = 0.4
-agent_max_slope = 45.0
-cell_size = 0.25
-cell_height = 0.25
-filter_baking_aabb = AABB(-30, -0.5, -10, 60, 3, 68)
+[sub_resource type="StandardMaterial3D" id="WallMaterial"]
+albedo_texture = ExtResource("2_wall")
+uv1_scale = Vector3(0.35, 0.35, 0.35)
+uv1_triplanar = true
 
-[node name="LevelMap" type="Node3D"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4mfww"]
+albedo_texture = ExtResource("5_28enl")
+uv1_scale = Vector3(10, 10, 10)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8v2yb"]
+albedo_texture = ExtResource("5_4mfww")
+uv1_scale = Vector3(3.15, 3.15, 3.15)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_e6xmq"]
+size = Vector3(23.749039, 6.1136475, 13.730713)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2iehp"]
+albedo_texture = ExtResource("6_ublle")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jbwni"]
+albedo_texture = ExtResource("6_ublle")
+
+[node name="LevelMap" type="Node3D" unique_id=2048863369]
 script = ExtResource("1_map")
 
-[node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=88664466]
 navigation_mesh = SubResource("NavigationMesh_map")
 
-[node name="Floor" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(0, -0.1, 24)
+[node name="Floor" type="CSGBox3D" parent="NavigationRegion3D" unique_id=88200803]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 24)
 material_override = SubResource("FloorMaterial")
 use_collision = true
 size = Vector3(60, 0.2, 68)
 
-[node name="WestBoundary" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(-30, 2.5, 24)
+[node name="WestBoundary" type="CSGBox3D" parent="NavigationRegion3D" unique_id=412590728]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 2.5, 24)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(0.8, 5, 68)
 
-[node name="EastBoundary" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(30, 2.5, 24)
+[node name="EastBoundary" type="CSGBox3D" parent="NavigationRegion3D" unique_id=373780311]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 2.5, 24)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(0.8, 5, 68)
 
-[node name="SouthBoundary" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(0, 2.5, -10)
+[node name="SouthBoundary" type="CSGBox3D" parent="NavigationRegion3D" unique_id=1630894112]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.961975, 2.5, -10)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(26.07605, 5, 0.8)
+
+[node name="NorthBoundary" type="CSGBox3D" parent="NavigationRegion3D" unique_id=384023752]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 58)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(60, 5, 0.8)
 
-[node name="NorthBoundary" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(0, 2.5, 58)
-material_override = SubResource("WallMaterial")
-use_collision = true
-size = Vector3(60, 5, 0.8)
-
-[node name="GeneratorDividerWest" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(-17, 2.5, 8)
+[node name="GeneratorDividerWest" type="CSGBox3D" parent="NavigationRegion3D" unique_id=1735445152]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 2.5, 8)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(26, 5, 0.8)
 
-[node name="GeneratorDividerEast" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(17, 2.5, 8)
+[node name="GeneratorDividerEast" type="CSGBox3D" parent="NavigationRegion3D" unique_id=507042995]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17, 2.5, 8)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(26, 5, 0.8)
 
-[node name="SouthWestRoomLower" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(-12, 2.5, -6.5)
+[node name="SouthWestRoomLower" type="CSGBox3D" parent="NavigationRegion3D" unique_id=1730283764]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 2.5, -6.5)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(0.8, 5, 7)
 
-[node name="SouthWestRoomUpper" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(-12, 2.5, 4.5)
+[node name="SouthWestRoomUpper" type="CSGBox3D" parent="NavigationRegion3D" unique_id=1051396822]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 2.5, 4.5)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(0.8, 5, 7)
 
-[node name="SouthEastRoomLower" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(12, 2.5, -6.5)
+[node name="SouthEastRoomLower" type="CSGBox3D" parent="NavigationRegion3D" unique_id=1525796906]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 2.5, -6.5)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(0.8, 5, 7)
 
-[node name="SouthEastRoomUpper" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(12, 2.5, 4.5)
+[node name="SouthEastRoomUpper" type="CSGBox3D" parent="NavigationRegion3D" unique_id=716159240]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 2.5, 4.5)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(0.8, 5, 7)
 
-[node name="MidDividerWest" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(-20, 2.5, 28)
+[node name="MidDividerWest" type="CSGBox3D" parent="NavigationRegion3D" unique_id=1699896074]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 2.5, 28)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(20, 5, 0.8)
 
-[node name="MidDividerCenter" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(3, 2.5, 28)
+[node name="MidDividerCenter" type="CSGBox3D" parent="NavigationRegion3D" unique_id=1814246488]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 2.5, 28)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(14, 5, 0.8)
 
-[node name="MidDividerEast" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(23, 2.5, 28)
+[node name="MidDividerEast" type="CSGBox3D" parent="NavigationRegion3D" unique_id=1815017186]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 2.5, 28)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(14, 5, 0.8)
 
-[node name="WestInnerLowerA" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(-12, 2.5, 11)
+[node name="WestInnerLowerA" type="CSGBox3D" parent="NavigationRegion3D" unique_id=734776329]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 2.5, 11)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(0.8, 5, 6)
 
-[node name="WestInnerLowerB" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(-12, 2.5, 20)
+[node name="WestInnerLowerB" type="CSGBox3D" parent="NavigationRegion3D" unique_id=1655245118]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 2.5, 20)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(0.8, 5, 4)
 
-[node name="WestInnerUpperA" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(-12, 2.5, 38.5)
+[node name="WestInnerUpperA" type="CSGBox3D" parent="NavigationRegion3D" unique_id=1332648766]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 2.5, 38.5)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(0.8, 5, 9)
 
-[node name="WestInnerUpperB" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(-12, 2.5, 53.5)
+[node name="WestInnerUpperB" type="CSGBox3D" parent="NavigationRegion3D" unique_id=528634955]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 2.5, 53.5)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(0.8, 5, 9)
 
-[node name="EastInnerLowerA" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(12, 2.5, 12.5)
+[node name="EastInnerLowerA" type="CSGBox3D" parent="NavigationRegion3D" unique_id=383337727]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 2.5, 12.5)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(0.8, 5, 9)
 
-[node name="EastInnerLowerB" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(12, 2.5, 25.5)
+[node name="EastInnerLowerB" type="CSGBox3D" parent="NavigationRegion3D" unique_id=1816328520]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 2.5, 25.5)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(0.8, 5, 9)
 
-[node name="EastInnerUpperA" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(12, 2.5, 43.5)
+[node name="EastInnerUpperA" type="CSGBox3D" parent="NavigationRegion3D" unique_id=837051574]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 2.5, 43.5)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(0.8, 5, 7)
 
-[node name="EastInnerUpperB" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(12, 2.5, 54.5)
+[node name="EastInnerUpperB" type="CSGBox3D" parent="NavigationRegion3D" unique_id=631310222]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 2.5, 54.5)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(0.8, 5, 7)
 
-[node name="NorthDividerWestOuter" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(-26, 2.5, 45)
+[node name="NorthDividerWestOuter" type="CSGBox3D" parent="NavigationRegion3D" unique_id=10866438]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 2.5, 45)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(8, 5, 0.8)
 
-[node name="NorthDividerWestInner" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(-12, 2.5, 45)
+[node name="NorthDividerWestInner" type="CSGBox3D" parent="NavigationRegion3D" unique_id=1620694563]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 2.5, 45)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(12, 5, 0.8)
 
-[node name="NorthDividerEastInner" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(12, 2.5, 45)
+[node name="NorthDividerEastInner" type="CSGBox3D" parent="NavigationRegion3D" unique_id=13849749]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 2.5, 45)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(12, 5, 0.8)
 
-[node name="NorthDividerEastOuter" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(26, 2.5, 45)
+[node name="NorthDividerEastOuter" type="CSGBox3D" parent="NavigationRegion3D" unique_id=1852231714]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 2.5, 45)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(8, 5, 0.8)
 
-[node name="CentralScreenLower" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(0, 2.5, 17)
+[node name="CentralScreenLower" type="CSGBox3D" parent="NavigationRegion3D" unique_id=819263259]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 17)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(0.8, 5, 10)
 
-[node name="CentralScreenUpper" type="CSGBox3D" parent="NavigationRegion3D"]
-position = Vector3(0, 2.5, 36.5)
+[node name="CentralScreenUpper" type="CSGBox3D" parent="NavigationRegion3D" unique_id=618443984]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 36.5)
 material_override = SubResource("WallMaterial")
 use_collision = true
 size = Vector3(0.8, 5, 9)
 
-[node name="SpawnPoints" type="Node3D" parent="."]
+[node name="SouthBoundary2" type="CSGBox3D" parent="NavigationRegion3D" unique_id=834442873]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.112598, 2.5, -10)
+material_override = SubResource("WallMaterial")
+use_collision = true
+size = Vector3(26.07605, 5, 0.8)
 
-[node name="PlayerSpawn" type="Marker3D" parent="SpawnPoints"]
+[node name="SpawnPoints" type="Node3D" parent="." unique_id=1283120107]
+
+[node name="PlayerSpawn" type="Marker3D" parent="SpawnPoints" unique_id=2074815459]
 unique_name_in_owner = true
-position = Vector3(0, 0.05, 52)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 52)
 
-[node name="EnemySpawn" type="Marker3D" parent="SpawnPoints"]
+[node name="EnemySpawn" type="Marker3D" parent="SpawnPoints" unique_id=1564421479]
 unique_name_in_owner = true
-position = Vector3(-23, 0.95, 35)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.672737, 0.9499981, -2.8758392)
 
-[node name="GeneratorSpawn" type="Marker3D" parent="SpawnPoints"]
+[node name="GeneratorSpawn" type="Marker3D" parent="SpawnPoints" unique_id=1520103318]
 unique_name_in_owner = true
-position = Vector3(0, 1, -4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.039157, 0.9999995, -7.0137596)
 
-[node name="GasSpawnPoints" type="Node3D" parent="."]
+[node name="GasSpawnPoints" type="Node3D" parent="." unique_id=356505687]
 unique_name_in_owner = true
 
-[node name="GasSpawn01" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
-position = Vector3(-23, 0.75, -4)
+[node name="GasSpawn01" type="Marker3D" parent="GasSpawnPoints" unique_id=1661480245 groups=["gas_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23, 0.75, -4)
 
-[node name="GasSpawn02" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
-position = Vector3(-18, 0.75, 4)
+[node name="GasSpawn02" type="Marker3D" parent="GasSpawnPoints" unique_id=1494841655 groups=["gas_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0.75, 4)
 
-[node name="GasSpawn03" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
-position = Vector3(20, 0.75, -4)
+[node name="GasSpawn03" type="Marker3D" parent="GasSpawnPoints" unique_id=111642840 groups=["gas_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0.75, -4)
 
-[node name="GasSpawn04" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
-position = Vector3(22, 0.75, 14)
+[node name="GasSpawn04" type="Marker3D" parent="GasSpawnPoints" unique_id=183529718 groups=["gas_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0.75, 14)
 
-[node name="GasSpawn05" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
-position = Vector3(-23, 0.75, 18)
+[node name="GasSpawn05" type="Marker3D" parent="GasSpawnPoints" unique_id=1510399670 groups=["gas_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23, 0.75, 18)
 
-[node name="GasSpawn06" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
-position = Vector3(-20, 0.75, 35)
+[node name="GasSpawn06" type="Marker3D" parent="GasSpawnPoints" unique_id=1521269071 groups=["gas_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0.75, 35)
 
-[node name="GasSpawn07" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
-position = Vector3(-22, 0.75, 51)
+[node name="GasSpawn07" type="Marker3D" parent="GasSpawnPoints" unique_id=238331970 groups=["gas_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0.75, 51)
 
-[node name="GasSpawn08" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
-position = Vector3(-5, 0.75, 23)
+[node name="GasSpawn08" type="Marker3D" parent="GasSpawnPoints" unique_id=1899956468 groups=["gas_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.75, 23)
 
-[node name="GasSpawn09" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
-position = Vector3(5, 0.75, 35)
+[node name="GasSpawn09" type="Marker3D" parent="GasSpawnPoints" unique_id=1897805777 groups=["gas_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.75, 35)
 
-[node name="GasSpawn10" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
-position = Vector3(21, 0.75, 35)
+[node name="GasSpawn10" type="Marker3D" parent="GasSpawnPoints" unique_id=1902512381 groups=["gas_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 0.75, 35)
 
-[node name="GasSpawn11" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
-position = Vector3(21, 0.75, 51)
+[node name="GasSpawn11" type="Marker3D" parent="GasSpawnPoints" unique_id=1921255132 groups=["gas_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 0.75, 51)
 
-[node name="GasSpawn12" type="Marker3D" parent="GasSpawnPoints" groups=["gas_spawn"]]
-position = Vector3(-5, 0.75, 13)
+[node name="GasSpawn12" type="Marker3D" parent="GasSpawnPoints" unique_id=569053277 groups=["gas_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.75, 13)
+
+[node name="Floor" type="CSGBox3D" parent="." unique_id=1107667861]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.1663184, 23.405762)
+material_override = SubResource("StandardMaterial3D_4mfww")
+use_collision = true
+size = Vector3(60, 0.2, 69.18848)
+
+[node name="Floor2" type="CSGBox3D" parent="." unique_id=1901310339]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1435165, -0.23675036, -20.989174)
+material_override = SubResource("StandardMaterial3D_4mfww")
+use_collision = true
+size = Vector3(24.915588, 0.2, 24.402344)
+
+[node name="factorygate" type="CSGBox3D" parent="." unique_id=733038119]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.5661602, 2.5, -10.780664)
+material_override = SubResource("StandardMaterial3D_8v2yb")
+use_collision = true
+size = Vector3(0.8, 5, 9)
+
+[node name="VictoryArea" type="Area3D" parent="." unique_id=124298055]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -22.22334)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="VictoryArea" unique_id=1715841440]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.3365707, 2.5568237, 0.51298904)
+shape = SubResource("BoxShape3D_e6xmq")
+
+[node name="wall1" type="CSGBox3D" parent="." unique_id=1992284493]
+transform = Transform3D(0.9986295, 0, 0.05233596, 0, 1, 0, -0.05233596, 0, 0.9986295, 4.244177, 2.5, -14.366006)
+material_override = SubResource("StandardMaterial3D_2iehp")
+use_collision = true
+size = Vector3(0.8, 5, 9)
+
+[node name="wall" type="CSGBox3D" parent="." unique_id=1205431227]
+transform = Transform3D(0.9986295, 0, 0.05233596, 0, 1, 0, -0.05233596, 0, 0.9986295, -5.7433844, 2.5, -14.61068)
+material_override = SubResource("StandardMaterial3D_jbwni")
+use_collision = true
+size = Vector3(0.8, 5, 9)
+
+[node name="lights" type="Node3D" parent="." unique_id=697272205]
+
+[node name="OmniLight3D" type="OmniLight3D" parent="lights" unique_id=1264070515]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.4089756, 0.11816597)
+light_energy = 8.604
+shadow_enabled = true
+omni_range = 52.594223
+
+[node name="OmniLight3D2" type="OmniLight3D" parent="lights" unique_id=2089277553]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.4089756, 48.3365)
+light_energy = 8.604
+shadow_enabled = true
+omni_range = 52.594223
+
+[node name="OmniLight3D3" type="OmniLight3D" parent="lights" unique_id=1178168042]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.042994, 4.4089756, 26.398531)
+light_energy = 8.604
+shadow_enabled = true
+omni_range = 52.594223
+
+[node name="OmniLight3D4" type="OmniLight3D" parent="lights" unique_id=1461246706]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.101547, 4.4089756, 24.03884)
+light_energy = 8.604
+shadow_enabled = true
+omni_range = 52.594223
