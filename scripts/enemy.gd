@@ -242,6 +242,10 @@ func _enter_state(new_state: State, data := {}) -> void:
 			_chase_timer = chase_max_time
 			_update_path_timer = 0.0
 			_player_last_seen_position = player.global_position
+			print(
+				"[Enemy] CHASING started — player position: ",
+				_player_last_seen_position
+			)
 			travel_to_position(_player_last_seen_position, chasing_speed)
 			_play_scream_chase()
 		
