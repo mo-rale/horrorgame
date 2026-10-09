@@ -27,6 +27,9 @@ var _state: State = State.ROAMING
 @export_group("Stalking")
 @export var stalking_speed := 5.0
 @export var stalking_follow_distance := 12.0
+@export var stalking_min_teleport_distance := 6.0
+@export var stalking_max_nav_snap_distance := 2.5
+@export var stalking_blocked_retry_delay := 3.0
 @export var stalking_path_update_delay := 0.5
 @export var stalking_cooldown_time := 25.0
 @export var initial_stalking_delay_min := 8.0
@@ -81,6 +84,7 @@ var _heartbeat_delay_timer := 0.0
 var _heartbeat_attack_timer := 0.0
 var _heartbeat_active := false
 var _footstep_base_volume_db := 0.0
+var _stalking_clearance_shape := CapsuleShape3D.new()
 
 # ── Chasing state ────────────────────────────────────────────────────────
 var _chase_timer := 0.0
@@ -112,6 +116,10 @@ func _ready() -> void:
 	randomize()
 	add_to_group("enemy")
 	_footstep_base_volume_db = _footsteps.volume_db
+	var enemy_capsule := _collision_shape.shape as CapsuleShape3D
+	if enemy_capsule:
+		_stalking_clearance_shape.radius = maxf(enemy_capsule.radius - 0.03, 0.1)
+		_stalking_clearance_shape.height = maxf(enemy_capsule.height - 0.1, 0.2)
 	_stalking_cooldown = randf_range(
 		initial_stalking_delay_min,
 		maxf(initial_stalking_delay_max, initial_stalking_delay_min)
@@ -140,7 +148,7 @@ func _physics_process(delta: float) -> void:
 		_stalking_cooldown <= 0.0
 		and _state not in [State.STALKING, State.VANISHING]
 	):
-		_enter_state(State.STALKING)
+		_try_start_stalking()
 	
 	match _state:
 		State.ROAMING:
@@ -188,6 +196,10 @@ func _enter_state(new_state: State, data := {}) -> void:
 			travel_to_position(_heard_position, investigating_speed)
 
 		State.STALKING:
+			if not data.has("teleport_position"):
+				_stalking_cooldown = stalking_blocked_retry_delay
+				_enter_state(State.ROAMING)
+				return
 			_stalking_path_timer = 0.0
 			_heartbeat_delay_timer = randf_range(
 				heartbeat_delay_min,
@@ -198,7 +210,7 @@ func _enter_state(new_state: State, data := {}) -> void:
 			_player_last_seen_position = player.global_position
 			# Stalking starts as a supernatural appearance directly behind the
 			# player. Following after this point still uses the navigation mesh.
-			var stalking_teleport_position := _pick_stalking_target()
+			var stalking_teleport_position: Vector3 = data["teleport_position"]
 			global_position = stalking_teleport_position
 			print(
 				"[Enemy] STALKING chosen — teleported behind player to ",
@@ -490,6 +502,78 @@ func _pick_stalking_target() -> Vector3:
 	return NavigationServer3D.map_get_closest_point(_nav_map, behind_player)
 
 
+func _try_start_stalking() -> void:
+	var placement := _find_safe_stalking_teleport()
+	if not bool(placement["found"]):
+		_stalking_cooldown = stalking_blocked_retry_delay
+		print(
+			"[Enemy] STALKING postponed — no safe room behind player; retrying in %.1f seconds"
+			% stalking_blocked_retry_delay
+		)
+		return
+
+	_enter_state(State.STALKING, {"teleport_position": placement["position"]})
+
+
+func _find_safe_stalking_teleport() -> Dictionary:
+	var behind_direction := player.global_basis.z.normalized()
+	var angle_offsets: Array[float] = [0.0, -0.35, 0.35, -0.7, 0.7, -1.05, 1.05]
+	var distances: Array[float] = [
+		stalking_follow_distance,
+		maxf(stalking_follow_distance * 0.8, stalking_min_teleport_distance),
+		maxf(stalking_follow_distance * 0.6, stalking_min_teleport_distance),
+	]
+
+	for distance in distances:
+		for angle in angle_offsets:
+			var direction := behind_direction.rotated(Vector3.UP, angle)
+			var requested_point := player.global_position + direction * distance
+			var nav_point := NavigationServer3D.map_get_closest_point(
+				_nav_map,
+				requested_point
+			)
+			var horizontal_snap_error := Vector2(
+				nav_point.x - requested_point.x,
+				nav_point.z - requested_point.z
+			).length()
+			if horizontal_snap_error > stalking_max_nav_snap_distance:
+				continue
+
+			var player_to_point := nav_point - player.global_position
+			player_to_point.y = 0.0
+			if player_to_point.length() < stalking_min_teleport_distance:
+				continue
+			if player_to_point.normalized().dot(behind_direction) < 0.25:
+				continue
+
+			var root_position := _root_position_from_nav_point(nav_point)
+			if _has_stalking_clearance(root_position):
+				return {"found": true, "position": root_position}
+
+	return {"found": false, "position": Vector3.ZERO}
+
+
+func _root_position_from_nav_point(nav_point: Vector3) -> Vector3:
+	var capsule := _collision_shape.shape as CapsuleShape3D
+	var body_half_height := 0.9
+	if capsule:
+		body_half_height = capsule.height * 0.5
+	return nav_point + Vector3.UP * (
+		body_half_height - _collision_shape.position.y + 0.05
+	)
+
+
+func _has_stalking_clearance(root_position: Vector3) -> bool:
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = _stalking_clearance_shape
+	query.transform = Transform3D(global_basis, root_position) * _collision_shape.transform
+	query.collision_mask = collision_mask
+	query.exclude = [get_rid()]
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	return get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
+
+
 func _is_player_looking_at_enemy() -> bool:
 	if not is_instance_valid(player.camera):
 		return false
@@ -536,7 +620,8 @@ func _pick_vanish_destination() -> Vector3:
 	var behind_direction := player.global_basis.z.normalized()
 	behind_direction = behind_direction.rotated(Vector3.UP, randf_range(-0.6, 0.6))
 	var raw_destination := player.global_position + behind_direction * distance
-	return NavigationServer3D.map_get_closest_point(_nav_map, raw_destination)
+	var nav_point := NavigationServer3D.map_get_closest_point(_nav_map, raw_destination)
+	return _root_position_from_nav_point(nav_point)
 
 
 func travel_to_position(wanted_position: Vector3, speed: float, _play_run_anim := false) -> void:
