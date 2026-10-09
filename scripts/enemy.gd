@@ -25,7 +25,7 @@ var _state: State = State.DORMANT
 @export var hearing_position_uncertainty := 2.0
 
 @export_group("Stalking")
-@export var stalking_speed := 5.0
+@export var stalking_speed := 5.5
 @export var stalking_teleport_distance := 7.0
 @export var stalking_min_teleport_distance := 5.0
 @export var stalking_max_nav_snap_distance := 2.5
@@ -33,15 +33,15 @@ var _state: State = State.DORMANT
 @export var stalking_path_update_delay := 0.5
 @export var stalking_follow_distance := 3.5
 @export var stalking_follow_max_nav_snap_distance := 3.0
-@export var stalking_cooldown_time := 25.0
-@export var initial_stalking_delay_min := 8.0
-@export var initial_stalking_delay_max := 15.0
+@export var stalking_cooldown_time := 18.0
+@export var initial_stalking_delay_min := 6.0
+@export var initial_stalking_delay_max := 10.0
 @export_range(-1.0, 1.0) var player_look_dot_threshold := 0.82
 @export var stalking_footstep_volume_db := -12.0
-@export var heartbeat_delay_min := 8.0
-@export var heartbeat_delay_max := 14.0
-@export var heartbeat_duration_min := 5.0
-@export var heartbeat_duration_max := 7.0
+@export var heartbeat_delay_min := 5.0
+@export var heartbeat_delay_max := 9.0
+@export var heartbeat_duration_min := 4.0
+@export var heartbeat_duration_max := 6.0
 @export var seen_vanish_delay := 0.75
 @export var vanish_hidden_time := 3.0
 @export var vanish_reappear_distance_min := 30.0
@@ -51,10 +51,24 @@ var _state: State = State.DORMANT
 @export var post_vanish_detection_grace := 5.0
 
 @export_group("Chasing")
-@export var chasing_speed := 6.0
-@export var chase_max_time := 8.0
-@export var catching_distance := 1.4
+@export var chasing_speed := 8.2
+@export var chase_max_time := 10.0
+@export var catching_distance := 1.6
 @export var update_path_delay := 0.2
+
+@export_group("Threat Escalation")
+@export_range(0, 8, 1) var max_threat_level := 4
+@export var cooldown_reduction_per_level := 2.0
+@export var minimum_stalking_cooldown := 9.0
+@export var stalking_speed_bonus_per_level := 0.35
+@export var stalking_distance_reduction_per_level := 0.3
+@export var minimum_stalking_follow_distance := 2.0
+@export var heartbeat_delay_reduction_per_level := 0.6
+@export var minimum_heartbeat_delay := 2.5
+@export var heartbeat_duration_reduction_per_level := 0.35
+@export var minimum_heartbeat_duration := 2.5
+@export var chase_speed_bonus_per_level := 0.4
+@export var chase_time_bonus_per_level := 1.5
 
 @export_group("Searching")
 @export var searching_speed := 6.0
@@ -91,6 +105,7 @@ var _direct_path_index := 0
 var _heartbeat_delay_timer := 0.0
 var _heartbeat_attack_timer := 0.0
 var _heartbeat_active := false
+var _stalking_encounters := 0
 var _footstep_base_volume_db := 0.0
 var _stalking_clearance_shape := CapsuleShape3D.new()
 var _detection_grace_timer := 0.0
@@ -101,6 +116,7 @@ var _chase_timer := 0.0
 var _update_path_timer := 0.0
 var _chase_path_failure_reported := false
 var _catch_emitted := false
+var _active_chasing_speed := 0.0
 
 # ── Searching state ──────────────────────────────────────────────────────
 var _search_timer := 0.0
@@ -216,7 +232,11 @@ func _physics_process(delta: float) -> void:
 		State.STALKING:
 			_update_stalking(delta)
 			if _state == State.STALKING:
-				_move_direct_path(delta, stalking_speed, true)
+				_move_direct_path(
+					delta,
+					stalking_speed + _threat_level() * stalking_speed_bonus_per_level,
+					true
+				)
 			return
 		State.VANISHING:
 			velocity = Vector3.ZERO
@@ -224,7 +244,7 @@ func _physics_process(delta: float) -> void:
 		State.CHASING:
 			_update_chasing(delta)
 			if _state == State.CHASING and not _catch_emitted:
-				_move_direct_path(delta, chasing_speed, false)
+				_move_direct_path(delta, _active_chasing_speed, false)
 			return
 		State.SEARCHING:
 			_update_searching(delta)
@@ -262,7 +282,11 @@ func _enter_state(new_state: State, data := {}) -> void:
 		_stalking.stop()
 		_direct_path.clear()
 		_direct_path_index = 0
-		_stalking_cooldown = stalking_cooldown_time
+		_stalking_encounters += 1
+		_stalking_cooldown = maxf(
+			minimum_stalking_cooldown,
+			stalking_cooldown_time - _threat_level() * cooldown_reduction_per_level
+		)
 		if is_instance_valid(player):
 			player.stop_stalking_heartbeat()
 	_state = new_state
@@ -300,10 +324,16 @@ func _enter_state(new_state: State, data := {}) -> void:
 				_enter_state(State.DORMANT)
 				return
 			_stalking_path_timer = 0.0
-			_heartbeat_delay_timer = randf_range(
-				heartbeat_delay_min,
-				maxf(heartbeat_delay_max, heartbeat_delay_min)
+			var threat := float(_threat_level())
+			var effective_delay_min := maxf(
+				minimum_heartbeat_delay,
+				heartbeat_delay_min - threat * heartbeat_delay_reduction_per_level
 			)
+			var effective_delay_max := maxf(
+				effective_delay_min,
+				heartbeat_delay_max - threat * heartbeat_delay_reduction_per_level
+			)
+			_heartbeat_delay_timer = randf_range(effective_delay_min, effective_delay_max)
 			_heartbeat_attack_timer = 0.0
 			_heartbeat_active = false
 			# Invalidate any older disappearance timer and always restore the
@@ -325,6 +355,7 @@ func _enter_state(new_state: State, data := {}) -> void:
 			)
 			print("[Enemy] STALKING path waypoints: ", _direct_path.size())
 			print("[Enemy] STALKER visibility restored: ", visible)
+			print("[Enemy] THREAT LEVEL: ", _threat_level())
 			velocity = Vector3.ZERO
 			_play_stalking_sound()
 
@@ -334,7 +365,12 @@ func _enter_state(new_state: State, data := {}) -> void:
 			_delay_then_vanish(_vanish_sequence_id)
 		
 		State.CHASING:
-			_chase_timer = chase_max_time
+			_active_chasing_speed = (
+				chasing_speed + _threat_level() * chase_speed_bonus_per_level
+			)
+			_chase_timer = (
+				chase_max_time + _threat_level() * chase_time_bonus_per_level
+			)
 			_update_path_timer = update_path_delay
 			_chase_path_failure_reported = false
 			_catch_emitted = false
@@ -394,6 +430,10 @@ func _update_stalking(delta: float) -> void:
 
 	var player_is_watching := has_line_of_sight and _is_player_looking_at_enemy()
 	if player_is_watching:
+		if _heartbeat_active:
+			print("[Enemy] STALKER SEEN DURING HEARTBEAT — attacking now")
+			_enter_state(State.CHASING)
+			return
 		print(
 			"[Enemy] STALKER SEEN — disappearing in %.2f seconds"
 			% seen_vanish_delay
@@ -410,9 +450,18 @@ func _update_stalking(delta: float) -> void:
 		_heartbeat_delay_timer -= delta
 		if _heartbeat_delay_timer <= 0.0:
 			_heartbeat_active = true
+			var threat := float(_threat_level())
+			var effective_duration_min := maxf(
+				minimum_heartbeat_duration,
+				heartbeat_duration_min - threat * heartbeat_duration_reduction_per_level
+			)
+			var effective_duration_max := maxf(
+				effective_duration_min,
+				heartbeat_duration_max - threat * heartbeat_duration_reduction_per_level
+			)
 			_heartbeat_attack_timer = randf_range(
-				heartbeat_duration_min,
-				maxf(heartbeat_duration_max, heartbeat_duration_min)
+				effective_duration_min,
+				effective_duration_max
 			)
 			player.start_stalking_heartbeat()
 
@@ -675,6 +724,10 @@ func hear_noise(_sound_position: Vector3, _hearing_distance: float) -> void:
 	return
 
 
+func _threat_level() -> int:
+	return mini(_stalking_encounters, max_threat_level)
+
+
 func _try_start_stalking() -> void:
 	var placement := _find_safe_stalking_teleport()
 	if not bool(placement["found"]):
@@ -727,11 +780,16 @@ func _find_stalking_follow_target() -> Dictionary:
 	# point behind the player; walls are handled by the generated path.
 	var behind_direction := player.global_basis.z.normalized()
 	var angle_offsets: Array[float] = [0.0, -0.35, 0.35, -0.7, 0.7, -1.05, 1.05]
+	var effective_follow_distance := maxf(
+		minimum_stalking_follow_distance,
+		stalking_follow_distance
+			- _threat_level() * stalking_distance_reduction_per_level
+	)
 
 	for angle in angle_offsets:
 		var direction := behind_direction.rotated(Vector3.UP, angle)
 		var requested_point := (
-			player.global_position + direction * stalking_follow_distance
+			player.global_position + direction * effective_follow_distance
 		)
 		var nav_point := NavigationServer3D.map_get_closest_point(
 			_nav_map,
