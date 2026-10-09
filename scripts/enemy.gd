@@ -44,6 +44,8 @@ var _state: State = State.ROAMING
 @export var vanish_hidden_time := 3.0
 @export var vanish_reappear_distance_min := 30.0
 @export var vanish_reappear_distance_max := 45.0
+@export var vanish_max_nav_snap_distance := 4.0
+@export var vanish_relocation_retry_delay := 1.0
 @export var post_vanish_detection_grace := 5.0
 
 @export_group("Chasing")
@@ -179,6 +181,12 @@ func _physics_process(delta: float) -> void:
 # ── State transition ─────────────────────────────────────────────────────
 
 func _enter_state(new_state: State, data := {}) -> void:
+	# VANISHING owns its complete hide/relocate/restore lifecycle. Ignore all
+	# external transitions until that sequence safely returns to roaming.
+	if _state == State.VANISHING and new_state != State.ROAMING:
+		print("[Enemy] State transition suppressed — stalker is vanishing")
+		return
+
 	# A chase must never begin while the stalker is still hidden or in the
 	# middle of its disappearance sequence.
 	if new_state == State.CHASING and (_state == State.VANISHING or not visible):
@@ -544,7 +552,11 @@ func _play_seen_sound() -> void:
 
 
 func hear_noise(sound_position: Vector3, hearing_distance: float) -> void:
-	if not _map_synchronized or _state in [State.STALKING, State.CHASING]:
+	if not _map_synchronized or _state in [
+		State.STALKING,
+		State.VANISHING,
+		State.CHASING,
+	]:
 		return
 	var distance_to_sound := global_position.distance_to(sound_position)
 	if distance_to_sound > hearing_distance:
@@ -707,7 +719,22 @@ func _delay_then_vanish(sequence_id: int) -> void:
 	):
 		return
 
-	global_position = _pick_vanish_destination()
+	var relocation := _find_safe_vanish_destination()
+	while not bool(relocation["found"]):
+		print(
+			"[Enemy] VANISHING remains hidden — no safe distant relocation; retrying in %.1f seconds"
+			% vanish_relocation_retry_delay
+		)
+		await get_tree().create_timer(vanish_relocation_retry_delay, false).timeout
+		if (
+			not is_inside_tree()
+			or _state != State.VANISHING
+			or sequence_id != _vanish_sequence_id
+		):
+			return
+		relocation = _find_safe_vanish_destination()
+
+	global_position = relocation["position"]
 	visible = true
 	_collision_shape.set_deferred("disabled", false)
 	_detection_grace_timer = post_vanish_detection_grace
@@ -718,18 +745,63 @@ func _delay_then_vanish(sequence_id: int) -> void:
 	_enter_state(State.ROAMING)
 
 
-func _pick_vanish_destination() -> Vector3:
-	# Reappear well behind the player's current view, with enough random
-	# variation that the next encounter does not feel scripted.
-	var distance := randf_range(
-		vanish_reappear_distance_min,
-		maxf(vanish_reappear_distance_max, vanish_reappear_distance_min)
-	)
+func _find_safe_vanish_destination() -> Dictionary:
+	# Prefer a distant connected point hidden behind solid geometry. A clear
+	# but otherwise safe point is retained only as a fallback.
 	var behind_direction := player.global_basis.z.normalized()
-	behind_direction = behind_direction.rotated(Vector3.UP, randf_range(-0.6, 0.6))
-	var raw_destination := player.global_position + behind_direction * distance
-	var nav_point := NavigationServer3D.map_get_closest_point(_nav_map, raw_destination)
-	return _root_position_from_nav_point(nav_point)
+	var angle_offsets: Array[float] = [0.0, -0.5, 0.5, -1.0, 1.0, -1.5, 1.5, PI]
+	var distances: Array[float] = [
+		randf_range(
+			vanish_reappear_distance_min,
+			maxf(vanish_reappear_distance_max, vanish_reappear_distance_min)
+		),
+		vanish_reappear_distance_min,
+		maxf(vanish_reappear_distance_max, vanish_reappear_distance_min),
+	]
+	var visible_fallback := {"found": false, "position": Vector3.ZERO}
+
+	for distance in distances:
+		for angle in angle_offsets:
+			var direction := behind_direction.rotated(Vector3.UP, angle)
+			var requested_point := player.global_position + direction * distance
+			var nav_point := NavigationServer3D.map_get_closest_point(
+				_nav_map,
+				requested_point
+			)
+			var horizontal_snap_error := Vector2(
+				nav_point.x - requested_point.x,
+				nav_point.z - requested_point.z
+			).length()
+			if horizontal_snap_error > vanish_max_nav_snap_distance:
+				continue
+
+			var actual_distance := Vector2(
+				nav_point.x - player.global_position.x,
+				nav_point.z - player.global_position.z
+			).length()
+			if actual_distance < vanish_reappear_distance_min * 0.8:
+				continue
+
+			var navigation_path := NavigationServer3D.map_get_path(
+				_nav_map,
+				player.global_position,
+				nav_point,
+				true
+			)
+			if navigation_path.is_empty():
+				continue
+
+			var root_position := _root_position_from_nav_point(nav_point)
+			if not _has_stalking_clearance(root_position):
+				continue
+
+			var candidate := {"found": true, "position": root_position}
+			if not _has_clear_teleport_line(root_position):
+				return candidate
+			if not bool(visible_fallback["found"]):
+				visible_fallback = candidate
+
+	return visible_fallback
 
 
 func travel_to_position(wanted_position: Vector3, speed: float, _play_run_anim := false) -> void:
