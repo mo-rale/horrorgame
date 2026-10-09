@@ -1,5 +1,8 @@
 extends Node3D
 
+const LIGHT_SWITCH_SFX := preload("res://assets/sfx/effects/light_switch.mp3")
+const GATE_OPEN_SFX := preload("res://assets/sfx/effects/gate_open.mp3")
+
 @onready var screeching: AudioStreamPlayer = $Screeching
 @onready var enemy: Enemy = $Enemy
 @onready var player: Player = $player
@@ -28,6 +31,10 @@ var generator_powered := false
 @onready var _level_map: Node3D = $LevelMap
 
 @export_group("Ending")
+@export var factory_power_start_delay := 1.0
+@export var light_activation_interval_min := 1.0
+@export var light_activation_interval_max := 2.0
+@export var factory_gate_open_delay := 2.0
 @export var factory_gate_open_height := 6.0
 @export var factory_gate_open_duration := 2.5
 
@@ -40,7 +47,10 @@ func _ready() -> void:
 			child.process_mode = Node.PROCESS_MODE_PAUSABLE
 
 	randomize()
-	factory_lights.visible = false
+	factory_lights.visible = true
+	for child in factory_lights.get_children():
+		if child is Light3D:
+			child.visible = false
 	victory_area.monitoring = false
 	_rebuild_level_and_randomize_fuel()
 	Settings.apply_brightness(world_environment.environment)
@@ -236,16 +246,50 @@ func _on_generator_started() -> void:
 		return
 
 	generator_powered = true
-	objective_label.text = "OBJECTIVE: ESCAPE THROUGH THE FACTORY GATE"
+	objective_label.text = "OBJECTIVE: FACTORY POWER STARTING..."
 	objective_label.modulate = Color(0.35, 1.0, 0.55)
 	fuel_label.text = "POWER RESTORED"
 	fuel_label.modulate = Color(0.35, 1.0, 0.55)
-	factory_lights.visible = true
-	victory_area.set_deferred("monitoring", true)
+	_run_factory_power_sequence()
+
+
+func _run_factory_power_sequence() -> void:
+	await get_tree().create_timer(factory_power_start_delay, false).timeout
+	if game_ended:
+		return
+
+	# The enemy is gone before the first powered light becomes visible.
 	enemy.disable_permanently()
+	var lights: Array[Light3D] = []
+	for child in factory_lights.get_children():
+		if child is Light3D:
+			lights.append(child)
+
+	for index in lights.size():
+		var factory_light := lights[index]
+		factory_light.visible = true
+		_play_factory_sfx(LIGHT_SWITCH_SFX, factory_light.global_position)
+		print("[Factory] Light %d/%d switched on" % [index + 1, lights.size()])
+		if index < lights.size() - 1:
+			await get_tree().create_timer(
+				randf_range(
+					light_activation_interval_min,
+					maxf(light_activation_interval_max, light_activation_interval_min)
+				),
+				false
+			).timeout
+			if game_ended:
+				return
+
+	await get_tree().create_timer(factory_gate_open_delay, false).timeout
+	if game_ended:
+		return
+
+	_play_factory_sfx(GATE_OPEN_SFX, factory_gate.global_position)
+	objective_label.text = "OBJECTIVE: ESCAPE THROUGH THE FACTORY GATE"
 
 	var gate_tween := factory_gate.create_tween()
-	gate_tween.set_trans(Tween.TRANS_SINE)
+	gate_tween.set_trans(Tween.TRANS_LINEAR)
 	gate_tween.set_ease(Tween.EASE_IN_OUT)
 	gate_tween.tween_property(
 		factory_gate,
@@ -253,7 +297,23 @@ func _on_generator_started() -> void:
 		factory_gate.position.y + factory_gate_open_height,
 		factory_gate_open_duration
 	)
-	print("[Factory] Power restored — lights on, gate opening, enemy disabled")
+	print("[Factory] All lights on — gate opening")
+	await gate_tween.finished
+	if game_ended:
+		return
+	victory_area.set_deferred("monitoring", true)
+	print("[Factory] Gate open — victory area enabled")
+
+
+func _play_factory_sfx(stream: AudioStream, world_position: Vector3) -> void:
+	var audio_player := AudioStreamPlayer3D.new()
+	audio_player.stream = stream
+	audio_player.bus = &"SFX"
+	audio_player.max_distance = 45.0
+	add_child(audio_player)
+	audio_player.global_position = world_position
+	audio_player.finished.connect(audio_player.queue_free)
+	audio_player.play()
 
 
 func _on_victory_area_body_entered(body: Node3D) -> void:
