@@ -18,13 +18,18 @@ extends Node3D
 @onready var fuel_label: Label = %FuelLabel
 @onready var controls_label: Label = %ControlsLabel
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
+@onready var factory_gate: CSGBox3D = $LevelMap/factorygate
+@onready var factory_lights: Node3D = $LevelMap/lights
+@onready var victory_area: Area3D = $LevelMap/VictoryArea
 
 var game_ended := false
 var player_paused := false
+var generator_powered := false
 @onready var _level_map: Node3D = $LevelMap
 
 @export_group("Ending")
-@export var victory_screen_delay := 4.0
+@export var factory_gate_open_height := 6.0
+@export var factory_gate_open_duration := 2.5
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -35,11 +40,14 @@ func _ready() -> void:
 			child.process_mode = Node.PROCESS_MODE_PAUSABLE
 
 	randomize()
+	factory_lights.visible = false
+	victory_area.monitoring = false
 	_rebuild_level_and_randomize_fuel()
 	Settings.apply_brightness(world_environment.environment)
 	enemy.reached_player.connect(_on_enemy_reached_player)
 	generator.generator_started.connect(_on_generator_started)
 	generator.fuel_changed.connect(_on_fuel_changed)
+	victory_area.body_entered.connect(_on_victory_area_body_entered)
 	restart_button.pressed.connect(_restart_game)
 	play_again_button.pressed.connect(_restart_game)
 	resume_button.pressed.connect(_resume_game)
@@ -224,14 +232,35 @@ func _on_enemy_reached_player() -> void:
 
 
 func _on_generator_started() -> void:
-	objective_label.text = "OBJECTIVE: GENERATOR STARTED"
-	objective_label.modulate = Color(0.35, 1.0, 0.55)
-
-	# Give the player time to see and hear the running generator before ending.
-	await get_tree().create_timer(victory_screen_delay, false).timeout
-	if game_ended:
+	if generator_powered or game_ended:
 		return
 
+	generator_powered = true
+	objective_label.text = "OBJECTIVE: ESCAPE THROUGH THE FACTORY GATE"
+	objective_label.modulate = Color(0.35, 1.0, 0.55)
+	fuel_label.text = "POWER RESTORED"
+	fuel_label.modulate = Color(0.35, 1.0, 0.55)
+	factory_lights.visible = true
+	victory_area.set_deferred("monitoring", true)
+	enemy.disable_permanently()
+
+	var gate_tween := factory_gate.create_tween()
+	gate_tween.set_trans(Tween.TRANS_SINE)
+	gate_tween.set_ease(Tween.EASE_IN_OUT)
+	gate_tween.tween_property(
+		factory_gate,
+		"position:y",
+		factory_gate.position.y + factory_gate_open_height,
+		factory_gate_open_duration
+	)
+	print("[Factory] Power restored — lights on, gate opening, enemy disabled")
+
+
+func _on_victory_area_body_entered(body: Node3D) -> void:
+	if game_ended or not generator_powered or body != player:
+		return
+
+	print("[Factory] Player reached the powered exit")
 	_finish_game(victory_screen, play_again_button)
 
 

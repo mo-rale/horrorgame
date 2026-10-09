@@ -182,6 +182,18 @@ func reset_after_navigation_rebuild() -> void:
 	print("[Enemy] Navigation reset after level rebuild at ", global_position)
 
 
+func disable_permanently() -> void:
+	# Powering the factory ends all enemy activity, including any pending
+	# stalking disappearance coroutine and the player's heartbeat warning.
+	_vanish_sequence_id += 1
+	_enter_state(State.DORMANT)
+	_map_synchronized = false
+	set_physics_process(false)
+	if is_instance_valid(player):
+		player.stop_stalking_heartbeat()
+	print("[Enemy] DISABLED — factory power is on")
+
+
 func _physics_process(delta: float) -> void:
 	if not _map_synchronized:
 		return
