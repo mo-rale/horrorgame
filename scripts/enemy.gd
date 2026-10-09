@@ -26,7 +26,6 @@ var _state: State = State.ROAMING
 
 @export_group("Stalking")
 @export var stalking_speed := 5.0
-@export var stalking_follow_distance := 12.0
 @export var stalking_teleport_distance := 7.0
 @export var stalking_min_teleport_distance := 5.0
 @export var stalking_max_nav_snap_distance := 2.5
@@ -231,7 +230,7 @@ func _enter_state(new_state: State, data := {}) -> void:
 				"[Enemy] STALKING chosen — teleported behind player to ",
 				stalking_teleport_position
 			)
-			_stop_moving()
+			travel_to_position(_pick_stalking_target(), stalking_speed)
 			_play_stalking_sound()
 
 		State.VANISHING:
@@ -513,12 +512,13 @@ func hear_noise(sound_position: Vector3, hearing_distance: float) -> void:
 
 
 func _pick_stalking_target() -> Vector3:
-	# Favor the space behind the player. The navigation mesh decides the
-	# actual route, so the enemy still has to walk around walls and doors.
-	var behind_player := player.global_position + (
-		player.global_basis.z.normalized() * stalking_follow_distance
-	)
-	return NavigationServer3D.map_get_closest_point(_nav_map, behind_player)
+	# Reuse the safe same-room search while following. A fixed distant point
+	# can land beyond a room wall and make the navigation path finish at the
+	# enemy's current position instead of following the player.
+	var placement := _find_safe_stalking_teleport()
+	if bool(placement["found"]):
+		return placement["position"]
+	return global_position
 
 
 func _try_start_stalking() -> void:
