@@ -100,6 +100,7 @@ var _vanish_sequence_id := 0
 var _chase_timer := 0.0
 var _update_path_timer := 0.0
 var _chase_path_failure_reported := false
+var _catch_emitted := false
 
 # ── Searching state ──────────────────────────────────────────────────────
 var _search_timer := 0.0
@@ -211,7 +212,7 @@ func _physics_process(delta: float) -> void:
 			return
 		State.CHASING:
 			_update_chasing(delta)
-			if _state == State.CHASING:
+			if _state == State.CHASING and not _catch_emitted:
 				_move_direct_path(delta, chasing_speed, false)
 			return
 		State.SEARCHING:
@@ -329,6 +330,7 @@ func _enter_state(new_state: State, data := {}) -> void:
 			_chase_timer = chase_max_time
 			_update_path_timer = update_path_delay
 			_chase_path_failure_reported = false
+			_catch_emitted = false
 			_player_last_seen_position = player.global_position
 			print(
 				"[Enemy] CHASING started — player position: ",
@@ -453,6 +455,8 @@ func _move_direct_path(delta: float, speed: float, face_player: bool) -> void:
 	var position_before_move := global_position
 	velocity = direction * speed
 	move_and_slide()
+	if _state == State.CHASING and _try_catch_player():
+		return
 	_update_wall_steering(direction, to_next)
 	var distance_moved := Vector2(
 		global_position.x - position_before_move.x,
@@ -469,6 +473,9 @@ func _move_direct_path(delta: float, speed: float, face_player: bool) -> void:
 
 
 func _update_chasing(delta: float) -> void:
+	if _try_catch_player():
+		return
+
 	_update_path_timer -= delta
 
 	var can_see_player := _can_see_player_during_chase()
@@ -488,15 +495,36 @@ func _update_chasing(delta: float) -> void:
 			_update_path_timer = update_path_delay
 			_update_chase_path()
 
-		var reached_last_seen := global_position.distance_to(_player_last_seen_position) <= (
-			navigation_agent.target_desired_distance + 0.25
-		)
-		if reached_last_seen or _chase_timer <= 0.0:
+		if _chase_timer <= 0.0:
 			_enter_state(State.DORMANT)
 			return
 
-	if can_see_player and global_position.distance_to(player.global_position) <= catching_distance:
+
+func _try_catch_player() -> bool:
+	if _catch_emitted or _state != State.CHASING or not is_instance_valid(player):
+		return false
+
+	# Physical contact is authoritative. It cannot be blocked by a held gas can
+	# crossing the enemy's sight ray, and walls still prevent this collision.
+	for collision_index in get_slide_collision_count():
+		var collider := get_slide_collision(collision_index).get_collider() as Node
+		if collider == player or (collider != null and player.is_ancestor_of(collider)):
+			_catch_emitted = true
+			print("[Enemy] PLAYER CAUGHT — physical contact")
+			reached_player.emit()
+			return true
+
+	# Also catch at close horizontal range if the path ends just short of body
+	# contact. A clear ray prevents this fallback from working through walls.
+	var player_offset := player.global_position - global_position
+	player_offset.y = 0.0
+	if player_offset.length() <= catching_distance and not is_line_of_sight_broken():
+		_catch_emitted = true
+		print("[Enemy] PLAYER CAUGHT — close range")
 		reached_player.emit()
+		return true
+
+	return false
 
 
 func _update_searching(delta: float) -> void:
