@@ -25,11 +25,12 @@ var _state: State = State.ROAMING
 @export var hearing_position_uncertainty := 2.0
 
 @export_group("Stalking")
-@export_range(0.0, 1.0) var stalking_chance := 0.65
 @export var stalking_speed := 5.0
 @export var stalking_follow_distance := 12.0
 @export var stalking_path_update_delay := 0.5
 @export var stalking_cooldown_time := 25.0
+@export var initial_stalking_delay_min := 8.0
+@export var initial_stalking_delay_max := 15.0
 @export_range(-1.0, 1.0) var player_look_dot_threshold := 0.82
 @export var stalking_footstep_volume_db := -12.0
 @export var heartbeat_delay_min := 8.0
@@ -110,6 +111,11 @@ func _ready() -> void:
 	randomize()
 	add_to_group("enemy")
 	_footstep_base_volume_db = _footsteps.volume_db
+	_stalking_cooldown = randf_range(
+		initial_stalking_delay_min,
+		maxf(initial_stalking_delay_max, initial_stalking_delay_min)
+	)
+	print("[Enemy] First stalking event scheduled in %.1f seconds" % _stalking_cooldown)
 	_nav_map = get_world_3d().get_navigation_map()
 	_sync_map_then_start_roaming()
 
@@ -129,6 +135,11 @@ func _physics_process(delta: float) -> void:
 	if not _map_synchronized:
 		return
 	_stalking_cooldown = maxf(_stalking_cooldown - delta, 0.0)
+	if (
+		_stalking_cooldown <= 0.0
+		and _state not in [State.STALKING, State.VANISHING]
+	):
+		_enter_state(State.STALKING)
 	
 	match _state:
 		State.ROAMING:
@@ -153,6 +164,7 @@ func _physics_process(delta: float) -> void:
 func _enter_state(new_state: State, data := {}) -> void:
 	if _state == State.STALKING and new_state != State.STALKING:
 		_stalking.stop()
+		_stalking_cooldown = stalking_cooldown_time
 		if is_instance_valid(player):
 			player.stop_stalking_heartbeat()
 	_state = new_state
@@ -176,7 +188,6 @@ func _enter_state(new_state: State, data := {}) -> void:
 
 		State.STALKING:
 			_stalking_path_timer = 0.0
-			_stalking_cooldown = stalking_cooldown_time
 			_heartbeat_delay_timer = randf_range(
 				heartbeat_delay_min,
 				maxf(heartbeat_delay_max, heartbeat_delay_min)
@@ -188,11 +199,10 @@ func _enter_state(new_state: State, data := {}) -> void:
 			# player. Following after this point still uses the navigation mesh.
 			var stalking_teleport_position := _pick_stalking_target()
 			global_position = stalking_teleport_position
-			if OS.is_debug_build():
-				print(
-					"[Enemy] STALKING chosen — teleported behind player to ",
-					stalking_teleport_position
-				)
+			print(
+				"[Enemy] STALKING chosen — teleported behind player to ",
+				stalking_teleport_position
+			)
 			_stop_moving()
 			_play_stalking_sound()
 
@@ -224,13 +234,9 @@ func _enter_state(new_state: State, data := {}) -> void:
 func _update_roaming(_delta: float) -> void:
 	if navigation_agent.is_navigation_finished():
 		_travel_to_random_position()
-	
+
 	if is_player_in_view():
-		var can_stalk := (
-			_stalking_cooldown <= 0.0
-			and randf() <= stalking_chance
-		)
-		_enter_state(State.STALKING if can_stalk else State.CHASING)
+		_enter_state(State.CHASING)
 
 
 func _update_investigating(delta: float) -> void:
