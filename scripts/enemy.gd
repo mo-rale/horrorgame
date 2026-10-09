@@ -148,6 +148,35 @@ func _sync_map_then_start_roaming() -> void:
 	_enter_state(State.ROAMING)
 
 
+func reset_after_navigation_rebuild() -> void:
+	# The level replaces its navigation region during startup. Clear any path
+	# calculated from the old map, snap onto the rebuilt mesh, and create a
+	# fresh roaming target so the agent cannot remain in a finished-path state.
+	_nav_map = get_world_3d().get_navigation_map()
+	_map_synchronized = false
+	velocity = Vector3.ZERO
+	_wall_steer_timer = 0.0
+	_wall_steer_direction = Vector3.ZERO
+
+	var closest_owner := NavigationServer3D.map_get_closest_point_owner(
+		_nav_map,
+		global_position
+	)
+	if not closest_owner.is_valid():
+		push_error("[Enemy] Rebuilt navigation map has no point near the enemy")
+		return
+
+	var nav_point := NavigationServer3D.map_get_closest_point(
+		_nav_map,
+		global_position
+	)
+	global_position = _root_position_from_nav_point(nav_point)
+	navigation_agent.target_position = global_position
+	_map_synchronized = true
+	_enter_state(State.ROAMING)
+	print("[Enemy] Navigation reset after level rebuild at ", global_position)
+
+
 func _physics_process(delta: float) -> void:
 	if not _map_synchronized:
 		return

@@ -59,6 +59,8 @@ func _rebuild_level_and_randomize_fuel() -> void:
 	enemy.set_physics_process(false)
 	player.set_physics_process(false)
 
+	var navigation_map := navigation_region.get_navigation_map()
+	var previous_iteration := NavigationServer3D.map_get_iteration_id(navigation_map)
 	var legacy_map := get_node_or_null("NavigationRegion3D")
 	if legacy_map:
 		legacy_map.queue_free()
@@ -73,18 +75,43 @@ func _rebuild_level_and_randomize_fuel() -> void:
 
 	# NavigationServer applies a freshly baked map on the following sync.
 	# Gameplay begins after that update so the enemy never uses the old map.
-	_enable_level_after_navigation_sync(gas_spawn_points)
+	_enable_level_after_navigation_sync(gas_spawn_points, previous_iteration)
 
 
-func _enable_level_after_navigation_sync(gas_spawn_points: Array[Marker3D]) -> void:
+func _enable_level_after_navigation_sync(
+	gas_spawn_points: Array[Marker3D],
+	previous_iteration: int
+) -> void:
+	var navigation_map := navigation_region.get_navigation_map()
+	var navigation_mesh := navigation_region.navigation_mesh
+	# CSG geometry finishes its collision/mesh update after entering the tree.
+	# Baking before this frame can produce an empty navigation mesh.
 	await get_tree().physics_frame
-	await get_tree().physics_frame
+	navigation_region.bake_navigation_mesh(false)
+	var wait_frames := 0
+	while wait_frames < 120:
+		await get_tree().physics_frame
+		wait_frames += 1
+		if (
+			navigation_mesh.get_polygon_count() > 0
+			and NavigationServer3D.map_get_iteration_id(navigation_map) > previous_iteration
+		):
+			break
+
 	if game_ended:
 		return
+	if navigation_mesh.get_polygon_count() == 0:
+		push_error("Level navigation bake produced no polygons; enemy cannot move")
+	else:
+		enemy.reset_after_navigation_rebuild()
 	_randomize_gas_can_spawns(gas_spawn_points)
 	enemy.set_physics_process(true)
 	player.set_physics_process(true)
-	print("[Map] Rebuilt industrial layout; gas cans randomized across safe spawn points")
+	print(
+		"[Map] Navigation ready with %d polygons after %d frames"
+		% [navigation_mesh.get_polygon_count(), wait_frames]
+	)
+	print("[Map] Gas cans randomized across safe spawn points")
 
 
 func _freeze_gas_cans() -> void:
