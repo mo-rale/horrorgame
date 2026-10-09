@@ -298,6 +298,10 @@ func _update_stalking(delta: float) -> void:
 
 	var player_is_watching := has_line_of_sight and _is_player_looking_at_enemy()
 	if player_is_watching:
+		print(
+			"[Enemy] STALKER SEEN — disappearing in %.2f seconds"
+			% seen_vanish_delay
+		)
 		_enter_state(State.VANISHING)
 		return
 
