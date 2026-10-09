@@ -36,7 +36,7 @@ var generator_powered := false
 @export var light_activation_interval_max := 2.0
 @export var factory_gate_open_delay := 2.0
 @export var factory_gate_open_height := 6.0
-@export var factory_gate_open_duration := 2.5
+@export var factory_gate_open_duration := 5.60
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
