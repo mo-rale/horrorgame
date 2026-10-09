@@ -86,6 +86,8 @@ var _heard_position := Vector3.ZERO
 var _stalking_path_timer := 0.0
 var _stalking_cooldown := 0.0
 var _stalking_follow_target := Vector3.ZERO
+var _stalking_path := PackedVector3Array()
+var _stalking_path_index := 0
 var _heartbeat_delay_timer := 0.0
 var _heartbeat_attack_timer := 0.0
 var _heartbeat_active := false
@@ -237,6 +239,8 @@ func _enter_state(new_state: State, data := {}) -> void:
 
 	if _state == State.STALKING and new_state != State.STALKING:
 		_stalking.stop()
+		_stalking_path.clear()
+		_stalking_path_index = 0
 		_stalking_cooldown = stalking_cooldown_time
 		if is_instance_valid(player):
 			player.stop_stalking_heartbeat()
@@ -288,6 +292,7 @@ func _enter_state(new_state: State, data := {}) -> void:
 				"[Enemy] STALKING chosen — teleported behind player to ",
 				stalking_teleport_position
 			)
+			print("[Enemy] STALKING path waypoints: ", _stalking_path.size())
 			print("[Enemy] STALKER visibility restored: ", visible)
 			velocity = Vector3.ZERO
 			_play_stalking_sound()
@@ -385,10 +390,49 @@ func _update_stalking(delta: float) -> void:
 
 
 func _move_stalking(delta: float) -> void:
-	# Follow the NavigationAgent path instead of moving directly toward the
-	# target. Direct movement made the stalker press into walls and remain
-	# stuck whenever the player moved around a corner or through a doorway.
-	_move_along_path(delta)
+	# Stalking owns its waypoint path. NavigationAgent3D can retain a finished
+	# state after the supernatural teleport and refuse to advance a new path.
+	# Following the NavigationServer path directly avoids that stale state.
+	_wall_steer_timer = maxf(_wall_steer_timer - delta, 0.0)
+	while _stalking_path_index < _stalking_path.size():
+		var waypoint := _stalking_path[_stalking_path_index]
+		var waypoint_offset := waypoint - global_position
+		waypoint_offset.y = 0.0
+		if waypoint_offset.length() > 0.35:
+			break
+		_stalking_path_index += 1
+
+	if _stalking_path_index >= _stalking_path.size():
+		velocity = Vector3.ZERO
+		move_and_slide()
+		_face_player()
+		return
+
+	var next_waypoint := _stalking_path[_stalking_path_index]
+	var to_next := next_waypoint - global_position
+	to_next.y = 0.0
+	var distance_to_next := to_next.length()
+	if distance_to_next < 0.01:
+		velocity = Vector3.ZERO
+		move_and_slide()
+		_face_player()
+		return
+
+	var direction := to_next / distance_to_next
+	if _wall_steer_timer > 0.0:
+		direction = (
+			direction + _wall_steer_direction * wall_steer_strength
+		).normalized()
+
+	var position_before_move := global_position
+	velocity = direction * stalking_speed
+	move_and_slide()
+	_update_wall_steering(direction, to_next)
+	var distance_moved := Vector2(
+		global_position.x - position_before_move.x,
+		global_position.z - position_before_move.z
+	).length()
+	_update_footsteps(distance_moved)
 	_face_player()
 
 
@@ -605,7 +649,8 @@ func _update_stalking_follow_path() -> void:
 	if not bool(placement["found"]):
 		return
 	_stalking_follow_target = placement["position"]
-	travel_to_position(_stalking_follow_target, stalking_speed)
+	_stalking_path = placement["path"]
+	_stalking_path_index = 0
 
 
 func _find_stalking_follow_target() -> Dictionary:
@@ -643,6 +688,7 @@ func _find_stalking_follow_target() -> Dictionary:
 		return {
 			"found": true,
 			"position": _root_position_from_nav_point(nav_point),
+			"path": path,
 		}
 
 	# Narrow corridors may have no navmesh point at the preferred offset.
@@ -662,9 +708,14 @@ func _find_stalking_follow_target() -> Dictionary:
 		return {
 			"found": true,
 			"position": _root_position_from_nav_point(player_nav_point),
+			"path": fallback_path,
 		}
 
-	return {"found": false, "position": Vector3.ZERO}
+	return {
+		"found": false,
+		"position": Vector3.ZERO,
+		"path": PackedVector3Array(),
+	}
 
 
 func _find_safe_stalking_teleport() -> Dictionary:
