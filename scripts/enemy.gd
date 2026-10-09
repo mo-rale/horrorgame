@@ -349,30 +349,18 @@ func _update_stalking(delta: float) -> void:
 	# around obstacles, but being caught in view still makes it vanish.
 	if _stalking_path_timer <= 0.0:
 		_stalking_path_timer = stalking_path_update_delay
-		_stalking_follow_target = _pick_stalking_target()
+		var placement := _find_safe_stalking_teleport()
+		if bool(placement["found"]):
+			_stalking_follow_target = placement["position"]
+			travel_to_position(_stalking_follow_target, stalking_speed)
 
 
-func _move_stalking(_delta: float) -> void:
-	var to_target := _stalking_follow_target - global_position
-	to_target.y = 0.0
-	var distance_to_target := to_target.length()
-
-	if distance_to_target <= 0.15:
-		velocity = Vector3.ZERO
-		move_and_slide()
-		_face_player()
-		return
-
-	var position_before_move := global_position
-	velocity = to_target.normalized() * stalking_speed
-	move_and_slide()
+func _move_stalking(delta: float) -> void:
+	# Follow the NavigationAgent path instead of moving directly toward the
+	# target. Direct movement made the stalker press into walls and remain
+	# stuck whenever the player moved around a corner or through a doorway.
+	_move_along_path(delta)
 	_face_player()
-
-	var distance_moved := Vector2(
-		global_position.x - position_before_move.x,
-		global_position.z - position_before_move.z
-	).length()
-	_update_footsteps(distance_moved)
 
 
 func _update_chasing(delta: float) -> void:
@@ -568,16 +556,6 @@ func hear_noise(sound_position: Vector3, hearing_distance: float) -> void:
 	var uncertainty := hearing_position_uncertainty * distance_ratio
 	var estimated_position := sound_position + _random_point_in_circle(uncertainty)
 	_enter_state(State.INVESTIGATING, {"sound_position": estimated_position})
-
-
-func _pick_stalking_target() -> Vector3:
-	# Reuse the safe same-room search while following. A fixed distant point
-	# can land beyond a room wall and make the navigation path finish at the
-	# enemy's current position instead of following the player.
-	var placement := _find_safe_stalking_teleport()
-	if bool(placement["found"]):
-		return placement["position"]
-	return global_position
 
 
 func _try_start_stalking() -> void:
