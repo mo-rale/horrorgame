@@ -21,7 +21,7 @@ const FOV_SPEED = 8.0
 @onready var collision_shape: CollisionShape3D = $CollisionShape3D
 
 var current_interactable: Node = null
-var mouse_sensitivity = 0.001
+var mouse_sensitivity := 0.001
 var pitch = 0.0
 var is_flashlight_on = false
 var is_crouching = false
@@ -59,6 +59,7 @@ var _held_object_clearance_shape := SphereShape3D.new()
 
 func _ready():
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	mouse_sensitivity *= Settings.mouse_sensitivity
 	camera_default_pos = camera.position
 	camera.fov = NORMAL_FOV
 	light.visible = false

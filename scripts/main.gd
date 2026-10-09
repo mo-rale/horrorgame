@@ -15,6 +15,7 @@ extends Node3D
 @onready var objective_label: Label = %ObjectiveLabel
 @onready var fuel_label: Label = %FuelLabel
 @onready var controls_label: Label = %ControlsLabel
+@onready var world_environment: WorldEnvironment = $WorldEnvironment
 
 var game_ended := false
 var player_paused := false
@@ -31,6 +32,7 @@ func _ready() -> void:
 			child.process_mode = Node.PROCESS_MODE_PAUSABLE
 
 	randomize()
+	Settings.apply_brightness(world_environment.environment)
 	enemy.reached_player.connect(_on_enemy_reached_player)
 	generator.generator_started.connect(_on_generator_started)
 	generator.fuel_changed.connect(_on_fuel_changed)
@@ -39,6 +41,8 @@ func _ready() -> void:
 	resume_button.pressed.connect(_resume_game)
 	%MainMenuButton.pressed.connect(_return_to_main_menu)
 	%QuitButton.pressed.connect(get_tree().quit)
+	%GameOverMenuButton.pressed.connect(_return_to_main_menu)
+	%VictoryMenuButton.pressed.connect(_return_to_main_menu)
 	_setup_volume_slider(pause_master_slider, "Master")
 	_setup_volume_slider(pause_music_slider, "Music")
 	_setup_volume_slider(pause_sfx_slider, "SFX")

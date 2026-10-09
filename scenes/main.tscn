@@ -365,6 +365,13 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "RESTART  [R]"
 
+[node name="GameOverMenuButton" type="Button" parent="GameOverScreen/CenterContainer/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "MAIN MENU"
+
 [node name="VictoryScreen" type="CanvasLayer" parent="." unique_id=1451431087]
 process_mode = 3
 layer = 100
@@ -411,6 +418,13 @@ custom_minimum_size = Vector2(240, 52)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "PLAY AGAIN  [R]"
+
+[node name="VictoryMenuButton" type="Button" parent="VictoryScreen/CenterContainer/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "MAIN MENU"
 
 [node name="PauseScreen" type="CanvasLayer" parent="." unique_id=1937436852]
 process_mode = 3
