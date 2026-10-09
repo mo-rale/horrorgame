@@ -5,7 +5,7 @@ class_name Enemy
 signal reached_player
 
 # ── States ───────────────────────────────────────────────────────────────
-enum State { ROAMING, INVESTIGATING, STALKING, CHASING, SEARCHING }
+enum State { ROAMING, INVESTIGATING, STALKING, VANISHING, CHASING, SEARCHING }
 
 var _state: State = State.ROAMING
 
@@ -35,9 +35,11 @@ var _state: State = State.ROAMING
 @export var stalking_lost_sight_time := 3.0
 @export var stalking_path_update_delay := 0.5
 @export var stalking_cooldown_time := 25.0
-@export var watched_before_chase := 1.75
 @export_range(-1.0, 1.0) var player_look_dot_threshold := 0.82
 @export var stalking_footstep_volume_db := -12.0
+@export var vanish_hidden_time := 3.0
+@export var vanish_reappear_distance_min := 18.0
+@export var vanish_reappear_distance_max := 28.0
 
 @export_group("Chasing")
 @export var chasing_speed := 6.0
@@ -76,8 +78,6 @@ var _stalking_timer := 0.0
 var _stalking_lost_sight_timer := 0.0
 var _stalking_path_timer := 0.0
 var _stalking_cooldown := 0.0
-var _watched_timer := 0.0
-var _seen_sound_played := false
 var _footstep_base_volume_db := 0.0
 
 # ── Chasing state ────────────────────────────────────────────────────────
@@ -102,6 +102,7 @@ var _map_synchronized := false
 @onready var _roaming: AudioStreamPlayer3D = $roaming
 @onready var _stalking: AudioStreamPlayer3D = $stalking
 @onready var _seen: AudioStreamPlayer3D = $seen
+@onready var _collision_shape: CollisionShape3D = $CollisionShape3D
 @onready var ray_cast_3d: RayCast3D = %EyeRayCast
 @onready var generator: Node3D = get_tree().get_first_node_in_group("generator")
 
@@ -136,6 +137,9 @@ func _physics_process(delta: float) -> void:
 			_update_investigating(delta)
 		State.STALKING:
 			_update_stalking(delta)
+		State.VANISHING:
+			velocity = Vector3.ZERO
+			return
 		State.CHASING:
 			_update_chasing(delta)
 		State.SEARCHING:
@@ -173,11 +177,16 @@ func _enter_state(new_state: State, data := {}) -> void:
 			_stalking_lost_sight_timer = stalking_lost_sight_time
 			_stalking_path_timer = 0.0
 			_stalking_cooldown = stalking_cooldown_time
-			_watched_timer = 0.0
-			_seen_sound_played = false
 			_player_last_seen_position = player.global_position
 			travel_to_position(_pick_stalking_target(), stalking_speed)
 			_play_stalking_sound()
+
+		State.VANISHING:
+			_stop_moving()
+			visible = false
+			_collision_shape.set_deferred("disabled", true)
+			_play_seen_sound()
+			_vanish_then_resume_roaming()
 		
 		State.CHASING:
 			_chase_timer = chase_max_time
@@ -261,21 +270,9 @@ func _update_stalking(delta: float) -> void:
 
 	var player_is_watching := has_line_of_sight and _is_player_looking_at_enemy()
 	if player_is_watching:
-		_stop_moving()
-		_watched_timer += delta
-		if not _seen_sound_played:
-			_seen_sound_played = true
-			_play_seen_sound()
-
-		if (
-			player.is_flashlight_on
-			or _watched_timer >= watched_before_chase
-			or distance_to_player <= stalking_chase_distance
-		):
-			_enter_state(State.CHASING)
+		_enter_state(State.VANISHING)
 		return
 
-	_watched_timer = maxf(_watched_timer - delta * 0.5, 0.0)
 	var player_horizontal_speed := Vector2(player.velocity.x, player.velocity.z).length()
 	if has_line_of_sight and (
 		distance_to_player <= stalking_chase_distance
@@ -502,6 +499,30 @@ func _is_player_looking_at_enemy() -> bool:
 func _stop_moving() -> void:
 	navigation_agent.target_position = global_position
 	velocity = Vector3.ZERO
+
+
+func _vanish_then_resume_roaming() -> void:
+	await get_tree().create_timer(vanish_hidden_time, false).timeout
+	if not is_inside_tree():
+		return
+
+	global_position = _pick_vanish_destination()
+	visible = true
+	_collision_shape.set_deferred("disabled", false)
+	_enter_state(State.ROAMING)
+
+
+func _pick_vanish_destination() -> Vector3:
+	# Reappear well behind the player's current view, with enough random
+	# variation that the next encounter does not feel scripted.
+	var distance := randf_range(
+		vanish_reappear_distance_min,
+		maxf(vanish_reappear_distance_max, vanish_reappear_distance_min)
+	)
+	var behind_direction := player.global_basis.z.normalized()
+	behind_direction = behind_direction.rotated(Vector3.UP, randf_range(-0.6, 0.6))
+	var raw_destination := player.global_position + behind_direction * distance
+	return NavigationServer3D.map_get_closest_point(_nav_map, raw_destination)
 
 
 func travel_to_position(wanted_position: Vector3, speed: float, _play_run_anim := false) -> void:
