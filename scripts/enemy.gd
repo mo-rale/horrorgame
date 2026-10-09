@@ -167,6 +167,8 @@ func _physics_process(delta: float) -> void:
 			_update_searching(delta)
 	
 	_move_along_path(delta)
+	if _state == State.STALKING:
+		_face_player()
 
 
 # ── State transition ─────────────────────────────────────────────────────
@@ -224,6 +226,7 @@ func _enter_state(new_state: State, data := {}) -> void:
 			# player. Following after this point still uses the navigation mesh.
 			var stalking_teleport_position: Vector3 = data["teleport_position"]
 			global_position = stalking_teleport_position
+			_face_player()
 			print(
 				"[Enemy] STALKING chosen — teleported behind player to ",
 				stalking_teleport_position
@@ -619,6 +622,15 @@ func _is_player_looking_at_enemy() -> bool:
 func _stop_moving() -> void:
 	navigation_agent.target_position = global_position
 	velocity = Vector3.ZERO
+
+
+func _face_player() -> void:
+	if not is_instance_valid(player):
+		return
+	var player_position := player.global_position
+	player_position.y = global_position.y
+	if not player_position.is_equal_approx(global_position):
+		look_at(player_position, Vector3.UP)
 
 
 func _delay_then_vanish() -> void:
