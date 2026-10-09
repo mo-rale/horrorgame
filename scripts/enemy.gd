@@ -86,8 +86,8 @@ var _heard_position := Vector3.ZERO
 var _stalking_path_timer := 0.0
 var _stalking_cooldown := 0.0
 var _stalking_follow_target := Vector3.ZERO
-var _stalking_path := PackedVector3Array()
-var _stalking_path_index := 0
+var _direct_path := PackedVector3Array()
+var _direct_path_index := 0
 var _heartbeat_delay_timer := 0.0
 var _heartbeat_attack_timer := 0.0
 var _heartbeat_active := false
@@ -99,6 +99,7 @@ var _vanish_sequence_id := 0
 # ── Chasing state ────────────────────────────────────────────────────────
 var _chase_timer := 0.0
 var _update_path_timer := 0.0
+var _chase_path_failure_reported := false
 
 # ── Searching state ──────────────────────────────────────────────────────
 var _search_timer := 0.0
@@ -203,13 +204,16 @@ func _physics_process(delta: float) -> void:
 		State.STALKING:
 			_update_stalking(delta)
 			if _state == State.STALKING:
-				_move_stalking(delta)
+				_move_direct_path(delta, stalking_speed, true)
 			return
 		State.VANISHING:
 			velocity = Vector3.ZERO
 			return
 		State.CHASING:
 			_update_chasing(delta)
+			if _state == State.CHASING:
+				_move_direct_path(delta, chasing_speed, false)
+			return
 		State.SEARCHING:
 			_update_searching(delta)
 	if _state == State.DORMANT:
@@ -246,8 +250,8 @@ func _enter_state(new_state: State, data := {}) -> void:
 
 	if _state == State.STALKING and new_state != State.STALKING:
 		_stalking.stop()
-		_stalking_path.clear()
-		_stalking_path_index = 0
+		_direct_path.clear()
+		_direct_path_index = 0
 		_stalking_cooldown = stalking_cooldown_time
 		if is_instance_valid(player):
 			player.stop_stalking_heartbeat()
@@ -256,6 +260,8 @@ func _enter_state(new_state: State, data := {}) -> void:
 	match _state:
 		State.DORMANT:
 			_stop_moving()
+			_direct_path.clear()
+			_direct_path_index = 0
 			visible = false
 			_collision_shape.set_deferred("disabled", true)
 			_footsteps.stop()
@@ -309,7 +315,7 @@ func _enter_state(new_state: State, data := {}) -> void:
 				"[Enemy] STALKING chosen — teleported behind player to ",
 				stalking_teleport_position
 			)
-			print("[Enemy] STALKING path waypoints: ", _stalking_path.size())
+			print("[Enemy] STALKING path waypoints: ", _direct_path.size())
 			print("[Enemy] STALKER visibility restored: ", visible)
 			velocity = Vector3.ZERO
 			_play_stalking_sound()
@@ -321,13 +327,15 @@ func _enter_state(new_state: State, data := {}) -> void:
 		
 		State.CHASING:
 			_chase_timer = chase_max_time
-			_update_path_timer = 0.0
+			_update_path_timer = update_path_delay
+			_chase_path_failure_reported = false
 			_player_last_seen_position = player.global_position
 			print(
 				"[Enemy] CHASING started — player position: ",
 				_player_last_seen_position
 			)
-			travel_to_position(_player_last_seen_position, chasing_speed)
+			_update_chase_path()
+			print("[Enemy] CHASING path waypoints: ", _direct_path.size())
 			_play_scream_chase()
 		
 		State.SEARCHING:
@@ -406,33 +414,34 @@ func _update_stalking(delta: float) -> void:
 		_update_stalking_follow_path()
 
 
-func _move_stalking(delta: float) -> void:
-	# Stalking owns its waypoint path. NavigationAgent3D can retain a finished
-	# state after the supernatural teleport and refuse to advance a new path.
-	# Following the NavigationServer path directly avoids that stale state.
+func _move_direct_path(delta: float, speed: float, face_player: bool) -> void:
+	# Teleporting can leave NavigationAgent3D in a stale finished state. Both
+	# stalking and chasing therefore follow fresh NavigationServer waypoints.
 	_wall_steer_timer = maxf(_wall_steer_timer - delta, 0.0)
-	while _stalking_path_index < _stalking_path.size():
-		var waypoint := _stalking_path[_stalking_path_index]
+	while _direct_path_index < _direct_path.size():
+		var waypoint := _direct_path[_direct_path_index]
 		var waypoint_offset := waypoint - global_position
 		waypoint_offset.y = 0.0
 		if waypoint_offset.length() > 0.35:
 			break
-		_stalking_path_index += 1
+		_direct_path_index += 1
 
-	if _stalking_path_index >= _stalking_path.size():
+	if _direct_path_index >= _direct_path.size():
 		velocity = Vector3.ZERO
 		move_and_slide()
-		_face_player()
+		if face_player:
+			_face_player()
 		return
 
-	var next_waypoint := _stalking_path[_stalking_path_index]
+	var next_waypoint := _direct_path[_direct_path_index]
 	var to_next := next_waypoint - global_position
 	to_next.y = 0.0
 	var distance_to_next := to_next.length()
 	if distance_to_next < 0.01:
 		velocity = Vector3.ZERO
 		move_and_slide()
-		_face_player()
+		if face_player:
+			_face_player()
 		return
 
 	var direction := to_next / distance_to_next
@@ -442,7 +451,7 @@ func _move_stalking(delta: float) -> void:
 		).normalized()
 
 	var position_before_move := global_position
-	velocity = direction * stalking_speed
+	velocity = direction * speed
 	move_and_slide()
 	_update_wall_steering(direction, to_next)
 	var distance_moved := Vector2(
@@ -450,7 +459,13 @@ func _move_stalking(delta: float) -> void:
 		global_position.z - position_before_move.z
 	).length()
 	_update_footsteps(distance_moved)
-	_face_player()
+	if face_player:
+		_face_player()
+	else:
+		var look_target := next_waypoint
+		look_target.y = global_position.y
+		if not look_target.is_equal_approx(global_position):
+			look_at(look_target, Vector3.UP)
 
 
 func _update_chasing(delta: float) -> void:
@@ -463,7 +478,7 @@ func _update_chasing(delta: float) -> void:
 
 		if _update_path_timer <= 0.0:
 			_update_path_timer = update_path_delay
-			travel_to_position(_player_last_seen_position, chasing_speed)
+			_update_chase_path()
 	else:
 		_chase_timer -= delta
 
@@ -471,7 +486,7 @@ func _update_chasing(delta: float) -> void:
 		# player's hidden position while a wall blocks sight.
 		if _update_path_timer <= 0.0:
 			_update_path_timer = update_path_delay
-			travel_to_position(_player_last_seen_position, chasing_speed)
+			_update_chase_path()
 
 		var reached_last_seen := global_position.distance_to(_player_last_seen_position) <= (
 			navigation_agent.target_desired_distance + 0.25
@@ -651,8 +666,32 @@ func _update_stalking_follow_path() -> void:
 	if not bool(placement["found"]):
 		return
 	_stalking_follow_target = placement["position"]
-	_stalking_path = placement["path"]
-	_stalking_path_index = 0
+	_direct_path = placement["path"]
+	_direct_path_index = 0
+
+
+func _update_chase_path() -> void:
+	var player_nav_point := NavigationServer3D.map_get_closest_point(
+		_nav_map,
+		_player_last_seen_position
+	)
+	var chase_path := NavigationServer3D.map_get_path(
+		_nav_map,
+		global_position,
+		player_nav_point,
+		true
+	)
+	if chase_path.is_empty():
+		_direct_path.clear()
+		_direct_path_index = 0
+		if not _chase_path_failure_reported:
+			push_warning("[Enemy] CHASING could not build a path to the player")
+			_chase_path_failure_reported = true
+		return
+
+	_chase_path_failure_reported = false
+	_direct_path = chase_path
+	_direct_path_index = 0
 
 
 func _find_stalking_follow_target() -> Dictionary:
