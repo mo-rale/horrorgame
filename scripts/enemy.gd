@@ -172,6 +172,17 @@ func _physics_process(delta: float) -> void:
 # ── State transition ─────────────────────────────────────────────────────
 
 func _enter_state(new_state: State, data := {}) -> void:
+	# One-shot behavior sounds do not stop automatically when the state
+	# changes. Clean them up so an old chase scream cannot leak into a
+	# stalking disappearance.
+	if new_state != State.CHASING:
+		_chasing.stop()
+	if new_state != State.ROAMING:
+		_roaming.stop()
+	if new_state == State.VANISHING:
+		_footsteps.stop()
+		_stalking.stop()
+
 	if _state == State.STALKING and new_state != State.STALKING:
 		_stalking.stop()
 		_stalking_cooldown = stalking_cooldown_time
