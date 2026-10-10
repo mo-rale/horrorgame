@@ -38,10 +38,9 @@ var _state: State = State.DORMANT
 @export var initial_stalking_delay_max := 10.0
 @export_range(-1.0, 1.0) var player_look_dot_threshold := 0.82
 @export var stalking_footstep_volume_db := -12.0
-@export var heartbeat_delay_min := 5.0
-@export var heartbeat_delay_max := 9.0
-@export var heartbeat_duration_min := 4.0
-@export var heartbeat_duration_max := 6.0
+@export var anxiety_rise_per_second := 8.0
+@export_range(1.0, 99.0, 1.0) var anxiety_heartbeat_threshold := 55.0
+@export var anxiety_rise_bonus_per_threat := 1.25
 @export var seen_vanish_delay := 0.75
 @export var vanish_hidden_time := 3.0
 @export var vanish_reappear_distance_min := 30.0
@@ -63,10 +62,6 @@ var _state: State = State.DORMANT
 @export var stalking_speed_bonus_per_level := 0.35
 @export var stalking_distance_reduction_per_level := 0.3
 @export var minimum_stalking_follow_distance := 2.0
-@export var heartbeat_delay_reduction_per_level := 0.6
-@export var minimum_heartbeat_delay := 2.5
-@export var heartbeat_duration_reduction_per_level := 0.35
-@export var minimum_heartbeat_duration := 2.5
 @export var chase_speed_bonus_per_level := 0.4
 @export var chase_time_bonus_per_level := 1.5
 
@@ -102,8 +97,7 @@ var _stalking_cooldown := 0.0
 var _stalking_follow_target := Vector3.ZERO
 var _direct_path := PackedVector3Array()
 var _direct_path_index := 0
-var _heartbeat_delay_timer := 0.0
-var _heartbeat_attack_timer := 0.0
+var _anxiety_level := 0.0
 var _heartbeat_active := false
 var _stalking_encounters := 0
 var _footstep_base_volume_db := 0.0
@@ -153,6 +147,9 @@ func _ready() -> void:
 		initial_stalking_delay_min,
 		maxf(initial_stalking_delay_max, initial_stalking_delay_min)
 	)
+	if is_instance_valid(player):
+		player.calm_pressed.connect(_on_player_calm_pressed)
+		player.anxiety_calmed.connect(_on_player_anxiety_calmed)
 	print("[Enemy] First stalking event scheduled in %.1f seconds" % _stalking_cooldown)
 	_nav_map = get_world_3d().get_navigation_map()
 	_sync_map_then_start_dormant()
@@ -206,7 +203,7 @@ func disable_permanently() -> void:
 	_map_synchronized = false
 	set_physics_process(false)
 	if is_instance_valid(player):
-		player.stop_stalking_heartbeat()
+		player.end_stalking_anxiety()
 	print("[Enemy] DISABLED — factory power is on")
 
 
@@ -288,7 +285,7 @@ func _enter_state(new_state: State, data := {}) -> void:
 			stalking_cooldown_time - _threat_level() * cooldown_reduction_per_level
 		)
 		if is_instance_valid(player):
-			player.stop_stalking_heartbeat()
+			player.end_stalking_anxiety()
 	_state = new_state
 	
 	match _state:
@@ -324,18 +321,9 @@ func _enter_state(new_state: State, data := {}) -> void:
 				_enter_state(State.DORMANT)
 				return
 			_stalking_path_timer = 0.0
-			var threat := float(_threat_level())
-			var effective_delay_min := maxf(
-				minimum_heartbeat_delay,
-				heartbeat_delay_min - threat * heartbeat_delay_reduction_per_level
-			)
-			var effective_delay_max := maxf(
-				effective_delay_min,
-				heartbeat_delay_max - threat * heartbeat_delay_reduction_per_level
-			)
-			_heartbeat_delay_timer = randf_range(effective_delay_min, effective_delay_max)
-			_heartbeat_attack_timer = 0.0
+			_anxiety_level = 0.0
 			_heartbeat_active = false
+			player.start_stalking_anxiety()
 			# Invalidate any older disappearance timer and always restore the
 			# physical/visual state before beginning a new stalking cycle.
 			_vanish_sequence_id += 1
@@ -430,10 +418,6 @@ func _update_stalking(delta: float) -> void:
 
 	var player_is_watching := has_line_of_sight and _is_player_looking_at_enemy()
 	if player_is_watching:
-		if _heartbeat_active:
-			print("[Enemy] STALKER SEEN DURING HEARTBEAT — attacking now")
-			_enter_state(State.CHASING)
-			return
 		print(
 			"[Enemy] STALKER SEEN — disappearing in %.2f seconds"
 			% seen_vanish_delay
@@ -441,35 +425,43 @@ func _update_stalking(delta: float) -> void:
 		_enter_state(State.VANISHING)
 		return
 
-	if _heartbeat_active:
-		_heartbeat_attack_timer -= delta
-		if _heartbeat_attack_timer <= 0.0:
-			_enter_state(State.CHASING)
-			return
-	else:
-		_heartbeat_delay_timer -= delta
-		if _heartbeat_delay_timer <= 0.0:
-			_heartbeat_active = true
-			var threat := float(_threat_level())
-			var effective_duration_min := maxf(
-				minimum_heartbeat_duration,
-				heartbeat_duration_min - threat * heartbeat_duration_reduction_per_level
-			)
-			var effective_duration_max := maxf(
-				effective_duration_min,
-				heartbeat_duration_max - threat * heartbeat_duration_reduction_per_level
-			)
-			_heartbeat_attack_timer = randf_range(
-				effective_duration_min,
-				effective_duration_max
-			)
-			player.start_stalking_heartbeat()
+	_anxiety_level = minf(
+		100.0,
+		_anxiety_level + (
+			anxiety_rise_per_second
+			+ float(_threat_level()) * anxiety_rise_bonus_per_threat
+		) * delta
+	)
+	player.update_stalking_anxiety(_anxiety_level, anxiety_heartbeat_threshold)
+	if not _heartbeat_active and _anxiety_level >= anxiety_heartbeat_threshold:
+		_heartbeat_active = true
+		player.start_stalking_heartbeat()
+		print("[Enemy] ANXIETY HIGH — heartbeat warning started")
+	if _anxiety_level >= 100.0:
+		print("[Enemy] ANXIETY MAXED — chase started")
+		_enter_state(State.CHASING)
+		return
 
 	# The stalker continually follows the player's back. It can navigate
 	# around obstacles, but being caught in view still makes it vanish.
 	if _stalking_path_timer <= 0.0:
 		_stalking_path_timer = stalking_path_update_delay
 		_update_stalking_follow_path()
+
+
+func _on_player_calm_pressed(amount: float) -> void:
+	if _state != State.STALKING:
+		return
+	_anxiety_level = maxf(_anxiety_level - amount, 0.0)
+	player.update_stalking_anxiety(_anxiety_level, anxiety_heartbeat_threshold)
+	print("[Enemy] CALM pressed — anxiety now %.0f%%" % _anxiety_level)
+
+
+func _on_player_anxiety_calmed() -> void:
+	if _state != State.STALKING:
+		return
+	print("[Enemy] ANXIETY SUPPRESSED — stalker withdrawing and restarting cooldown")
+	_enter_state(State.DORMANT)
 
 
 func _move_direct_path(delta: float, speed: float, face_player: bool) -> void:

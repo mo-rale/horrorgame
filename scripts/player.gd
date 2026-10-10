@@ -1,6 +1,9 @@
 extends CharacterBody3D
 class_name Player
 
+signal calm_pressed(amount: float)
+signal anxiety_calmed
+
 const SPEED = 5.0
 const SPRINT_SPEED = 9.0
 const CROUCH_SPEED = 2.5
@@ -20,6 +23,10 @@ const FOV_SPEED = 8.0
 @onready var heartbeat: AudioStreamPlayer = $heartbeat
 @onready var hand: Node3D = %hand
 @onready var collision_shape: CollisionShape3D = $CollisionShape3D
+@onready var anxiety_hud: CanvasLayer = %AnxietyHUD
+@onready var anxiety_bar: ProgressBar = %AnxietyBar
+@onready var anxiety_value_label: Label = %AnxietyValueLabel
+@onready var calm_button: Button = %CalmButton
 
 var current_interactable: Node = null
 var mouse_sensitivity := 0.001
@@ -61,6 +68,16 @@ var grabbed_object: RigidBody3D = null
 
 var _held_object_clearance_shape := SphereShape3D.new()
 
+@export_group("Anxiety")
+@export_range(2, 10, 1) var calm_presses_required := 5
+@export_range(1.0, 50.0, 1.0) var calm_reduction_per_press := 18.0
+
+var _anxiety_active := false
+var _calm_phase_started := false
+var _calm_press_count := 0
+var _calm_key := KEY_NONE
+var _calm_keys: Array[int] = [KEY_Q, KEY_C, KEY_Z, KEY_X]
+
 func _ready():
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	mouse_sensitivity *= Settings.mouse_sensitivity
@@ -82,8 +99,22 @@ func _ready():
 		_standing_collider_height - CROUCH_COLLIDER_HEIGHT
 	) * 0.5
 	_held_object_clearance_shape.radius = held_object_clearance_radius
+	calm_button.pressed.connect(_register_calm_press)
+	anxiety_hud.visible = false
 
 func _input(event):
+	if (
+		_anxiety_active
+		and _calm_phase_started
+		and event is InputEventKey
+		and event.pressed
+		and not event.echo
+		and event.physical_keycode == _calm_key
+	):
+		_register_calm_press()
+		get_viewport().set_input_as_handled()
+		return
+
 	if event is InputEventMouseMotion:
 		# Rotate player left/right
 		rotate_y(-event.relative.x * mouse_sensitivity)
@@ -462,3 +493,62 @@ func start_stalking_heartbeat() -> void:
 
 func stop_stalking_heartbeat() -> void:
 	heartbeat.stop()
+
+
+func start_stalking_anxiety() -> void:
+	_anxiety_active = true
+	_calm_phase_started = false
+	_calm_press_count = 0
+	_calm_key = KEY_NONE
+	anxiety_bar.value = 0.0
+	anxiety_value_label.text = "0%"
+	calm_button.visible = false
+	anxiety_hud.visible = true
+
+
+func update_stalking_anxiety(value: float, heartbeat_threshold: float) -> void:
+	if not _anxiety_active:
+		return
+	anxiety_bar.value = clampf(value, 0.0, 100.0)
+	anxiety_value_label.text = "%d%%" % roundi(anxiety_bar.value)
+	if value >= heartbeat_threshold and not _calm_phase_started:
+		_calm_phase_started = true
+		calm_button.visible = true
+		_choose_next_calm_key()
+
+
+func end_stalking_anxiety() -> void:
+	_anxiety_active = false
+	_calm_phase_started = false
+	_calm_press_count = 0
+	calm_button.visible = false
+	anxiety_hud.visible = false
+	stop_stalking_heartbeat()
+
+
+func _register_calm_press() -> void:
+	if not _anxiety_active or not _calm_phase_started:
+		return
+	_calm_press_count += 1
+	calm_pressed.emit(calm_reduction_per_press)
+	if _calm_press_count >= calm_presses_required:
+		anxiety_calmed.emit()
+		return
+	_choose_next_calm_key()
+
+
+func _choose_next_calm_key() -> void:
+	var previous_key := _calm_key
+	while _calm_key == previous_key:
+		_calm_key = _calm_keys.pick_random()
+	calm_button.text = "CALM  [%s]   %d/%d" % [
+		OS.get_keycode_string(_calm_key),
+		_calm_press_count,
+		calm_presses_required,
+	]
+	var viewport_size := get_viewport().get_visible_rect().size
+	var prompt_size := Vector2(230.0, 64.0)
+	calm_button.position = Vector2(
+		randf_range(60.0, maxf(60.0, viewport_size.x - prompt_size.x - 60.0)),
+		randf_range(120.0, maxf(120.0, viewport_size.y - prompt_size.y - 70.0))
+	)

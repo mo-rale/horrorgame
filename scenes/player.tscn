@@ -72,3 +72,63 @@ volume_db = -8.0
 [node name="heartbeat" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("6_heartbeat")
 volume_db = -8.0
+
+[node name="AnxietyHUD" type="CanvasLayer" parent="."]
+unique_name_in_owner = true
+layer = 25
+visible = false
+
+[node name="AnxietyPanel" type="PanelContainer" parent="AnxietyHUD"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -354.0
+offset_top = 28.0
+offset_right = -28.0
+offset_bottom = 116.0
+grow_horizontal = 0
+mouse_filter = 2
+
+[node name="Margin" type="MarginContainer" parent="AnxietyHUD/AnxietyPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 10
+
+[node name="Content" type="VBoxContainer" parent="AnxietyHUD/AnxietyPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="Header" type="HBoxContainer" parent="AnxietyHUD/AnxietyPanel/Margin/Content"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="AnxietyHUD/AnxietyPanel/Margin/Content/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.82, 0.18, 0.16, 1)
+theme_override_font_sizes/font_size = 17
+text = "ANXIETY"
+
+[node name="AnxietyValueLabel" type="Label" parent="AnxietyHUD/AnxietyPanel/Margin/Content/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 16
+text = "0%"
+
+[node name="AnxietyBar" type="ProgressBar" parent="AnxietyHUD/AnxietyPanel/Margin/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(298, 24)
+layout_mode = 2
+show_percentage = false
+
+[node name="CalmButton" type="Button" parent="AnxietyHUD"]
+unique_name_in_owner = true
+visible = false
+offset_right = 230.0
+offset_bottom = 64.0
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "CALM  [Q]   0/5"
