@@ -13,6 +13,7 @@
 [ext_resource type="PackedScene" uid="uid://cp861k7cohx8e" path="res://scenes/gas_can.tscn" id="11_ya4ey"]
 [ext_resource type="PackedScene" uid="uid://bb13ne5cuslgi" path="res://scenes/enemy.tscn" id="12_eb6dy"]
 [ext_resource type="PackedScene" path="res://scenes/level_map.tscn" id="13_level_map"]
+[ext_resource type="PackedScene" path="res://scenes/fuse.tscn" id="14_fuse"]
 
 [sub_resource type="Environment" id="Environment_tefeu"]
 background_mode = 1
@@ -170,6 +171,18 @@ transform = Transform3D(0.9999945, 0.00032698133, 0.003322762, -0.00032288526, 0
 
 [node name="gascan3" parent="." unique_id=92787371 instance=ExtResource("11_ya4ey")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.740276, 1.5547175, 14.806274)
+
+[node name="FuseRed" parent="." instance=ExtResource("14_fuse")]
+fuse_type = "RED"
+fuse_color = Color(0.88, 0.07, 0.05, 1)
+
+[node name="FuseBlue" parent="." instance=ExtResource("14_fuse")]
+fuse_type = "BLUE"
+fuse_color = Color(0.05, 0.28, 0.9, 1)
+
+[node name="FuseYellow" parent="." instance=ExtResource("14_fuse")]
+fuse_type = "YELLOW"
+fuse_color = Color(0.95, 0.68, 0.04, 1)
 
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=626495198]
 visible = false
@@ -528,7 +541,7 @@ layer = 10
 offset_left = 24.0
 offset_top = 24.0
 offset_right = 650.0
-offset_bottom = 184.0
+offset_bottom = 210.0
 mouse_filter = 2
 
 [node name="Margin" type="MarginContainer" parent="ObjectiveHUD/ObjectivePanel" unique_id=1489593637]
@@ -547,6 +560,12 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "OBJECTIVE: FIND GAS CANS"
+
+[node name="FuseLabel" type="Label" parent="ObjectiveHUD/ObjectivePanel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "FUSES: 0 / 3"
 
 [node name="FuelLabel" type="Label" parent="ObjectiveHUD/ObjectivePanel/Margin/Content" unique_id=1271972744]
 unique_name_in_owner = true

@@ -81,9 +81,9 @@ func use(target: Node) -> void:
 		return
 	
 	if target.is_in_group("generator") and target.has_method("fueled"):
-		target.fueled()
-		is_used = true
-		queue_free()
+		if bool(target.fueled()):
+			is_used = true
+			queue_free()
 
 # Collision handler
 func _on_body_entered(_body: Node) -> void:

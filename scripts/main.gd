@@ -18,6 +18,7 @@ const GATE_OPEN_SFX := preload("res://assets/sfx/effects/gate_open.mp3")
 @onready var pause_music_slider: HSlider = %PauseMusicSlider
 @onready var pause_sfx_slider: HSlider = %PauseSFXSlider
 @onready var objective_label: Label = %ObjectiveLabel
+@onready var fuse_label: Label = %FuseLabel
 @onready var fuel_label: Label = %FuelLabel
 @onready var controls_label: Label = %ControlsLabel
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
@@ -52,11 +53,12 @@ func _ready() -> void:
 		if child is Light3D:
 			child.visible = false
 	victory_area.monitoring = false
-	_rebuild_level_and_randomize_fuel()
+	_rebuild_level_and_randomize_pickups()
 	Settings.apply_brightness(world_environment.environment)
 	enemy.reached_player.connect(_on_enemy_reached_player)
 	generator.generator_started.connect(_on_generator_started)
 	generator.fuel_changed.connect(_on_fuel_changed)
+	generator.fuse_changed.connect(_on_fuse_changed)
 	victory_area.body_entered.connect(_on_victory_area_body_entered)
 	restart_button.pressed.connect(_restart_game)
 	play_again_button.pressed.connect(_restart_game)
@@ -68,12 +70,12 @@ func _ready() -> void:
 	_setup_volume_slider(pause_master_slider, "Master")
 	_setup_volume_slider(pause_music_slider, "Music")
 	_setup_volume_slider(pause_sfx_slider, "SFX")
-	_on_fuel_changed(generator.get_current_fuel(), generator.get_required_fuel())
+	_on_fuse_changed(generator.get_current_fuses(), generator.get_required_fuses())
 	_fade_controls_after_delay()
 	start_random_screeches()
 
 
-func _rebuild_level_and_randomize_fuel() -> void:
+func _rebuild_level_and_randomize_pickups() -> void:
 	enemy.set_physics_process(false)
 	player.set_physics_process(false)
 
@@ -82,22 +84,22 @@ func _rebuild_level_and_randomize_fuel() -> void:
 	var legacy_map := get_node_or_null("NavigationRegion3D")
 	if legacy_map:
 		legacy_map.queue_free()
-	var gas_spawn_points: Array[Marker3D] = _level_map.rebuild(navigation_region)
+	var pickup_spawn_points: Array[Marker3D] = _level_map.rebuild(navigation_region)
 
 	player.global_position = _level_map.player_spawn
 	player.velocity = Vector3.ZERO
 	enemy.global_position = _level_map.enemy_spawn
 	enemy.velocity = Vector3.ZERO
 	generator.global_position = _level_map.generator_spawn
-	_freeze_gas_cans()
+	_freeze_pickups()
 
 	# NavigationServer applies a freshly baked map on the following sync.
 	# Gameplay begins after that update so the enemy never uses the old map.
-	_enable_level_after_navigation_sync(gas_spawn_points, previous_iteration)
+	_enable_level_after_navigation_sync(pickup_spawn_points, previous_iteration)
 
 
 func _enable_level_after_navigation_sync(
-	gas_spawn_points: Array[Marker3D],
+	pickup_spawn_points: Array[Marker3D],
 	previous_iteration: int
 ) -> void:
 	var navigation_map := navigation_region.get_navigation_map()
@@ -161,26 +163,28 @@ func _enable_level_after_navigation_sync(
 		push_error("Level navigation region did not register on the world map")
 	else:
 		enemy.reset_after_navigation_rebuild()
-	_randomize_gas_can_spawns(gas_spawn_points)
+	_randomize_pickup_spawns(pickup_spawn_points)
 	enemy.set_physics_process(true)
 	player.set_physics_process(true)
 	print(
 		"[Map] Navigation ready with %d polygons after %d frames"
 		% [navigation_mesh.get_polygon_count(), wait_frames]
 	)
-	print("[Map] Gas cans randomized across safe spawn points")
+	print("[Map] Gas cans and fuses randomized across safe spawn points")
 
 
-func _freeze_gas_cans() -> void:
-	for node in get_tree().get_nodes_in_group("gas_can"):
-		var gas_can := node as RigidBody3D
-		gas_can.freeze = true
-		gas_can.linear_velocity = Vector3.ZERO
-		gas_can.angular_velocity = Vector3.ZERO
+func _freeze_pickups() -> void:
+	for group_name in ["gas_can", "fuse"]:
+		for node in get_tree().get_nodes_in_group(group_name):
+			var pickup := node as RigidBody3D
+			pickup.freeze = true
+			pickup.linear_velocity = Vector3.ZERO
+			pickup.angular_velocity = Vector3.ZERO
 
 
-func _randomize_gas_can_spawns(spawn_points: Array[Marker3D]) -> void:
-	var gas_cans := get_tree().get_nodes_in_group("gas_can")
+func _randomize_pickup_spawns(spawn_points: Array[Marker3D]) -> void:
+	var pickups := get_tree().get_nodes_in_group("gas_can")
+	pickups.append_array(get_tree().get_nodes_in_group("fuse"))
 	var available_spawns: Array[Marker3D] = []
 	var navigation_map := navigation_region.get_navigation_map()
 	for spawn_point in spawn_points:
@@ -193,24 +197,24 @@ func _randomize_gas_can_spawns(spawn_points: Array[Marker3D]) -> void:
 		if not path.is_empty():
 			available_spawns.append(spawn_point)
 
-	if available_spawns.size() < gas_cans.size():
+	if available_spawns.size() < pickups.size():
 		push_warning(
-			"Only %d connected gas spawns were found; using the authored safe list"
+			"Only %d connected pickup spawns were found; using the authored safe list"
 			% available_spawns.size()
 		)
 		available_spawns = spawn_points.duplicate()
 	available_spawns.shuffle()
 
-	for index in mini(gas_cans.size(), available_spawns.size()):
-		var gas_can := gas_cans[index] as RigidBody3D
+	for index in mini(pickups.size(), available_spawns.size()):
+		var pickup := pickups[index] as RigidBody3D
 		var spawn_point := available_spawns[index]
-		gas_can.freeze = true
-		gas_can.linear_velocity = Vector3.ZERO
-		gas_can.angular_velocity = Vector3.ZERO
-		gas_can.global_position = spawn_point.global_position
-		gas_can.rotation = Vector3(0.0, randf_range(0.0, TAU), 0.0)
-		gas_can.freeze = false
-		print("[Map] %s spawned at %s" % [gas_can.name, gas_can.global_position])
+		pickup.freeze = true
+		pickup.linear_velocity = Vector3.ZERO
+		pickup.angular_velocity = Vector3.ZERO
+		pickup.global_position = spawn_point.global_position
+		pickup.rotation = Vector3(0.0, randf_range(0.0, TAU), 0.0)
+		pickup.freeze = false
+		print("[Map] %s spawned at %s" % [pickup.name, pickup.global_position])
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -250,6 +254,8 @@ func _on_generator_started() -> void:
 	objective_label.modulate = Color(0.35, 1.0, 0.55)
 	fuel_label.text = "POWER RESTORED"
 	fuel_label.modulate = Color(0.35, 1.0, 0.55)
+	fuse_label.text = "FUSES ONLINE"
+	fuse_label.modulate = Color(0.35, 1.0, 0.55)
 	_run_factory_power_sequence()
 
 
@@ -326,6 +332,8 @@ func _on_victory_area_body_entered(body: Node3D) -> void:
 
 func _on_fuel_changed(current_fuel: int, required_fuel: int) -> void:
 	fuel_label.text = "FUEL: %d / %d" % [current_fuel, required_fuel]
+	if generator.get_current_fuses() < generator.get_required_fuses():
+		return
 
 	if current_fuel <= 0:
 		objective_label.text = "OBJECTIVE: FIND GAS CANS"
@@ -336,6 +344,16 @@ func _on_fuel_changed(current_fuel: int, required_fuel: int) -> void:
 	else:
 		objective_label.text = "OBJECTIVE: START THE GENERATOR"
 		fuel_label.modulate = Color(0.35, 1.0, 0.55)
+
+
+func _on_fuse_changed(current_fuses: int, required_fuses: int) -> void:
+	fuse_label.text = "FUSES: %d / %d" % [current_fuses, required_fuses]
+	if current_fuses < required_fuses:
+		objective_label.text = "OBJECTIVE: FIND AND INSTALL GENERATOR FUSES"
+		fuse_label.modulate = Color(1.0, 0.3, 0.25) if current_fuses == 0 else Color(1.0, 0.8, 0.25)
+	else:
+		fuse_label.modulate = Color(0.35, 1.0, 0.55)
+		_on_fuel_changed(generator.get_current_fuel(), generator.get_required_fuel())
 
 
 func _fade_controls_after_delay() -> void:
