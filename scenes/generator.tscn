@@ -9,10 +9,19 @@
 [ext_resource type="AudioStream" uid="uid://myvw14c6talr" path="res://assets/sfx/generator/chrisiex1-correct-156911.mp3" id="7_ionxw"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rqoq6"]
+transparency = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.32, 0.34, 0.36, 0.46)
+billboard_mode = 1
 
-[sub_resource type="BoxMesh" id="BoxMesh_rqoq6"]
+[sub_resource type="Gradient" id="Gradient_smoke"]
+offsets = PackedFloat32Array(0, 0.16, 0.68, 1)
+colors = PackedColorArray(0.18, 0.19, 0.2, 0, 0.16, 0.17, 0.18, 0.58, 0.31, 0.32, 0.33, 0.28, 0.42, 0.43, 0.44, 0)
+
+[sub_resource type="QuadMesh" id="BoxMesh_rqoq6"]
 material = SubResource("StandardMaterial3D_rqoq6")
-size = Vector3(0.32, 0.32, 0.32)
+size = Vector2(0.52, 0.52)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_t55hn"]
 resource_name = "Material"
@@ -177,15 +186,42 @@ max_distance = 25.0
 
 [node name="smoke" type="CPUParticles3D" parent="." unique_id=790145545]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6941628, 1.7424743, 0.018844903)
-amount = 40
-lifetime = 2.0
-explosiveness = 0.11
+amount = 58
+lifetime = 3.4
+randomness = 0.52
+explosiveness = 0.08
 mesh = SubResource("BoxMesh_rqoq6")
-gravity = Vector3(0, 1.91, 0)
-initial_velocity_min = 1.0
-initial_velocity_max = 1.0
-scale_amount_min = 0.3
-hue_variation_max = 1.0
+emission_shape = 1
+emission_sphere_radius = 0.12
+direction = Vector3(0.12, 1, 0.04)
+spread = 16.0
+gravity = Vector3(0.18, 0.42, 0.08)
+initial_velocity_min = 0.75
+initial_velocity_max = 1.65
+angular_velocity_min = -22.0
+angular_velocity_max = 22.0
+scale_amount_min = 0.32
+scale_amount_max = 1.25
+color_ramp = SubResource("Gradient_smoke")
+
+[node name="startup_smoke" type="CPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6941628, 1.7424743, 0.018844903)
+amount = 18
+lifetime = 1.35
+one_shot = true
+explosiveness = 0.72
+randomness = 0.7
+mesh = SubResource("BoxMesh_rqoq6")
+emission_shape = 1
+emission_sphere_radius = 0.1
+direction = Vector3(0.16, 1, 0.06)
+spread = 23.0
+gravity = Vector3(0.2, 0.3, 0.1)
+initial_velocity_min = 0.7
+initial_velocity_max = 1.9
+scale_amount_min = 0.25
+scale_amount_max = 0.9
+color_ramp = SubResource("Gradient_smoke")
 
 [node name="Cube" type="MeshInstance3D" parent="." unique_id=158330117]
 mesh = SubResource("ArrayMesh_0rhcp")

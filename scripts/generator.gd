@@ -10,6 +10,7 @@ const REQUIRED_FUSES := 3
 @onready var start: AudioStreamPlayer3D = $start
 @onready var running: AudioStreamPlayer3D = $running
 @onready var smoke: CPUParticles3D = $smoke
+@onready var startup_smoke: CPUParticles3D = $startup_smoke
 @onready var outline: MeshInstance3D = %outline
 @onready var fuelcount: Label3D = $fuelcount
 @onready var error: AudioStreamPlayer3D = $error
@@ -32,6 +33,7 @@ func _ready() -> void:
 	light.visible = false
 	outline.visible = false
 	smoke.emitting = false
+	startup_smoke.emitting = false
 	# Add this node to the "generator" group so the enemy and fuel can find it
 	add_to_group("generator")
 	
@@ -138,6 +140,7 @@ func interact() -> void:
 		hide_outline()
 		
 		start.play()
+		startup_smoke.emitting = true
 		_emit_noise(startup_noise_radius)
 		await get_tree().create_timer(2.0).timeout
 		light.visible = true
