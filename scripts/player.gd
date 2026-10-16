@@ -523,9 +523,14 @@ func _update_interaction() -> void:
 
 
 func _find_item_use_target(collider: Node) -> Node:
+	# Fuses belong in the fuse box; fuel (and everything else) in the generator.
+	var holding_fuse := grabbed_object != null and grabbed_object.is_in_group("fuse")
 	var target := collider
 	while target:
-		if target.is_in_group("generator") and target.has_method("fueled"):
+		if holding_fuse:
+			if target.is_in_group("fuse_box") and target.has_method("install_fuse"):
+				return target
+		elif target.is_in_group("generator") and target.has_method("fueled"):
 			return target
 		target = target.get_parent()
 

@@ -65,7 +65,8 @@ func drop() -> void:
 func use(target: Node) -> void:
 	if is_used:
 		return
-	if target.is_in_group("generator") and target.has_method("install_fuse"):
+	# Fuses go into the plant's fuse box, never straight into the generator.
+	if target.is_in_group("fuse_box") and target.has_method("install_fuse"):
 		if bool(target.install_fuse(fuse_type)):
 			is_used = true
 			queue_free()

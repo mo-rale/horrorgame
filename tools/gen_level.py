@@ -252,9 +252,6 @@ csg_box(P, "PressureGauge", -29.65, 2.5, 33.2, 0.1, 0.9, 0.9, GLOW_RED, solid=Fa
 # Electrical room
 for i, z in enumerate((32.5, 35.5, 38.5)):
     csg_box(R, "Switchboard%d" % i, 29.45, 1.35, z, 0.6, 2.7, 2.2, SWITCH)
-csg_box(P, "FuseCabinet", 29.5, 1.1, 42.2, 0.5, 2.0, 1.2, DARK)
-for colr, dz in (("red", -0.35), ("blue", 0.0), ("yellow", 0.35)):
-    csg_box(P, "FuseSlot_" + colr, 29.2, 1.5, 42.2 + dz, 0.06, 0.28, 0.14, GLOW[colr], solid=False, collide=False)
 csg_box(P, "ElectricianDesk", 20, 0.4, 43.4, 2.2, 0.8, 1.0, BENCH)
 # Assembly line
 csg_box(P, "Conveyor1", -5, 0.4, 37, 1.2, 0.8, 12, BENCH)
@@ -292,6 +289,13 @@ for i, (x, z) in enumerate([(-9, 5.5), (-8.2, 6.2)]):
 for i, z in enumerate((-8, -4, 0)):
     csg_box(P, "Workbench%d" % i, 28.2, 0.45, z, 1.2, 0.9, 3.0, BENCH)
 csg_box(P, "Toolbox", 21, 0.3, 5.5, 0.9, 0.6, 0.5, DARK)
+
+# The fuse box on the east wall of the electrical room (front faces west, -X).
+node("FuseBox", "StaticBody3D", "Props", [
+    ("transform", xform(29.2, 0, 42.2, -math.pi / 2)),
+    ("script", 'ExtResource("fusebox_script")')])
+# A lit panel above the box so players can find it in the dark.
+csg_box(P, "FuseBoxSign", 29.6, 3.3, 42.2, 0.1, 0.5, 1.6, mat(color=(0.9, 0.3, 0.05, 1), emit=(1.0, 0.35, 0.05), energy=0.7), solid=False, collide=False)
 
 # ── Exit corridor (gate, outside yard, victory trigger) ─────────────────────
 node("Floor2", "CSGBox3D", ".", [
@@ -379,7 +383,7 @@ NOTES = [
     ("NoteElect", (20.0, 0.83, 43.4), 0.2, (0.4, 0.03, 0.3), "ELECTRICIAN'S NOTE",
      "02:11 - Main breaker tripped. The whole plant is dark and the gate seal clamped shut on its own.\\n\\n"
      "I pulled the generator fuses and hid them around the plant. If Ellis restarts the line, he'll send more men into that boiler.\\n\\n"
-     "Whoever reads this: you need three fuses - red, blue, yellow. And the pressure valves closed first, or the generator will blow."),
+     "Whoever reads this: you need three fuses - red, blue, yellow. Push them into the FUSE BOX on this wall. Close the pressure valves first, or the plant will blow."),
     ("NoteFuel", (-20.0, 1.03, -8.0), 0.5, (0.4, 0.03, 0.3), "SCRAWLED ON A CRATE",
      "Generator fuel is kept here. Three cans left, maybe four.\\n\\nSomething walks the catwalk above us. Slow. Patient. It stops whenever I look at it.\\n\\n"
      "Don't look away from it. And don't let it get behind you."),
@@ -411,7 +415,7 @@ for key, ((x, y, z), (r, g, b)) in EMERGENCY.items():
         ("transform", "Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, %s, %s, %s)" % (f(x), f(y), f(z))),
         ("script", 'ExtResource("flicker_script")'),
         ("light_color", "Color(%s, %s, %s, 1)" % (r, g, b)),
-        ("light_energy", "2.6"), ("omni_range", "15.0")])
+        ("light_energy", "1.0"), ("omni_range", "10.5")])
 
 node("lights", "Node3D", ".", [])
 for i, (x, z) in enumerate([(0, 52), (-21, 36), (21, 36), (0, 18), (-21, 0), (0, 0), (21, 0)]):
@@ -469,6 +473,7 @@ head = ['[gd_scene format=3 uid="uid://dvuhqut63xyl0"]\n',
         '[ext_resource type="Script" uid="uid://b7e6t4f133m6o" path="res://scripts/level_map.gd" id="1_map"]',
         '[ext_resource type="Script" path="res://scripts/story_note.gd" id="note_script"]',
         '[ext_resource type="Script" path="res://scripts/flicker_light.gd" id="flicker_script"]',
+        '[ext_resource type="Script" path="res://scripts/fuse_box.gd" id="fusebox_script"]',
         '[ext_resource type="PackedScene" uid="uid://cp861k7cohx8e" path="res://scenes/gas_can.tscn" id="gascan_scene"]']
 for ident, ttype, path in ext:
     head.append('[ext_resource type="%s" path="%s" id="%s"]' % (ttype, path, ident))

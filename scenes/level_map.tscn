@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://b7e6t4f133m6o" path="res://scripts/level_map.gd" id="1_map"]
 [ext_resource type="Script" path="res://scripts/story_note.gd" id="note_script"]
 [ext_resource type="Script" path="res://scripts/flicker_light.gd" id="flicker_script"]
+[ext_resource type="Script" path="res://scripts/fuse_box.gd" id="fusebox_script"]
 [ext_resource type="PackedScene" uid="uid://cp861k7cohx8e" path="res://scenes/gas_can.tscn" id="gascan_scene"]
 [ext_resource type="Texture2D" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Wall/Horror_Wall_09-128x128.png" id="t1"]
 [ext_resource type="Texture2D" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Metal/Horror_Metal_12-128x128.png" id="t2"]
@@ -228,6 +229,12 @@ uv1_scale = Vector3(1.0, 1.0, 1.0)
 [sub_resource type="StandardMaterial3D" id="m37"]
 albedo_texture = ExtResource("t27")
 uv1_scale = Vector3(3.15, 3.15, 3.15)
+
+[sub_resource type="StandardMaterial3D" id="m38"]
+albedo_color = Color(0.9, 0.3, 0.05, 1)
+emission_enabled = true
+emission = Color(1.0, 0.35, 0.05, 1)
+emission_energy_multiplier = 0.7
 
 [sub_resource type="QuadMesh" id="StainQuad"]
 size = Vector2(2.4, 2.4)
@@ -793,27 +800,6 @@ material_override = SubResource("m24")
 use_collision = true
 size = Vector3(0.6, 2.7, 2.2)
 
-[node name="FuseCabinet" type="CSGBox3D" parent="Props"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 29.5, 1.1, 42.2)
-material_override = SubResource("m21")
-use_collision = true
-size = Vector3(0.5, 2, 1.2)
-
-[node name="FuseSlot_red" type="CSGBox3D" parent="Props"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 29.2, 1.5, 41.85)
-material_override = SubResource("m32")
-size = Vector3(0.06, 0.28, 0.14)
-
-[node name="FuseSlot_blue" type="CSGBox3D" parent="Props"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 29.2, 1.5, 42.2)
-material_override = SubResource("m33")
-size = Vector3(0.06, 0.28, 0.14)
-
-[node name="FuseSlot_yellow" type="CSGBox3D" parent="Props"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 29.2, 1.5, 42.55)
-material_override = SubResource("m34")
-size = Vector3(0.06, 0.28, 0.14)
-
 [node name="ElectricianDesk" type="CSGBox3D" parent="Props"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 20, 0.4, 43.4)
 material_override = SubResource("m20")
@@ -1049,6 +1035,15 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 21, 0.3, 5.5)
 material_override = SubResource("m21")
 use_collision = true
 size = Vector3(0.9, 0.6, 0.5)
+
+[node name="FuseBox" type="StaticBody3D" parent="Props"]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 29.2, 0, 42.2)
+script = ExtResource("fusebox_script")
+
+[node name="FuseBoxSign" type="CSGBox3D" parent="Props"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 29.6, 3.3, 42.2)
+material_override = SubResource("m38")
+size = Vector3(0.1, 0.5, 1.6)
 
 [node name="Floor2" type="CSGBox3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1435, -0.2368, -20.9892)
@@ -1305,7 +1300,7 @@ paper_size = Vector3(0.05, 0.6, 0.45)
 transform = Transform3D(0.9801, 0, 0.1987, 0, 1, 0, -0.1987, 0, 0.9801, 20, 0.83, 43.4)
 script = ExtResource("note_script")
 title = "ELECTRICIAN'S NOTE"
-body = "02:11 - Main breaker tripped. The whole plant is dark and the gate seal clamped shut on its own.\n\nI pulled the generator fuses and hid them around the plant. If Ellis restarts the line, he'll send more men into that boiler.\n\nWhoever reads this: you need three fuses - red, blue, yellow. And the pressure valves closed first, or the generator will blow."
+body = "02:11 - Main breaker tripped. The whole plant is dark and the gate seal clamped shut on its own.\n\nI pulled the generator fuses and hid them around the plant. If Ellis restarts the line, he'll send more men into that boiler.\n\nWhoever reads this: you need three fuses - red, blue, yellow. Push them into the FUSE BOX on this wall. Close the pressure valves first, or the plant will blow."
 paper_size = Vector3(0.4, 0.03, 0.3)
 
 [node name="NoteFuel" type="StaticBody3D" parent="Notes"]
@@ -1333,85 +1328,85 @@ paper_size = Vector3(0.05, 0.6, 0.45)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 4.1, 51.5)
 script = ExtResource("flicker_script")
 light_color = Color(1.0, 0.6, 0.25, 1)
-light_energy = 2.6
-omni_range = 15.0
+light_energy = 1.0
+omni_range = 10.5
 
 [node name="Emergency_lobby" type="OmniLight3D" parent="EmergencyLights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1, 52)
 script = ExtResource("flicker_script")
 light_color = Color(1.0, 0.65, 0.3, 1)
-light_energy = 2.6
-omni_range = 15.0
+light_energy = 1.0
+omni_range = 10.5
 
 [node name="Emergency_break" type="OmniLight3D" parent="EmergencyLights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 4.1, 51.5)
 script = ExtResource("flicker_script")
 light_color = Color(1.0, 0.7, 0.35, 1)
-light_energy = 2.6
-omni_range = 15.0
+light_energy = 1.0
+omni_range = 10.5
 
 [node name="Emergency_steam" type="OmniLight3D" parent="EmergencyLights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 4.1, 36.5)
 script = ExtResource("flicker_script")
 light_color = Color(1.0, 0.25, 0.15, 1)
-light_energy = 2.6
-omni_range = 15.0
+light_energy = 1.0
+omni_range = 10.5
 
 [node name="Emergency_assembly" type="OmniLight3D" parent="EmergencyLights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1, 36.5)
 script = ExtResource("flicker_script")
 light_color = Color(0.9, 0.5, 0.25, 1)
-light_energy = 2.6
-omni_range = 15.0
+light_energy = 1.0
+omni_range = 10.5
 
 [node name="Emergency_elect" type="OmniLight3D" parent="EmergencyLights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 4.1, 36.5)
 script = ExtResource("flicker_script")
 light_color = Color(1.0, 0.6, 0.25, 1)
-light_energy = 2.6
-omni_range = 15.0
+light_energy = 1.0
+omni_range = 10.5
 
 [node name="Emergency_boiler" type="OmniLight3D" parent="EmergencyLights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 4.1, 18)
 script = ExtResource("flicker_script")
 light_color = Color(1.0, 0.35, 0.1, 1)
-light_energy = 2.6
-omni_range = 15.0
+light_energy = 1.0
+omni_range = 10.5
 
 [node name="Emergency_press" type="OmniLight3D" parent="EmergencyLights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1, 18)
 script = ExtResource("flicker_script")
 light_color = Color(1.0, 0.2, 0.12, 1)
-light_energy = 2.6
-omni_range = 15.0
+light_energy = 1.0
+omni_range = 10.5
 
 [node name="Emergency_pump" type="OmniLight3D" parent="EmergencyLights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 4.1, 18)
 script = ExtResource("flicker_script")
 light_color = Color(0.9, 0.35, 0.2, 1)
-light_energy = 2.6
-omni_range = 15.0
+light_energy = 1.0
+omni_range = 10.5
 
 [node name="Emergency_fuel" type="OmniLight3D" parent="EmergencyLights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 4.1, 0)
 script = ExtResource("flicker_script")
 light_color = Color(1.0, 0.55, 0.25, 1)
-light_energy = 2.6
-omni_range = 15.0
+light_energy = 1.0
+omni_range = 10.5
 
 [node name="Emergency_gen" type="OmniLight3D" parent="EmergencyLights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1, 0)
 script = ExtResource("flicker_script")
 light_color = Color(1.0, 0.4, 0.2, 1)
-light_energy = 2.6
-omni_range = 15.0
+light_energy = 1.0
+omni_range = 10.5
 
 [node name="Emergency_maint" type="OmniLight3D" parent="EmergencyLights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 4.1, 0)
 script = ExtResource("flicker_script")
 light_color = Color(0.9, 0.5, 0.25, 1)
-light_energy = 2.6
-omni_range = 15.0
+light_energy = 1.0
+omni_range = 10.5
 
 [node name="lights" type="Node3D" parent="."]
 
