@@ -59,3 +59,14 @@ the factory gate. The camera turns back to the plant, the windows go dark one by
 one, the gate slams, the foreman stands in the gateway and the dead sign comes
 back on: "NEXT SHIFT 22:00". A title card shows the run time and how many of the
 eight notes were read. SPACE skips to the card.
+
+## Building a release
+
+Export templates for the editor version must be installed. From the project root:
+
+```
+godot --headless --path . --export-release "Windows Desktop" build/HalversonWorks.exe
+```
+
+The preset embeds the data pack, so `build/HalversonWorks.exe` is a single file
+(about 135 MB) you can zip and share. `export_presets.cfg` holds the preset.
