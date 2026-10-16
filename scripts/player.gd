@@ -89,6 +89,7 @@ var _calm_keys: Array[int] = [KEY_Q, KEY_C, KEY_Z, KEY_X]
 @export var battery_recharge_per_second := 2.0
 @export var enemy_flicker_distance := 14.0
 
+var controls_locked := false
 var stamina := 100.0
 var battery := 100.0
 var _stamina_exhausted := false
@@ -128,6 +129,9 @@ func _ready():
 	anxiety_hud.visible = false
 
 func _input(event):
+	if controls_locked:
+		return
+
 	if (
 		_anxiety_active
 		and _calm_phase_started
@@ -173,6 +177,13 @@ func _physics_process(delta: float) -> void:
 	# Gravity
 	if not is_on_floor():
 		velocity += get_gravity() * delta
+
+	# Cutscenes freeze the player in place but keep gravity and the light.
+	if controls_locked:
+		velocity.x = 0.0
+		velocity.z = 0.0
+		move_and_slide()
+		return
 
 	# Stay crouched when there is not enough room to safely stand up.
 	if Input.is_action_pressed("Crouch"):

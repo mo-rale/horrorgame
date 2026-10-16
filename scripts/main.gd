@@ -31,6 +31,14 @@ var player_paused := false
 var generator_powered := false
 @onready var _level_map: Node3D = $LevelMap
 
+@export_group("Intro")
+@export var play_intro := true
+
+var _intro_layer: CanvasLayer
+var _intro_black: ColorRect
+var _intro_label: Label
+var _intro_skipped := false
+
 @export_group("Ending")
 @export var factory_power_start_delay := 1.0
 @export var light_activation_interval_min := 1.0
@@ -48,6 +56,8 @@ func _ready() -> void:
 			child.process_mode = Node.PROCESS_MODE_PAUSABLE
 
 	randomize()
+	if play_intro:
+		_build_intro_overlay()
 	factory_lights.visible = true
 	for child in factory_lights.get_children():
 		if child is Light3D:
@@ -164,13 +174,104 @@ func _enable_level_after_navigation_sync(
 	else:
 		enemy.reset_after_navigation_rebuild()
 	_randomize_pickup_spawns(pickup_spawn_points)
-	enemy.set_physics_process(true)
 	player.set_physics_process(true)
+	if play_intro:
+		# The enemy stays frozen until the intro hands control to the player.
+		_play_intro()
+	else:
+		enemy.set_physics_process(true)
 	print(
 		"[Map] Navigation ready with %d polygons after %d frames"
 		% [navigation_mesh.get_polygon_count(), wait_frames]
 	)
 	print("[Map] Gas cans and fuses randomized across safe spawn points")
+
+
+func _build_intro_overlay() -> void:
+	player.controls_locked = true
+	_intro_layer = CanvasLayer.new()
+	_intro_layer.layer = 50
+	_intro_layer.process_mode = Node.PROCESS_MODE_PAUSABLE
+	add_child(_intro_layer)
+
+	_intro_black = ColorRect.new()
+	_intro_black.color = Color.BLACK
+	_intro_black.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_intro_black.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_intro_layer.add_child(_intro_black)
+
+	_intro_label = Label.new()
+	_intro_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_intro_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_intro_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_intro_label.add_theme_font_size_override("font_size", 28)
+	_intro_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85))
+	_intro_label.modulate.a = 0.0
+	_intro_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_intro_layer.add_child(_intro_label)
+
+
+func _intro_wait(seconds: float) -> void:
+	if _intro_skipped:
+		return
+	await get_tree().create_timer(seconds, false).timeout
+
+
+func _intro_line(text: String, hold: float) -> void:
+	if _intro_skipped:
+		return
+	_intro_label.text = text
+	var tween := _intro_label.create_tween()
+	tween.tween_property(_intro_label, "modulate:a", 1.0, 1.0)
+	await tween.finished
+	await _intro_wait(hold)
+	if _intro_skipped:
+		return
+	tween = _intro_label.create_tween()
+	tween.tween_property(_intro_label, "modulate:a", 0.0, 1.0)
+	await tween.finished
+
+
+func _play_intro() -> void:
+	var camera := player.camera
+	# Wake up on the floor: looking at the ceiling, tilted, then rise.
+	camera.rotation = Vector3(deg_to_rad(75.0), 0.0, deg_to_rad(18.0))
+
+	await _intro_wait(0.8)
+	await _intro_line("The power failed hours ago.", 1.6)
+	await _intro_line("Something is still walking the halls.", 1.8)
+	await _intro_line("Restart the generator. Get out.", 1.6)
+
+	if not _intro_skipped:
+		var rise := camera.create_tween().set_parallel(true)
+		rise.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		rise.tween_property(camera, "rotation:x", 0.0, 3.0)
+		rise.tween_property(camera, "rotation:z", 0.0, 3.0)
+		var fade := _intro_black.create_tween()
+		fade.tween_property(_intro_black, "modulate:a", 0.0, 2.5)
+		await rise.finished
+	_finish_intro()
+
+
+func _finish_intro() -> void:
+	if not is_instance_valid(_intro_layer):
+		return
+	player.camera.rotation = Vector3.ZERO
+	player.pitch = 0.0
+	player.controls_locked = false
+	_intro_layer.queue_free()
+	_intro_layer = null
+	if not game_ended:
+		enemy.set_physics_process(true)
+
+
+func _skip_intro() -> void:
+	if _intro_skipped or _intro_layer == null:
+		return
+	_intro_skipped = true
+	_intro_black.modulate.a = 0.0
+	_intro_label.modulate.a = 0.0
+	_finish_intro()
 
 
 func _freeze_pickups() -> void:
@@ -218,6 +319,16 @@ func _randomize_pickup_spawns(spawn_points: Array[Marker3D]) -> void:
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
+	if (
+		_intro_layer != null
+		and event is InputEventKey
+		and event.pressed
+		and not event.echo
+		and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)
+	):
+		_skip_intro()
+		return
+
 	if (
 		not game_ended
 		and event is InputEventKey
