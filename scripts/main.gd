@@ -252,9 +252,9 @@ func _play_intro() -> void:
 	camera.rotation = Vector3(deg_to_rad(75.0), 0.0, deg_to_rad(18.0))
 
 	await _intro_wait(0.8)
-	await _intro_line("The power failed hours ago.", 1.6)
-	await _intro_line("Something is still walking the halls.", 1.8)
-	await _intro_line("Restart the generator. Get out.", 1.6)
+	await _intro_line("Halverson Works went dark at 2:07 AM.", 1.8)
+	await _intro_line("Fourteen night-shift workers. Nobody answers the radio.", 2.0)
+	await _intro_line("Restore power. Release the gate seal. Get out.", 1.8)
 
 	if not _intro_skipped:
 		var rise := camera.create_tween().set_parallel(true)
@@ -320,9 +320,31 @@ func _randomize_pickup_spawns(spawn_points: Array[Marker3D]) -> void:
 		available_spawns = spawn_points.duplicate()
 	available_spawns.shuffle()
 
-	for index in mini(pickups.size(), available_spawns.size()):
+	# Fuses were hidden by the electrician in fuse spawns; fuel is kept in the
+	# plant's gas spawns. Any shortfall falls back to whatever spawn is left.
+	var assigned: Array[Marker3D] = []
+	var used := {}
+	for pickup in pickups:
+		var wanted_group := &"fuse_spawn" if pickup.is_in_group("fuse") else &"gas_spawn"
+		var chosen: Marker3D = null
+		for spawn_point in available_spawns:
+			if not used.has(spawn_point) and spawn_point.is_in_group(wanted_group):
+				chosen = spawn_point
+				break
+		if chosen == null:
+			for spawn_point in available_spawns:
+				if not used.has(spawn_point):
+					chosen = spawn_point
+					break
+		if chosen != null:
+			used[chosen] = true
+		assigned.append(chosen)
+
+	for index in pickups.size():
 		var pickup := pickups[index] as RigidBody3D
-		var spawn_point := available_spawns[index]
+		var spawn_point := assigned[index]
+		if spawn_point == null:
+			continue
 		pickup.freeze = true
 		pickup.linear_velocity = Vector3.ZERO
 		pickup.angular_velocity = Vector3.ZERO
