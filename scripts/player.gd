@@ -78,7 +78,32 @@ var _calm_press_count := 0
 var _calm_key := KEY_NONE
 var _calm_keys: Array[int] = [KEY_Q, KEY_C, KEY_Z, KEY_X]
 
+@export_group("Stamina")
+@export var stamina_drain_per_second := 22.0
+@export var stamina_regen_per_second := 14.0
+@export var stamina_regen_delay := 1.0
+@export var stamina_resume_threshold := 25.0
+
+@export_group("Flashlight Battery")
+@export var battery_drain_per_second := 1.1
+@export var battery_recharge_per_second := 2.0
+@export var enemy_flicker_distance := 14.0
+
+var stamina := 100.0
+var battery := 100.0
+var _stamina_exhausted := false
+var _is_sprinting := false
+var _stamina_regen_timer := 0.0
+var _flashlight_base_energy := 1.0
+var _flicker_timer := 0.0
+var _flicker_off_time := 0.0
+var _stamina_bar: ProgressBar
+var _battery_bar: ProgressBar
+
+
 func _ready():
+	_flashlight_base_energy = light.light_energy
+	_build_survival_hud()
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	mouse_sensitivity *= Settings.mouse_sensitivity
 	camera_default_pos = camera.position
@@ -161,23 +186,32 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("Jump") and is_on_floor() and !is_crouching:
 		velocity.y = JUMP_VELOCITY
 
-	# Speed
+	# Movement
+	var input_dir := Input.get_vector("Left", "Right", "Forward", "Backward")
+
+	# Speed (sprinting costs stamina; running dry forces a recovery period)
 	var current_speed = SPEED
+	var wants_sprint: bool = (
+		Input.is_action_pressed("Sprint")
+		and input_dir != Vector2.ZERO
+		and not is_crouching
+		and not _stamina_exhausted
+	)
+	_is_sprinting = wants_sprint
+	_update_stamina(delta, wants_sprint)
 
 	if is_crouching:
 		current_speed = CROUCH_SPEED
-	elif Input.is_action_pressed("Sprint"):
+	elif wants_sprint:
 		current_speed = SPRINT_SPEED
 
 	# Flashlight
-	if Input.is_action_just_pressed("Flashlight"):
+	if Input.is_action_just_pressed("Flashlight") and (battery > 0.0 or is_flashlight_on):
 		is_flashlight_on = !is_flashlight_on
 		light.visible = is_flashlight_on
 		flashlight.pitch_scale = randf_range(0.9, 1.1)
 		flashlight.play()
-
-	# Movement
-	var input_dir := Input.get_vector("Left", "Right", "Forward", "Backward")
+	_update_flashlight(delta)
 
 	var direction := (
 		transform.basis * Vector3(input_dir.x, 0, input_dir.y)
@@ -227,7 +261,7 @@ func _physics_process(delta: float) -> void:
 	# Sprint FOV Effect
 	var target_fov = NORMAL_FOV
 
-	if Input.is_action_pressed("Sprint") and moving and !is_crouching:
+	if _is_sprinting and moving:
 		target_fov = SPRINT_FOV
 
 	camera.fov = lerpf(camera.fov, target_fov, delta * FOV_SPEED)
@@ -244,7 +278,7 @@ func _physics_process(delta: float) -> void:
 				footsteps.volume_db = crouching_footstep_volume_db
 				footstep_cooldown = 0.7
 				noise_radius = crouching_noise_radius
-			elif Input.is_action_pressed("Sprint"):
+			elif _is_sprinting:
 				footsteps.volume_db = sprinting_footstep_volume_db
 				footstep_cooldown = 0.28
 				noise_radius = sprinting_noise_radius
@@ -260,6 +294,105 @@ func _physics_process(delta: float) -> void:
 	
 	# ===== INTERACTION & GRAB =====
 	_update_interaction()
+
+
+func _update_stamina(delta: float, sprinting: bool) -> void:
+	if sprinting:
+		stamina = maxf(0.0, stamina - stamina_drain_per_second * delta)
+		_stamina_regen_timer = stamina_regen_delay
+		if stamina <= 0.0:
+			_stamina_exhausted = true
+	else:
+		_stamina_regen_timer -= delta
+		if _stamina_regen_timer <= 0.0:
+			stamina = minf(100.0, stamina + stamina_regen_per_second * delta)
+		if _stamina_exhausted and stamina >= stamina_resume_threshold:
+			_stamina_exhausted = false
+
+	_stamina_bar.value = stamina
+	_stamina_bar.modulate = (
+		Color(1.0, 0.3, 0.25) if _stamina_exhausted else Color(0.85, 0.85, 0.85)
+	)
+	# Fade the bar out when full so it does not clutter the screen.
+	var target_alpha := 0.0 if stamina >= 99.9 and not _stamina_exhausted else 0.9
+	_stamina_bar.modulate.a = lerpf(_stamina_bar.modulate.a, target_alpha, 0.2)
+
+
+func _update_flashlight(delta: float) -> void:
+	if is_flashlight_on:
+		battery = maxf(0.0, battery - battery_drain_per_second * delta)
+		if battery <= 0.0:
+			is_flashlight_on = false
+			light.visible = false
+			flashlight.play()
+	else:
+		battery = minf(100.0, battery + battery_recharge_per_second * delta)
+
+	_battery_bar.value = battery
+	_battery_bar.modulate = (
+		Color(1.0, 0.3, 0.25) if battery < 20.0 else Color(0.95, 0.85, 0.45)
+	)
+
+	if not is_flashlight_on:
+		return
+
+	# Dying battery and a nearby enemy both make the beam stutter.
+	var flicker_chance := 0.0
+	if battery < 25.0:
+		flicker_chance = (25.0 - battery) / 25.0 * 0.6
+	var enemy_node := get_tree().get_first_node_in_group("enemy") as Node3D
+	if enemy_node and is_instance_valid(enemy_node) and enemy_node.visible:
+		var dist := global_position.distance_to(enemy_node.global_position)
+		if dist < enemy_flicker_distance:
+			flicker_chance = maxf(flicker_chance, (1.0 - dist / enemy_flicker_distance) * 0.7)
+
+	_flicker_off_time -= delta
+	_flicker_timer -= delta
+	if _flicker_off_time > 0.0:
+		light.light_energy = _flashlight_base_energy * randf_range(0.0, 0.25)
+		return
+	light.light_energy = _flashlight_base_energy * (
+		1.0 if battery >= 25.0 else lerpf(0.35, 1.0, battery / 25.0)
+	)
+	if flicker_chance > 0.0 and _flicker_timer <= 0.0:
+		_flicker_timer = randf_range(0.15, 0.5)
+		if randf() < flicker_chance:
+			_flicker_off_time = randf_range(0.05, 0.2)
+
+
+func _build_survival_hud() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 20
+	add_child(layer)
+	var box := VBoxContainer.new()
+	box.anchor_top = 1.0
+	box.anchor_bottom = 1.0
+	box.offset_left = 28.0
+	box.offset_top = -80.0
+	box.offset_bottom = -24.0
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_theme_constant_override("separation", 6)
+	layer.add_child(box)
+	_stamina_bar = _make_hud_bar(box)
+	_battery_bar = _make_hud_bar(box)
+	_stamina_bar.modulate.a = 0.0
+
+
+func _make_hud_bar(parent: Control) -> ProgressBar:
+	var bar := ProgressBar.new()
+	bar.custom_minimum_size = Vector2(180.0, 8.0)
+	bar.show_percentage = false
+	bar.max_value = 100.0
+	bar.value = 100.0
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = Color(1, 1, 1, 0.9)
+	var back := StyleBoxFlat.new()
+	back.bg_color = Color(0, 0, 0, 0.45)
+	bar.add_theme_stylebox_override("fill", fill)
+	bar.add_theme_stylebox_override("background", back)
+	parent.add_child(bar)
+	return bar
 
 
 func _update_crouch_collision(delta: float) -> void:
