@@ -110,17 +110,23 @@ def csg_box(parent, name, cx, cy, cz, sx, sy, sz, material, ry=0.0, collide=True
 
 
 def csg_cyl(parent, name, cx, cy, cz, radius, height, material, collide=True, sides=16,
-            along_z=False):
-    # CSG cylinders stand upright by default; along_z lays them down along Z.
-    transform = ("Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, %s, %s, %s)" % (f(cx), f(cy), f(cz))
-                 if along_z else xform(cx, cy, cz))
+            along_z=False, along_x=False):
+    # CSG cylinders stand upright by default; along_z / along_x lay them down.
+    if along_z:
+        transform = "Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, %s, %s, %s)" % (f(cx), f(cy), f(cz))
+    elif along_x:
+        transform = "Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, %s, %s, %s)" % (f(cx), f(cy), f(cz))
+    else:
+        transform = xform(cx, cy, cz)
     props = [("transform", transform),
              ("material_override", 'SubResource("%s")' % material)]
     if collide:
         props.append(("use_collision", "true"))
     props += [("radius", f(radius)), ("height", f(height)), ("sides", str(sides))]
     node(name, "CSGCylinder3D", parent, props)
-    if along_z:
+    if along_x:
+        obstacles.append((cx - height / 2, cx + height / 2, cz - radius, cz + radius, cy + radius))
+    elif along_z:
         obstacles.append((cx - radius, cx + radius, cz - height / 2, cz + height / 2, cy + radius))
     else:
         obstacles.append((cx - radius, cx + radius, cz - radius, cz + radius, cy + height / 2))
@@ -300,6 +306,109 @@ csg_box(P, "Toolbox", 21, 0.3, 5.5, 0.9, 0.6, 0.5, DARK)
 # The fuse box on the east wall of the electrical room (front faces west, -X).
 nodes.append('[node name="FuseBox" parent="Props" instance=ExtResource("fusebox_scene")]' + chr(10) +
              'transform = ' + xform(29.25, 0, 42.2, -math.pi / 2) + chr(10))
+
+# ── Detail pass: structure, story dressing and small life ───────────────────
+import random
+rng = random.Random(11)
+GIRDER = mat(tex("Metal", 2), uv=0.5, metal=0.0, rough=0.8)
+CLOTH = mat(color=(0.16, 0.17, 0.15, 1), rough=1.0)
+BOOT = mat(color=(0.05, 0.04, 0.03, 1), rough=0.9)
+PAPER = mat(color=(0.78, 0.75, 0.66, 1), rough=1.0)
+STRIPE_Y = mat(color=(0.85, 0.66, 0.05, 1), rough=0.8)
+STRIPE_K = mat(color=(0.05, 0.05, 0.05, 1), rough=0.8)
+PUDDLE = mat(color=(0.02, 0.03, 0.05, 0.82), alpha=True, rough=0.05, metal=0.0)
+DRIP_GLOW = mat(color=(0.55, 0.7, 0.85, 1), emit=(0.35, 0.5, 0.7), energy=1.2)
+
+# Ceiling girders in both directions.
+for z in (2, 18, 34, 50):
+    csg_box(P, "GirderZ%d" % z, 0, 4.72, z, 59, 0.35, 0.45, GIRDER, solid=False)
+for x in (-24, -8, 8, 24):
+    csg_box(P, "GirderX%d" % abs(x) + ("n" if x < 0 else "p"), x, 4.72, 24, 0.45, 0.35, 66, GIRDER, solid=False)
+
+# Dead hanging lamps in every room.
+for key, (xa, xb, za, zb) in ROOMS.items():
+    lx, lz = (xa + xb) / 2 + 3.0, (za + zb) / 2 + 2.0
+    csg_cyl(P, "LampChain_" + key, lx, 4.5, lz, 0.01, 0.8, DARK, collide=False)
+    csg_box(P, "LampShade_" + key, lx, 4.05, lz, 0.55, 0.14, 0.55, DARK, solid=False, collide=False)
+
+# Conduit runs along the outer east and west walls.
+for sx in (-1, 1):
+    csg_cyl(P, "WallConduit%s" % ("W" if sx < 0 else "E"), sx * 29.5, 3.9, 24, 0.09, 66.0, PIPE,
+            collide=False, along_z=True)
+    csg_cyl(P, "WallConduitLow%s" % ("W" if sx < 0 else "E"), sx * 29.5, 0.35, 24, 0.07, 66.0, PIPE,
+            collide=False, along_z=True)
+
+# Catwalk across the assembly line, where the foreman is heard walking.
+CAT_Z, CAT_Y = 37.0, 3.3
+csg_box(P, "Catwalk", 0, CAT_Y, CAT_Z, 23, 0.12, 1.6, GIRDER, solid=False)
+for dz in (-0.75, 0.75):
+    csg_box(P, "CatwalkRail%d" % int(dz * 4), 0, CAT_Y + 0.95, CAT_Z + dz, 23, 0.06, 0.06, GIRDER, solid=False)
+for ix in range(-5, 6):
+    for dz in (-0.75, 0.75):
+        csg_box(P, "CatwalkPost%d_%d" % (ix, int(dz * 4)), ix * 2.2, CAT_Y + 0.5, CAT_Z + dz, 0.07, 1.0, 0.07, GIRDER, solid=False, collide=False)
+for x in (-9, 9):
+    csg_cyl(R, "CatwalkSupport%d" % x, x, CAT_Y / 2, CAT_Z, 0.13, CAT_Y, PIPE)
+# A ladder at the west end.
+for dz in (-0.25, 0.25):
+    csg_box(P, "LadderRail%d" % int(dz * 8), -11.4, 1.65, CAT_Z + dz, 0.05, 3.3, 0.05, GIRDER, solid=False, collide=False)
+for i in range(11):
+    csg_box(P, "LadderRung%d" % i, -11.4, 0.3 + i * 0.3, CAT_Z, 0.05, 0.05, 0.5, GIRDER, solid=False, collide=False)
+
+# Tipped barrels and debris near the boiler.
+csg_cyl(P, "TippedBarrel1", -27.2, 0.35, 21.0, 0.35, 1.0, RUST, sides=12, along_x=True)
+csg_cyl(P, "TippedBarrel2", -28.3, 0.35, 23.2, 0.35, 1.0, RUST, sides=12, along_z=True)
+
+# What is left of two of the workers.
+csg_box(P, "BodyBoiler", -17.4, 0.13, 21.5, 1.7, 0.24, 0.55, CLOTH, ry=0.5, solid=False)
+csg_box(P, "BodyBoilerBoots", -16.2, 0.1, 22.0, 0.28, 0.2, 0.4, BOOT, ry=0.5, solid=False)
+csg_box(P, "BodyLocker", -25.0, 0.13, 55.0, 1.7, 0.24, 0.55, CLOTH, ry=1.3, solid=False)
+csg_box(P, "BodyLockerBoots", -25.0, 0.1, 53.9, 0.4, 0.2, 0.28, BOOT, ry=1.3, solid=False)
+
+# Chairs around the break room tables, some knocked over.
+for i, (x, z) in enumerate([(22.0, 51.0), (26.0, 51.0), (22.0, 47.5), (26.0, 47.5)]):
+    csg_box(P, "ChairSeat%d" % i, x, 0.45, z, 0.5, 0.06, 0.5, BENCH, ry=rng.uniform(-0.4, 0.4), solid=False)
+    csg_box(P, "ChairBack%d" % i, x, 0.78, z + (0.22 if i % 2 else -0.22), 0.5, 0.6, 0.05, BENCH, solid=False)
+
+# Open locker doors.
+for i, idx in enumerate((2, 6, 9)):
+    csg_box(P, "OpenLockerDoor%d" % i, -28.9 + idx * 1.05 + 0.4, 1.3, 56.7, 0.04, 2.4, 0.6, LOCKER_M, ry=0.9 + i * 0.3, solid=False)
+
+# Hazard stripes across the generator hall doorway and in front of the gate.
+for strip, (zc, x0, x1) in enumerate(((8.7, -1.8, 1.8), (-8.7, -4.5, 3.5))):
+    x = x0
+    k = 0
+    while x < x1:
+        csg_box(P, "Stripe%d_%d" % (strip, k), x + 0.25, 0.006, zc, 0.5, 0.012, 0.5,
+                STRIPE_Y if k % 2 == 0 else STRIPE_K, solid=False, collide=False)
+        x += 0.5
+        k += 1
+
+# Papers scattered where the shift left in a hurry.
+subs.append('[sub_resource type="QuadMesh" id="PaperQuad"]' + chr(10) + 'size = Vector2(0.3, 0.21)' + chr(10))
+for i in range(26):
+    room = ROOMS[rng.choice(("locker", "lobby", "break", "elect", "assembly"))]
+    x = rng.uniform(room[0] + 2, room[1] - 2)
+    z = rng.uniform(room[2] + 2, room[3] - 2)
+    rot = rng.uniform(0, math.pi)
+    node("Paper%d" % i, "MeshInstance3D", "Decor", [
+        ("transform", "Transform3D(%s, %s, 0, 0, 0, 1, %s, %s, 0, %s, 0.015, %s)" % (
+            f(math.cos(rot)), f(-math.sin(rot)), f(-math.sin(rot)), f(-math.cos(rot)), f(x), f(z))),
+        ("material_override", 'SubResource("%s")' % PAPER), ("mesh", 'SubResource("PaperQuad")')])
+
+# Puddles and drips under the leaking pipes.
+subs.append('[sub_resource type="QuadMesh" id="PuddleQuad"]' + chr(10) + 'size = Vector2(1.6, 1.2)' + chr(10))
+subs.append('[sub_resource type="SphereMesh" id="DripMesh"]' + chr(10) + 'radius = 0.018' + chr(10) + 'height = 0.05' + chr(10) + 'radial_segments = 6' + chr(10) + 'rings = 3' + chr(10))
+for i, (x, z) in enumerate([(-20.5, 36.5), (-18.0, 14.0), (21.0, 16.0), (-20.0, 0.5), (-4.0, 26.0)]):
+    node("Puddle%d" % i, "MeshInstance3D", "Decor", [
+        ("transform", "Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, %s, 0.018, %s)" % (f(x), f(z))),
+        ("material_override", 'SubResource("%s")' % PUDDLE), ("mesh", 'SubResource("PuddleQuad")')])
+    node("Drip%d" % i, "CPUParticles3D", "Props", [
+        ("transform", "Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, %s, 4.2, %s)" % (f(x), f(z))),
+        ("amount", "3"), ("lifetime", "1.5"), ("randomness", "0.6"),
+        ("mesh", 'SubResource("DripMesh")'), ("material_override", 'SubResource("%s")' % DRIP_GLOW),
+        ("direction", "Vector3(0, -1, 0)"), ("spread", "0.0"),
+        ("initial_velocity_min", "0.0"), ("initial_velocity_max", "0.0"),
+        ("gravity", "Vector3(0, -6, 0)")])
 
 # ── Exit corridor (gate, outside yard, victory trigger) ─────────────────────
 node("Floor2", "CSGBox3D", ".", [
