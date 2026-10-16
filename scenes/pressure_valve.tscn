@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/pressure_valve.gd" id="1_valve"]
+
+[node name="PressureValve" type="StaticBody3D"]
+script = ExtResource("1_valve")

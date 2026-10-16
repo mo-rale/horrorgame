@@ -109,14 +109,21 @@ def csg_box(parent, name, cx, cy, cz, sx, sy, sz, material, ry=0.0, collide=True
         obstacles.append((cx - hx, cx + hx, cz - hz, cz + hz, cy + sy / 2))
 
 
-def csg_cyl(parent, name, cx, cy, cz, radius, height, material, collide=True, sides=16):
-    props = [("transform", xform(cx, cy, cz)),
+def csg_cyl(parent, name, cx, cy, cz, radius, height, material, collide=True, sides=16,
+            along_z=False):
+    # CSG cylinders stand upright by default; along_z lays them down along Z.
+    transform = ("Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, %s, %s, %s)" % (f(cx), f(cy), f(cz))
+                 if along_z else xform(cx, cy, cz))
+    props = [("transform", transform),
              ("material_override", 'SubResource("%s")' % material)]
     if collide:
         props.append(("use_collision", "true"))
     props += [("radius", f(radius)), ("height", f(height)), ("sides", str(sides))]
     node(name, "CSGCylinder3D", parent, props)
-    obstacles.append((cx - radius, cx + radius, cz - radius, cz + radius, cy + height / 2))
+    if along_z:
+        obstacles.append((cx - radius, cx + radius, cz - height / 2, cz + height / 2, cy + radius))
+    else:
+        obstacles.append((cx - radius, cx + radius, cz - radius, cz + radius, cy + height / 2))
 
 
 def label(name, text, x, y, z, ry=0.0, size=64, color=(0.85, 0.82, 0.7), pixel=0.008):
@@ -246,8 +253,8 @@ csg_box(P, "OverturnedChair2", 26.8, 0.22, 52.6, 0.5, 0.45, 0.5, BENCH, ry=1.1)
 # Steam hall
 for (x, z) in [(-20, 32), (-20, 41), (-26, 30.5)]:
     csg_cyl(R, uname("SteamColumn"), x, 2.5, z, 0.35, 5.0, PIPE)
-csg_cyl(P, "SteamCeilingPipe1", -27, 4.3, 36.5, 0.25, 16.0, PIPE)
-csg_cyl(P, "SteamCeilingPipe2", -16, 4.3, 36.5, 0.25, 16.0, PIPE)
+csg_cyl(P, "SteamCeilingPipe1", -27, 4.3, 36.5, 0.25, 16.0, PIPE, along_z=True)
+csg_cyl(P, "SteamCeilingPipe2", -16, 4.3, 36.5, 0.25, 16.0, PIPE, along_z=True)
 csg_box(P, "PressureGauge", -29.65, 2.5, 33.2, 0.1, 0.9, 0.9, GLOW_RED, solid=False, collide=False)
 # Electrical room
 for i, z in enumerate((32.5, 35.5, 38.5)):

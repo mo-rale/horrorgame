@@ -1,0 +1,7 @@
+Valve sound effects
+
+steam_release.wav - derived from 'Steam release sounds' (steam_hisses.zip), CC0
+  https://opengameart.org/content/steam-release-sounds
+metal_clank.ogg, metal_slam.ogg - from '100 CC0 metal and wood SFX' by rubberduck, CC0
+  https://opengameart.org/content/100-cc0-metal-and-wood-sfx
+steam_leak_loop.wav, valve_turn.wav - synthesized by tools/prepare_valve_audio.py (no third-party audio)
