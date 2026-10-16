@@ -559,7 +559,7 @@ func _on_fuel_changed(current_fuel: int, required_fuel: int) -> void:
 func _on_fuse_changed(current_fuses: int, required_fuses: int) -> void:
 	fuse_label.text = "FUSES: %d / %d" % [current_fuses, required_fuses]
 	if current_fuses < required_fuses:
-		objective_label.text = "OBJECTIVE: FIND AND INSTALL GENERATOR FUSES"
+		objective_label.text = "OBJECTIVE: FIND THE FUSES AND PUT THEM IN THE FUSE BOX"
 		fuse_label.modulate = Color(1.0, 0.3, 0.25) if current_fuses == 0 else Color(1.0, 0.8, 0.25)
 	else:
 		fuse_label.modulate = Color(0.35, 1.0, 0.55)
