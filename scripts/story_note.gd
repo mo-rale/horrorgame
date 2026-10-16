@@ -1,6 +1,6 @@
 extends StaticBody3D
 # A readable note. Look at it and press E to read; press E again, ESC, or walk
-# away to put it down. Built from code so a note is just a node with text.
+# away to put it down. The paper, collision and hint live in scenes/story_note.tscn.
 
 @export var title := "NOTE"
 @export_multiline var body := ""
@@ -18,32 +18,56 @@ var _opened_frame := -10
 
 
 func _ready() -> void:
-	_material = StandardMaterial3D.new()
-	_material.albedo_color = Color(0.86, 0.8, 0.62)
-	_material.emission_enabled = true
-	_material.emission = Color(0.55, 0.48, 0.3)
-	_material.emission_energy_multiplier = 0.25
+	if has_node("Paper"):
+		_mesh = $Paper
+		_hint = $Hint
+	else:
+		_build_model()
+	# Each note has its own paper size and highlight, so give it private copies
+	# of the scene's shared mesh, shape and material.
+	_material = _mesh.material_override.duplicate() as StandardMaterial3D
+	_mesh.material_override = _material
+	var box := (_mesh.mesh as BoxMesh).duplicate() as BoxMesh
+	box.size = paper_size
+	_mesh.mesh = box
+	var shape := ($CollisionShape3D.shape as BoxShape3D).duplicate() as BoxShape3D
+	shape.size = paper_size + Vector3(0.12, 0.12, 0.12)
+	$CollisionShape3D.shape = shape
+	_hint.position = Vector3(0.0, maxf(paper_size.y, 0.3) * 0.5 + 0.2, 0.0)
+	_hint.visible = false
+
+
+func _build_model() -> void:
+	# Only used by tools/bake_scenes.gd to create scenes/story_note.tscn.
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.86, 0.8, 0.62)
+	material.emission_enabled = true
+	material.emission = Color(0.55, 0.48, 0.3)
+	material.emission_energy_multiplier = 0.25
 	_mesh = MeshInstance3D.new()
+	_mesh.name = "Paper"
 	var box := BoxMesh.new()
 	box.size = paper_size
 	_mesh.mesh = box
-	_mesh.material_override = _material
+	_mesh.material_override = material
 	add_child(_mesh)
 
 	var collision := CollisionShape3D.new()
+	collision.name = "CollisionShape3D"
 	var shape := BoxShape3D.new()
 	shape.size = paper_size + Vector3(0.12, 0.12, 0.12)
 	collision.shape = shape
 	add_child(collision)
 
 	_hint = Label3D.new()
+	_hint.name = "Hint"
 	_hint.text = "[E] READ"
 	_hint.font_size = 36
 	_hint.pixel_size = 0.004
 	_hint.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_hint.no_depth_test = true
 	_hint.modulate = Color(1.0, 0.9, 0.6)
-	_hint.position = Vector3(0.0, maxf(paper_size.y, 0.3) * 0.5 + 0.2, 0.0)
+	_hint.position = Vector3(0.0, 0.35, 0.0)
 	_hint.visible = false
 	add_child(_hint)
 

@@ -1,13 +1,13 @@
 [gd_scene format=3 uid="uid://bb13ne5cuslgi"]
 
 [ext_resource type="Script" uid="uid://cndcvc1pbpj00" path="res://scripts/enemy.gd" id="1_4ra3w"]
-[ext_resource type="Script" path="res://scripts/enemy_model.gd" id="9_model"]
 [ext_resource type="AudioStream" uid="uid://cwal04uoyu0bd" path="res://assets/sfx/ambience/data_pion-st3-footstep-sfx-323056.mp3" id="3_c4w8v"]
 [ext_resource type="AudioStream" uid="uid://cvoq83aj73x3" path="res://assets/sfx/ambience/freesound_community-jumpscare-68730.mp3" id="4_5uy6h"]
 [ext_resource type="AudioStream" uid="uid://b5307ijbvw7jo" path="res://assets/sfx/enemy/creepy_whispiring.mp3" id="5_xwavj"]
 [ext_resource type="AudioStream" uid="uid://bc73iqh7ocvoe" path="res://assets/sfx/enemy/creepyWhispiring2.mp3" id="6_nenq2"]
 [ext_resource type="AudioStream" uid="uid://bqdw12u8q1yu6" path="res://assets/sfx/enemy/enemyStalking.mp3" id="7_stalk"]
 [ext_resource type="AudioStream" uid="uid://cnlmvjrhkpfbv" path="res://assets/sfx/enemy/enemySeen.mp3" id="8_seen"]
+[ext_resource type="PackedScene" path="res://scenes/enemy_model.tscn" id="9_model"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_md484"]
 radius = 0.35
@@ -24,8 +24,7 @@ stream_2/stream = ExtResource("7_stalk")
 script = ExtResource("1_4ra3w")
 max_spotting_distance = 30.0
 
-[node name="Model" type="Node3D" parent="."]
-script = ExtResource("9_model")
+[node name="Model" parent="." instance=ExtResource("9_model")]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2090277364]
 shape = SubResource("CapsuleShape3D_md484")

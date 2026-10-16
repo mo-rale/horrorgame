@@ -1,7 +1,9 @@
 extends Node3D
 # Main-menu backdrop: the front gate of Halverson Works on a stormy night. A
 # dead neon sign, a failing lamp, a fence and, whenever lightning strikes, the
-# night-shift foreman standing a little closer than before. Built from code.
+# night-shift foreman standing a little closer than before. The set lives in
+# scenes/main_menu_scenery.tscn; the script rebuilds it only if the nodes are
+# missing (tools/bake_scenes.gd uses that to create the scene).
 
 const TEX := "res://assets/SBS - Horror Texture Pack 128x128/128x128/"
 const GROUND_TEXTURE := preload(TEX + "Stone/Horror_Stone_01-128x128.png")
@@ -41,17 +43,46 @@ var _rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	_rng.randomize()
 	_camera = get_node_or_null(camera_path) as Camera3D
-	_build_environment()
-	_build_ground()
-	_build_factory()
-	_build_fence()
-	_build_lamps()
-	_build_trees()
-	_build_figure()
-	_build_audio()
+	if has_node("Factory"):
+		_bind_set()
+	else:
+		_build_environment()
+		_build_ground()
+		_build_factory()
+		_build_fence()
+		_build_lamps()
+		_build_trees()
+		_build_figure()
+		_build_audio()
+	_start_runtime()
 	var weather := get_parent()
 	if weather and weather.has_signal("lightning_struck"):
 		weather.connect("lightning_struck", _on_lightning)
+
+
+func _enter_tree() -> void:
+	# The rain loops. This runs before the Rain node's autoplay starts.
+	var rain := get_node_or_null("Rain") as AudioStreamPlayer
+	if rain and rain.stream is AudioStreamOggVorbis:
+		(rain.stream as AudioStreamOggVorbis).loop = true
+
+
+func _bind_set() -> void:
+	_sign = $Factory/Sign
+	_figure = $Figure
+	_thunder = $Thunder
+
+
+func _start_runtime() -> void:
+	# Window glow pulses and the rain loops; both use the scene's own nodes.
+	for node in get_tree().get_nodes_in_group("menu_windows"):
+		var window_mesh := node as MeshInstance3D
+		if window_mesh and is_ancestor_of(window_mesh):
+			var material := window_mesh.material_override as StandardMaterial3D
+			if not _windows.has(material):
+				_windows.append(material)
+				_window_phase.append(_rng.randf() * TAU)
+	_place_figure()
 
 
 func _process(delta: float) -> void:
@@ -168,6 +199,7 @@ func _build_ground() -> void:
 func _build_factory() -> void:
 	var brick := _material(BRICK_TEXTURE, Color(0.42, 0.37, 0.37), 0.28, 0.9)
 	var factory := Node3D.new()
+	factory.name = "Factory"
 	factory.position = Vector3(10.0, 0.0, -38.0)
 	add_child(factory)
 	_box(Vector3(36, 11, 12), Vector3(0, 5.5, 0), brick, factory)
@@ -198,15 +230,17 @@ func _build_factory() -> void:
 				material = _glow(Color(0.9, 0.05, 0.03), 2.0)
 			elif lit:
 				material = _glow(Color(1.0, 0.6, 0.22), 1.6)
-				_windows.append(material)
-				_window_phase.append(rng.randf() * TAU)
-			_box(Vector3(1.5, 1.8, 0.1), Vector3(x, y, 6.02), material, factory)
+			var window := _box(Vector3(1.5, 1.8, 0.1), Vector3(x, y, 6.02), material, factory)
+			window.name = "Window"
+			if lit:
+				window.add_to_group("menu_windows", true)
 
 	# The gate and its dead sign.
 	_box(Vector3(6.5, 5.4, 0.35), Vector3(-1.0, 2.7, 6.0), _material(RUST_TEXTURE, Color(0.35, 0.32, 0.3), 0.5, 0.7), factory)
 	_box(Vector3(0.14, 5.4, 0.4), Vector3(-1.0, 2.7, 6.05), _flat(Color(0.02, 0.02, 0.02)), factory)
 	_box(Vector3(7.0, 0.25, 0.5), Vector3(-1.0, 5.6, 6.1), _flat(Color(0.05, 0.05, 0.05)), factory)
 	_sign = Label3D.new()
+	_sign.name = "Sign"
 	_sign.text = "HALV  RSON  W RKS"
 	_sign.font_size = 140
 	_sign.pixel_size = 0.014
@@ -353,10 +387,13 @@ func _build_trees() -> void:
 
 
 func _build_figure() -> void:
-	_figure = Node3D.new()
-	_figure.set_script(ENEMY_MODEL)
+	if ResourceLoader.exists("res://scenes/enemy_model.tscn"):
+		_figure = (load("res://scenes/enemy_model.tscn") as PackedScene).instantiate()
+	else:
+		_figure = Node3D.new()
+		_figure.set_script(ENEMY_MODEL)
+	_figure.name = "Figure"
 	add_child(_figure)
-	_place_figure()
 
 
 func _place_figure() -> void:
@@ -369,7 +406,8 @@ func _place_figure() -> void:
 
 func _build_audio() -> void:
 	var rain := AudioStreamPlayer.new()
-	var rain_stream := RAIN_SFX.duplicate() as AudioStreamOggVorbis
+	rain.name = "Rain"
+	var rain_stream: AudioStreamOggVorbis = RAIN_SFX
 	rain_stream.loop = true
 	rain.stream = rain_stream
 	rain.bus = &"SFX"
@@ -377,6 +415,7 @@ func _build_audio() -> void:
 	rain.autoplay = true
 	add_child(rain)
 	_thunder = AudioStreamPlayer.new()
+	_thunder.name = "Thunder"
 	_thunder.stream = THUNDER_SFX
 	_thunder.bus = &"SFX"
 	_thunder.volume_db = -3.0

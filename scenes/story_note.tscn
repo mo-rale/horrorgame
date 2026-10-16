@@ -1,0 +1,35 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/story_note.gd" id="1_tqecu"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lmtxr"]
+albedo_color = Color(0.86, 0.8, 0.62, 1)
+emission_enabled = true
+emission = Color(0.55, 0.48, 0.3, 1)
+emission_energy_multiplier = 0.25
+
+[sub_resource type="BoxMesh" id="BoxMesh_u7jgp"]
+size = Vector3(0.4, 0.03, 0.3)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_0a7dt"]
+size = Vector3(0.52, 0.14999999, 0.42000002)
+
+[node name="StoryNote" type="StaticBody3D" unique_id=2017166909]
+script = ExtResource("1_tqecu")
+
+[node name="Paper" type="MeshInstance3D" parent="." unique_id=737710116]
+material_override = SubResource("StandardMaterial3D_lmtxr")
+mesh = SubResource("BoxMesh_u7jgp")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=387640785]
+shape = SubResource("BoxShape3D_0a7dt")
+
+[node name="Hint" type="Label3D" parent="." unique_id=164364043]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0)
+visible = false
+pixel_size = 0.004
+billboard = 1
+no_depth_test = true
+modulate = Color(1, 0.9, 0.6, 1)
+text = "[E] READ"
+font_size = 36

@@ -20,6 +20,19 @@ func _ready() -> void:
 	add_to_group("fuse")
 	label.visible = false
 
+	# The cartridge model lives in the scene; the script only builds it when the
+	# nodes are missing (tools/bake_scenes.gd uses that to create the scene).
+	if has_node("Model"):
+		_outline = $Outline
+		_glow_light = $GlowLight
+	else:
+		_build_model()
+	FuseModel.tint($Model, fuse_color)
+	_glow_light.light_color = fuse_color
+	_outline.visible = false
+
+
+func _build_model() -> void:
 	# The cartridge lies along local Z so it sits in the hand like before.
 	var model := FuseModel.build(fuse_color)
 	model.rotation.x = PI * 0.5
@@ -34,6 +47,7 @@ func _ready() -> void:
 	outline_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	outline_material.albedo_color = Color(1.0, 0.82, 0.18, 0.34)
 	_outline = MeshInstance3D.new()
+	_outline.name = "Outline"
 	_outline.mesh = outline_mesh
 	_outline.material_override = outline_material
 	_outline.rotation.x = PI * 0.5
@@ -42,7 +56,7 @@ func _ready() -> void:
 
 	# A faint coloured glow makes a dropped fuse findable in the dark.
 	_glow_light = OmniLight3D.new()
-	_glow_light.light_color = fuse_color
+	_glow_light.name = "GlowLight"
 	_glow_light.light_energy = 0.45
 	_glow_light.omni_range = 2.6
 	_glow_light.shadow_enabled = false

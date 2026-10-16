@@ -298,9 +298,8 @@ for i, z in enumerate((-8, -4, 0)):
 csg_box(P, "Toolbox", 21, 0.3, 5.5, 0.9, 0.6, 0.5, DARK)
 
 # The fuse box on the east wall of the electrical room (front faces west, -X).
-node("FuseBox", "StaticBody3D", "Props", [
-    ("transform", xform(29.25, 0, 42.2, -math.pi / 2)),
-    ("script", 'ExtResource("fusebox_script")')])
+nodes.append('[node name="FuseBox" parent="Props" instance=ExtResource("fusebox_scene")]' + chr(10) +
+             'transform = ' + xform(29.25, 0, 42.2, -math.pi / 2) + chr(10))
 
 # ── Exit corridor (gate, outside yard, victory trigger) ─────────────────────
 node("Floor2", "CSGBox3D", ".", [
@@ -400,11 +399,12 @@ NOTES = [
      "The gate opens when the plant runs. It always opens... for the next shift.\\n\\nDon't stop. Don't stop. Don't stop."),
 ]
 for name, (x, y, z), ry, (sx, sy, sz), title, body in NOTES:
-    node(name, "StaticBody3D", "Notes", [
-        ("transform", xform(x, y, z, ry)),
-        ("script", 'ExtResource("note_script")'),
-        ("title", '"%s"' % title), ("body", '"%s"' % body),
-        ("paper_size", vec(sx, sy, sz))])
+    nl = chr(10)
+    nodes.append('[node name="%s" parent="Notes" instance=ExtResource("note_scene")]' % name + nl
+                 + 'transform = ' + xform(x, y, z, ry) + nl
+                 + 'title = "%s"' % title + nl
+                 + 'body = "%s"' % body + nl
+                 + 'paper_size = ' + vec(sx, sy, sz) + nl)
 
 # ── Lights ──────────────────────────────────────────────────────────────────
 EMERGENCY = {
@@ -476,9 +476,9 @@ check_spawns()
 # ── Write the scene ─────────────────────────────────────────────────────────
 head = ['[gd_scene format=3 uid="uid://dvuhqut63xyl0"]\n',
         '[ext_resource type="Script" uid="uid://b7e6t4f133m6o" path="res://scripts/level_map.gd" id="1_map"]',
-        '[ext_resource type="Script" path="res://scripts/story_note.gd" id="note_script"]',
+        '[ext_resource type="PackedScene" path="res://scenes/story_note.tscn" id="note_scene"]',
         '[ext_resource type="Script" path="res://scripts/flicker_light.gd" id="flicker_script"]',
-        '[ext_resource type="Script" path="res://scripts/fuse_box.gd" id="fusebox_script"]',
+        '[ext_resource type="PackedScene" path="res://scenes/fuse_box.tscn" id="fusebox_scene"]',
         '[ext_resource type="PackedScene" uid="uid://cp861k7cohx8e" path="res://scenes/gas_can.tscn" id="gascan_scene"]']
 for ident, ttype, path in ext:
     head.append('[ext_resource type="%s" path="%s" id="%s"]' % (ttype, path, ident))

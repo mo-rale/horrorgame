@@ -2,8 +2,10 @@ extends StaticBody3D
 # The plant's fuse box: a steel cabinet with its door hanging open, three fuse
 # sockets (red, blue, yellow) and a main breaker. Fuses are inserted here (hold
 # a fuse, aim, left click), not into the generator. When all three are in, the
-# breaker flips on and the generator can be started. Built from code; the
-# front faces local +Z and the back sits against a wall.
+# breaker flips on and the generator can be started. The model lives in the scene
+# (scenes/fuse_box.tscn); the script rebuilds it only if the nodes are missing
+# (tools/bake_scenes.gd uses that). The front faces local +Z and the back sits
+# against a wall.
 
 signal fuse_installed(fuse_type: String, installed: int, required: int)
 
@@ -43,10 +45,36 @@ var _spark_flash := 0.0
 
 func _ready() -> void:
 	add_to_group("fuse_box")
-	_build_cabinet()
-	_build_sockets()
-	_build_breaker_and_cables()
-	_build_effects()
+	if has_node("CabinetBack"):
+		_bind_model()
+	else:
+		_build_cabinet()
+		_build_sockets()
+		_build_breaker_and_cables()
+		_build_effects()
+	_prepare_runtime()
+
+
+func _bind_model() -> void:
+	_body_material = $CabinetBack.material_override as StandardMaterial3D
+	for fuse_type in SLOT_ORDER:
+		_lamps[fuse_type] = get_node("Lamp_" + fuse_type).material_override
+	_lever = $Lever
+	_power_lamp = $PowerLamp.material_override as StandardMaterial3D
+	_inner_light = $InnerLight
+	_sparks = $Sparks
+	_label = $Label
+	_sfx = $Sfx
+	_hum = $Hum
+
+
+func _prepare_runtime() -> void:
+	var hum_stream := HUM_SFX.duplicate() as AudioStreamWAV
+	hum_stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	hum_stream.loop_begin = 0
+	hum_stream.loop_end = hum_stream.data.size() / 2   # 16-bit mono
+	_hum.stream = hum_stream
+	_label.visible = false
 
 
 # ── Model ────────────────────────────────────────────────────────────────────
@@ -97,7 +125,7 @@ func _build_cabinet() -> void:
 
 	var dark := _flat(Color(0.05, 0.055, 0.05))
 	# Shell: back, two sides, top and bottom make an open-fronted cabinet.
-	_box(Vector3(1.4, 2.0, 0.06), Vector3(0, 1.0, -0.47), _body_material)
+	_box(Vector3(1.4, 2.0, 0.06), Vector3(0, 1.0, -0.47), _body_material).name = "CabinetBack"
 	_box(Vector3(0.06, 2.0, 0.5), Vector3(-0.67, 1.0, -0.22), _body_material)
 	_box(Vector3(0.06, 2.0, 0.5), Vector3(0.67, 1.0, -0.22), _body_material)
 	_box(Vector3(1.4, 0.06, 0.5), Vector3(0, 2.0, -0.22), _body_material)
@@ -141,6 +169,7 @@ func _build_cabinet() -> void:
 	add_child(danger)
 
 	var collision := CollisionShape3D.new()
+	collision.name = "CollisionShape3D"
 	var shape := BoxShape3D.new()
 	shape.size = Vector3(1.4, 2.0, 0.6)
 	collision.shape = shape
@@ -148,6 +177,7 @@ func _build_cabinet() -> void:
 	add_child(collision)
 
 	_label = Label3D.new()
+	_label.name = "Label"
 	_label.font_size = 40
 	_label.pixel_size = 0.004
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -199,6 +229,7 @@ func _build_sockets() -> void:
 		lamp_mesh.radius = 0.035
 		lamp_mesh.height = 0.07
 		var lamp := MeshInstance3D.new()
+		lamp.name = "Lamp_" + fuse_type
 		lamp.mesh = lamp_mesh
 		lamp.material_override = lamp_material
 		lamp.position = Vector3(x, SLOT_Y + 0.55, -0.32)
@@ -210,6 +241,7 @@ func _build_breaker_and_cables() -> void:
 	# Main breaker: a lever on a plate, down = off, up = on.
 	_box(Vector3(0.34, 0.3, 0.04), Vector3(0.0, 1.88, -0.4), _flat(Color(0.12, 0.12, 0.13)))
 	_lever = Node3D.new()
+	_lever.name = "Lever"
 	_lever.position = Vector3(0.0, 1.88, -0.37)
 	_lever.rotation.z = deg_to_rad(-35.0)
 	add_child(_lever)
@@ -224,6 +256,7 @@ func _build_breaker_and_cables() -> void:
 	lamp_mesh.radius = 0.04
 	lamp_mesh.height = 0.08
 	var power := MeshInstance3D.new()
+	power.name = "PowerLamp"
 	power.mesh = lamp_mesh
 	power.material_override = _power_lamp
 	power.position = Vector3(0.22, 1.88, -0.36)
@@ -240,6 +273,7 @@ func _build_breaker_and_cables() -> void:
 
 func _build_effects() -> void:
 	_inner_light = OmniLight3D.new()
+	_inner_light.name = "InnerLight"
 	_inner_light.position = Vector3(0, 1.4, 0.5)
 	_inner_light.light_color = Color(1.0, 0.72, 0.35)
 	_inner_light.light_energy = 0.7
@@ -248,6 +282,7 @@ func _build_effects() -> void:
 	add_child(_inner_light)
 
 	_sparks = CPUParticles3D.new()
+	_sparks.name = "Sparks"
 	_sparks.position = Vector3(0, SLOT_Y, -0.2)
 	_sparks.amount = 24
 	_sparks.lifetime = 0.45
@@ -272,17 +307,15 @@ func _build_effects() -> void:
 	add_child(_sparks)
 
 	_sfx = AudioStreamPlayer3D.new()
+	_sfx.name = "Sfx"
 	_sfx.bus = &"SFX"
 	_sfx.unit_size = 5.0
 	_sfx.position = Vector3(0, SLOT_Y, 0.2)
 	add_child(_sfx)
 
-	var hum_stream := HUM_SFX.duplicate() as AudioStreamWAV
-	hum_stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	hum_stream.loop_begin = 0
-	hum_stream.loop_end = hum_stream.data.size() / 2   # 16-bit mono
 	_hum = AudioStreamPlayer3D.new()
-	_hum.stream = hum_stream
+	_hum.name = "Hum"
+	_hum.stream = HUM_SFX
 	_hum.bus = &"SFX"
 	_hum.volume_db = -22.0
 	_hum.unit_size = 3.0

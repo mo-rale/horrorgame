@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://dvuhqut63xyl0"]
 
 [ext_resource type="Script" uid="uid://b7e6t4f133m6o" path="res://scripts/level_map.gd" id="1_map"]
-[ext_resource type="Script" path="res://scripts/story_note.gd" id="note_script"]
+[ext_resource type="PackedScene" path="res://scenes/story_note.tscn" id="note_scene"]
 [ext_resource type="Script" path="res://scripts/flicker_light.gd" id="flicker_script"]
-[ext_resource type="Script" path="res://scripts/fuse_box.gd" id="fusebox_script"]
+[ext_resource type="PackedScene" path="res://scenes/fuse_box.tscn" id="fusebox_scene"]
 [ext_resource type="PackedScene" uid="uid://cp861k7cohx8e" path="res://scenes/gas_can.tscn" id="gascan_scene"]
 [ext_resource type="Texture2D" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Wall/Horror_Wall_09-128x128.png" id="t1"]
 [ext_resource type="Texture2D" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Metal/Horror_Metal_12-128x128.png" id="t2"]
@@ -1030,9 +1030,8 @@ material_override = SubResource("m21")
 use_collision = true
 size = Vector3(0.9, 0.6, 0.5)
 
-[node name="FuseBox" type="StaticBody3D" parent="Props"]
+[node name="FuseBox" parent="Props" instance=ExtResource("fusebox_scene")]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 29.25, 0, 42.2)
-script = ExtResource("fusebox_script")
 
 [node name="Floor2" type="CSGBox3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1435, -0.2368, -20.9892)
@@ -1257,58 +1256,50 @@ double_sided = false
 text = "182 PSI"
 font_size = 72
 
-[node name="NoteLobby" type="StaticBody3D" parent="Notes"]
+[node name="NoteLobby" parent="Notes" instance=ExtResource("note_scene")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, -11.7, 1.5, 56.4)
-script = ExtResource("note_script")
 title = "NIGHT SHIFT NOTICE"
 body = "HALVERSON WORKS - NIGHT SHIFT\n\nOutput target: 4,000 units by 06:00.\nBoiler pressure limit: 140 PSI. Do NOT override.\n\nIn a power loss the gate SEAL engages automatically. It releases only when the plant generator is running.\n\n- Plant Management"
 paper_size = Vector3(0.05, 0.75, 0.55)
 
-[node name="NoteLocker" type="StaticBody3D" parent="Notes"]
+[node name="NoteLocker" parent="Notes" instance=ExtResource("note_scene")]
 transform = Transform3D(0.9211, 0, 0.3894, 0, 1, 0, -0.3894, 0, 0.9211, -21.4, 0.55, 51)
-script = ExtResource("note_script")
 title = "A LETTER, NEVER SENT"
 body = "Dad,\n\nEllis cancelled our break again. Nobody leaves until quota, he says. Half of us haven't slept.\n\nI keep hearing someone walking the catwalks after the lights flicker. Nobody will say it out loud, but we've all heard it.\n\nIf I'm late home, tell Ma I'm okay.\n\n- Mara"
 paper_size = Vector3(0.4, 0.03, 0.3)
 
-[node name="NoteBreak" type="StaticBody3D" parent="Notes"]
+[node name="NoteBreak" parent="Notes" instance=ExtResource("note_scene")]
 transform = Transform3D(0.9553, 0, -0.2955, 0, 1, 0, 0.2955, 0, 0.9553, 24, 0.83, 51)
-script = ExtResource("note_script")
 title = "FOREMAN'S MEMO"
 body = "ATTN ALL HANDS\n\nLine 3 is behind. The valves stay OPEN. Pressure is a number on a dial - production is the job.\n\nAnyone who touches those valves answers to me. Nobody clocks out until the shift is done.\n\n- F. Ellis, Night Foreman"
 paper_size = Vector3(0.4, 0.03, 0.3)
 
-[node name="NoteSteam" type="StaticBody3D" parent="Notes"]
+[node name="NoteSteam" parent="Notes" instance=ExtResource("note_scene")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, -29.7, 1.55, 40.5)
-script = ExtResource("note_script")
 title = "PRESSURE LOG"
 body = "02:07 - Gauge past 180 PSI and still climbing. Line 3 split. Steam everywhere.\n\nEllis screamed at us to keep running. I'm closing valve A anyway.\n\nSomebody has to shut B and C too, or this whole place goes.\n\nEllis went down to the boiler room to override B himself."
 paper_size = Vector3(0.05, 0.6, 0.45)
 
-[node name="NoteElect" type="StaticBody3D" parent="Notes"]
+[node name="NoteElect" parent="Notes" instance=ExtResource("note_scene")]
 transform = Transform3D(0.9801, 0, 0.1987, 0, 1, 0, -0.1987, 0, 0.9801, 20, 0.83, 43.4)
-script = ExtResource("note_script")
 title = "ELECTRICIAN'S NOTE"
 body = "02:11 - Main breaker tripped. The whole plant is dark and the gate seal clamped shut on its own.\n\nI pulled the generator fuses and hid them around the plant. If Ellis restarts the line, he'll send more men into that boiler.\n\nWhoever reads this: you need three fuses - red, blue, yellow. Push them into the FUSE BOX on this wall. Close the pressure valves first, or the plant will blow."
 paper_size = Vector3(0.4, 0.03, 0.3)
 
-[node name="NoteFuel" type="StaticBody3D" parent="Notes"]
+[node name="NoteFuel" parent="Notes" instance=ExtResource("note_scene")]
 transform = Transform3D(0.8776, 0, 0.4794, 0, 1, 0, -0.4794, 0, 0.8776, -20, 1.03, -8)
-script = ExtResource("note_script")
 title = "SCRAWLED ON A CRATE"
 body = "Generator fuel is kept here. Three cans left, maybe four.\n\nSomething walks the catwalk above us. Slow. Patient. It stops whenever I look at it.\n\nDon't look away from it. And don't let it get behind you."
 paper_size = Vector3(0.4, 0.03, 0.3)
 
-[node name="NoteBoiler" type="StaticBody3D" parent="Notes"]
+[node name="NoteBoiler" parent="Notes" instance=ExtResource("note_scene")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, -29.7, 1.5, 21.5)
-script = ExtResource("note_script")
 title = "BOILER ROOM LOG"
 body = "The boiler hatch is welded shut - from the INSIDE.\n\nWe heard Ellis hammering and shouting for an hour. Then quiet. Then the hatch started to glow.\n\nThen the first of us went missing.\n\nIt isn't done with the shift."
 paper_size = Vector3(0.05, 0.6, 0.45)
 
-[node name="NoteGen" type="StaticBody3D" parent="Notes"]
+[node name="NoteGen" parent="Notes" instance=ExtResource("note_scene")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, -11.7, 1.5, 4.6)
-script = ExtResource("note_script")
 title = "FOREMAN'S LAST LOG"
 body = "SHIFT LOG - F. ELLIS\n\n02:40 - Pressure holding. Quota on track.\n\nThe men keep leaving. That's fine. I'll keep working until the next shift arrives.\n\nThe gate opens when the plant runs. It always opens... for the next shift.\n\nDon't stop. Don't stop. Don't stop."
 paper_size = Vector3(0.05, 0.6, 0.45)

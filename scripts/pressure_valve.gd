@@ -1,7 +1,9 @@
 extends StaticBody3D
 # A steam-line pressure valve. It leaks (hissing, puffing steam, red lamp) until
-# the player shuts it with the hand wheel. The model is built from code and
-# faces local +Z; its back is a wall bracket at about z = -0.75.
+# the player shuts it with the hand wheel. The model lives in the scene
+# (scenes/pressure_valve.tscn) and faces local +Z; its back is a wall bracket at
+# about z = -0.75. If the model nodes are missing the script rebuilds them, which
+# is how tools/bake_scenes.gd creates the scene.
 
 const METAL_TEXTURE := preload("res://assets/SBS - Horror Texture Pack 128x128/128x128/Metal/Horror_Metal_02-128x128.png")
 const BODY_TEXTURE := preload("res://assets/SBS - Horror Texture Pack 128x128/128x128/Metal/Horror_Metal_10-128x128.png")
@@ -23,6 +25,7 @@ var turning := false
 var _wheel: Node3D
 var _needle: Node3D
 var _outline: MeshInstance3D
+var _lamp_mesh: MeshInstance3D
 var _lamp_material: StandardMaterial3D
 var _lamp_light: OmniLight3D
 var _steam: CPUParticles3D
@@ -35,9 +38,42 @@ var _leak_player: AudioStreamPlayer3D
 
 func _ready() -> void:
 	add_to_group("pressure_valve")
-	_build_model()
-	_build_audio()
+	if has_node("ValveWheel"):
+		_bind_model()
+	else:
+		_build_model()
+		_build_audio()
+	_prepare_runtime()
 	_set_leaking(true)
+
+
+func _bind_model() -> void:
+	_wheel = $ValveWheel
+	_outline = $ValveWheel/Outline
+	_needle = $Needle
+	_lamp_mesh = $LampMesh
+	_lamp_light = $LampLight
+	_steam = $Steam
+	_label = $Label
+	_turn_player = $TurnPlayer
+	_impact_player = $ImpactPlayer
+	_release_player = $ReleasePlayer
+	_leak_player = $LeakPlayer
+
+
+func _prepare_runtime() -> void:
+	# Each valve gets its own lamp material (the scene's is shared by every
+	# instance) and a looping copy of the leak sound.
+	_lamp_material = _lamp_mesh.material_override.duplicate() as StandardMaterial3D
+	_lamp_mesh.material_override = _lamp_material
+	var leak_stream := LEAK_SFX.duplicate() as AudioStreamWAV
+	leak_stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	leak_stream.loop_begin = 0
+	leak_stream.loop_end = leak_stream.data.size() / 2   # 16-bit mono
+	_leak_player.stream = leak_stream
+	_label.visible = false
+	_outline.visible = false
+	_set_lamp(LAMP_OPEN)
 
 
 # ── Model ────────────────────────────────────────────────────────────────────
@@ -106,6 +142,7 @@ func _build_model() -> void:
 
 	# Hand wheel: rim, hub and spokes, all on one pivot so it can spin.
 	_wheel = Node3D.new()
+	_wheel.name = "ValveWheel"
 	_wheel.position = Vector3(0, 1.2, 0.78)
 	add_child(_wheel)
 	var rim_mesh := TorusMesh.new()
@@ -134,6 +171,7 @@ func _build_model() -> void:
 	outline_material.albedo_color = Color(1.0, 0.75, 0.3, 0.55)
 	outline_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	_outline = MeshInstance3D.new()
+	_outline.name = "Outline"
 	_outline.mesh = outline_mesh
 	_outline.material_override = outline_material
 	_outline.rotation.x = PI * 0.5
@@ -145,6 +183,7 @@ func _build_model() -> void:
 	_add_cylinder(0.15, 0.07, Vector3(0, 1.72, 0.28), steel, true)
 	_add_cylinder(0.125, 0.02, Vector3(0, 1.72, 0.32), gauge_face, true)
 	_needle = Node3D.new()
+	_needle.name = "Needle"
 	_needle.position = Vector3(0, 1.72, 0.335)
 	_needle.rotation.z = deg_to_rad(-70.0)
 	add_child(_needle)
@@ -154,24 +193,28 @@ func _build_model() -> void:
 	_lamp_material = StandardMaterial3D.new()
 	_lamp_material.emission_enabled = true
 	_lamp_material.emission_energy_multiplier = 3.0
+	_lamp_material.albedo_color = LAMP_OPEN
+	_lamp_material.emission = LAMP_OPEN
 	var lamp_mesh := SphereMesh.new()
 	lamp_mesh.radius = 0.045
 	lamp_mesh.height = 0.09
-	var lamp := MeshInstance3D.new()
-	lamp.mesh = lamp_mesh
-	lamp.material_override = _lamp_material
-	lamp.position = Vector3(0.22, 1.42, 0.3)
-	add_child(lamp)
+	_lamp_mesh = MeshInstance3D.new()
+	_lamp_mesh.name = "LampMesh"
+	_lamp_mesh.mesh = lamp_mesh
+	_lamp_mesh.material_override = _lamp_material
+	_lamp_mesh.position = Vector3(0.22, 1.42, 0.3)
+	add_child(_lamp_mesh)
 	_lamp_light = OmniLight3D.new()
+	_lamp_light.name = "LampLight"
 	_lamp_light.position = Vector3(0.1, 1.5, 0.6)
 	_lamp_light.omni_range = 5.5
 	_lamp_light.light_energy = 1.5
 	_lamp_light.shadow_enabled = false
 	add_child(_lamp_light)
-	_set_lamp(LAMP_OPEN)
 
 	# Steam leaking from the flange.
 	_steam = CPUParticles3D.new()
+	_steam.name = "Steam"
 	_steam.position = Vector3(0.05, 1.25, 0.5)
 	_steam.amount = 28
 	_steam.lifetime = 1.6
@@ -212,6 +255,7 @@ func _build_model() -> void:
 	add_child(_steam)
 
 	var collision := CollisionShape3D.new()
+	collision.name = "CollisionShape3D"
 	var shape := BoxShape3D.new()
 	shape.size = Vector3(0.95, 1.9, 1.7)
 	collision.shape = shape
@@ -219,6 +263,7 @@ func _build_model() -> void:
 	add_child(collision)
 
 	_label = Label3D.new()
+	_label.name = "Label"
 	_label.position = Vector3(0, 2.2, 0.5)
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_label.no_depth_test = true
@@ -231,19 +276,16 @@ func _build_model() -> void:
 
 
 func _build_audio() -> void:
-	_turn_player = _make_player(TURN_SFX, 0.0, 14.0)
-	_impact_player = _make_player(CLANK_SFX, 0.0, 22.0)
-	_release_player = _make_player(RELEASE_SFX, 2.0, 28.0)
-	var leak_stream := LEAK_SFX.duplicate() as AudioStreamWAV
-	leak_stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	leak_stream.loop_begin = 0
-	leak_stream.loop_end = leak_stream.data.size() / 2   # 16-bit mono
-	_leak_player = _make_player(leak_stream, -14.0, 14.0)
+	_turn_player = _make_player("TurnPlayer", TURN_SFX, 0.0, 14.0)
+	_impact_player = _make_player("ImpactPlayer", CLANK_SFX, 0.0, 22.0)
+	_release_player = _make_player("ReleasePlayer", RELEASE_SFX, 2.0, 28.0)
+	_leak_player = _make_player("LeakPlayer", LEAK_SFX, -14.0, 14.0)
 	_leak_player.position = Vector3(0.05, 1.25, 0.5)
 
 
-func _make_player(stream: AudioStream, volume_db: float, max_distance: float) -> AudioStreamPlayer3D:
+func _make_player(player_name: String, stream: AudioStream, volume_db: float, max_distance: float) -> AudioStreamPlayer3D:
 	var player := AudioStreamPlayer3D.new()
+	player.name = player_name
 	player.stream = stream
 	player.bus = &"SFX"
 	player.volume_db = volume_db
