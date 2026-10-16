@@ -105,6 +105,27 @@ var _stalking_clearance_shape := CapsuleShape3D.new()
 var _detection_grace_timer := 0.0
 var _vanish_sequence_id := 0
 
+# ── Dread behaviours ────────────────────────────────────────────────────
+@export_group("Dread")
+@export var anxiety_follow_distance_shrink := 0.45
+@export var stalk_pause_interval_min := 3.0
+@export var stalk_pause_interval_max := 7.0
+@export var stalk_pause_duration_min := 1.2
+@export var stalk_pause_duration_max := 2.6
+@export var ambient_cue_interval_min := 14.0
+@export var ambient_cue_interval_max := 32.0
+@export var ambient_cue_distance_min := 14.0
+@export var ambient_cue_distance_max := 24.0
+@export var chase_lunge_distance := 6.0
+@export var chase_lunge_multiplier := 1.25
+@export var searching_whisper_interval := 4.0
+
+var _stalk_pause_timer := 0.0
+var _next_stalk_pause := 0.0
+var _ambient_cue_timer := 0.0
+var _ambient_cue_running := false
+var _search_whisper_timer := 0.0
+
 # ── Chasing state ────────────────────────────────────────────────────────
 var _chase_timer := 0.0
 var _update_path_timer := 0.0
@@ -221,6 +242,7 @@ func _physics_process(delta: float) -> void:
 	match _state:
 		State.DORMANT:
 			velocity = Vector3.ZERO
+			_update_ambient_cues(delta)
 			return
 		State.ROAMING:
 			_update_roaming(delta)
@@ -228,6 +250,8 @@ func _physics_process(delta: float) -> void:
 			_update_investigating(delta)
 		State.STALKING:
 			_update_stalking(delta)
+			if _state == State.STALKING and _update_stalk_pause(delta):
+				return
 			if _state == State.STALKING:
 				_move_direct_path(
 					delta,
@@ -241,7 +265,13 @@ func _physics_process(delta: float) -> void:
 		State.CHASING:
 			_update_chasing(delta)
 			if _state == State.CHASING and not _catch_emitted:
-				_move_direct_path(delta, _active_chasing_speed, false)
+				var lunge := 1.0
+				if (
+					is_instance_valid(player)
+					and global_position.distance_to(player.global_position) < chase_lunge_distance
+				):
+					lunge = chase_lunge_multiplier
+				_move_direct_path(delta, _active_chasing_speed * lunge, false)
 			return
 		State.SEARCHING:
 			_update_searching(delta)
@@ -269,6 +299,8 @@ func _enter_state(new_state: State, data := {}) -> void:
 	# One-shot behavior sounds do not stop automatically when the state
 	# changes. Clean them up so an old chase scream cannot leak into a
 	# stalking disappearance.
+	if _state == State.CHASING and new_state != State.CHASING:
+		_end_chase_effects(new_state == State.SEARCHING)
 	if new_state != State.CHASING:
 		_chasing.stop()
 	if new_state == State.VANISHING:
@@ -298,6 +330,9 @@ func _enter_state(new_state: State, data := {}) -> void:
 			_footsteps.stop()
 			_stalking.stop()
 			_chasing.stop()
+			get_tree().call_group("post_fx", "set_anxiety", 0.0)
+			if is_instance_valid(player):
+				player.threat_proximity = 0.0
 			print("[Enemy] DORMANT — hidden until the next stalking event")
 
 		State.ROAMING:
@@ -321,6 +356,11 @@ func _enter_state(new_state: State, data := {}) -> void:
 				_enter_state(State.DORMANT)
 				return
 			_stalking_path_timer = 0.0
+			_stalk_pause_timer = 0.0
+			_next_stalk_pause = randf_range(
+				stalk_pause_interval_min,
+				maxf(stalk_pause_interval_max, stalk_pause_interval_min)
+			)
 			_anxiety_level = 0.0
 			_heartbeat_active = false
 			player.start_stalking_anxiety()
@@ -370,6 +410,9 @@ func _enter_state(new_state: State, data := {}) -> void:
 			_update_chase_path()
 			print("[Enemy] CHASING path waypoints: ", _direct_path.size())
 			_play_scream_chase()
+			if is_instance_valid(player):
+				player.add_trauma(0.9)
+			get_tree().call_group("post_fx", "set_anxiety", 1.0)
 		
 		State.SEARCHING:
 			if data.has("player_last_seen_position"):
@@ -449,6 +492,81 @@ func _update_stalking(delta: float) -> void:
 		_update_stalking_follow_path()
 
 
+func _update_stalk_pause(delta: float) -> bool:
+	# Now and then it stops dead and stares in total silence, then resumes.
+	if _stalk_pause_timer > 0.0:
+		_stalk_pause_timer -= delta
+		velocity = Vector3.ZERO
+		move_and_slide()
+		_face_player()
+		return true
+
+	_next_stalk_pause -= delta
+	if _next_stalk_pause <= 0.0:
+		_next_stalk_pause = randf_range(
+			stalk_pause_interval_min,
+			maxf(stalk_pause_interval_max, stalk_pause_interval_min)
+		)
+		_stalk_pause_timer = randf_range(
+			stalk_pause_duration_min,
+			maxf(stalk_pause_duration_max, stalk_pause_duration_min)
+		)
+	return false
+
+
+func _end_chase_effects(still_hunting: bool) -> void:
+	get_tree().call_group("post_fx", "set_anxiety", 0.3 if still_hunting else 0.0)
+	if is_instance_valid(player):
+		player.threat_proximity = 0.0
+
+
+func _update_ambient_cues(delta: float) -> void:
+	# While hidden, the thing occasionally makes itself known from far away so
+	# the player never feels alone: distant whispers or steps through the walls.
+	if _ambient_cue_running or not is_instance_valid(player):
+		return
+	if _ambient_cue_timer <= 0.0:
+		_ambient_cue_timer = randf_range(
+			ambient_cue_interval_min,
+			maxf(ambient_cue_interval_max, ambient_cue_interval_min)
+		)
+		return
+	_ambient_cue_timer -= delta
+	if _ambient_cue_timer > 0.0 or _stalking_cooldown < 4.0:
+		return
+	_play_ambient_cue()
+
+
+func _play_ambient_cue() -> void:
+	_ambient_cue_running = true
+	var angle := randf() * TAU
+	var distance := randf_range(
+		ambient_cue_distance_min,
+		maxf(ambient_cue_distance_max, ambient_cue_distance_min)
+	)
+	var requested := player.global_position + Vector3(cos(angle), 0.0, sin(angle)) * distance
+	var nav_point := NavigationServer3D.map_get_closest_point(_nav_map, requested)
+	global_position = _root_position_from_nav_point(nav_point)
+
+	if randf() < 0.5:
+		_play_stalking_sound()
+	else:
+		# A slow walk that never quite arrives.
+		for step in 4:
+			if _state != State.DORMANT or not is_inside_tree():
+				break
+			_footsteps.volume_db = _footstep_base_volume_db - 6.0
+			_footsteps.pitch_scale = randf_range(0.85, 1.0)
+			_footsteps.play()
+			await get_tree().create_timer(randf_range(0.55, 0.8), false).timeout
+			if _state != State.DORMANT:
+				break
+			var toward := (player.global_position - global_position)
+			toward.y = 0.0
+			global_position += toward.normalized() * 1.5
+	_ambient_cue_running = false
+
+
 func _on_player_calm_pressed(amount: float) -> void:
 	if _state != State.STALKING:
 		return
@@ -525,6 +643,9 @@ func _update_chasing(delta: float) -> void:
 		return
 
 	_update_path_timer -= delta
+	if is_instance_valid(player):
+		var chase_distance := global_position.distance_to(player.global_position)
+		player.threat_proximity = clampf(1.0 - chase_distance / 14.0, 0.0, 1.0)
 
 	var can_see_player := _can_see_player_during_chase()
 	if can_see_player:
@@ -544,7 +665,11 @@ func _update_chasing(delta: float) -> void:
 			_update_chase_path()
 
 		if _chase_timer <= 0.0:
-			_enter_state(State.DORMANT)
+			# It does not give up: it hunts around where it lost the player.
+			_enter_state(
+				State.SEARCHING,
+				{"player_last_seen_position": _player_last_seen_position}
+			)
 			return
 
 
@@ -577,7 +702,11 @@ func _try_catch_player() -> bool:
 
 func _update_searching(delta: float) -> void:
 	_search_timer -= delta
-	
+	_search_whisper_timer -= delta
+	if _search_whisper_timer <= 0.0:
+		_search_whisper_timer = searching_whisper_interval * randf_range(0.8, 1.6)
+		_play_stalking_sound()
+
 	if _search_timer <= 0.0:
 		_enter_state(State.DORMANT)
 		return
@@ -772,10 +901,14 @@ func _find_stalking_follow_target() -> Dictionary:
 	# point behind the player; walls are handled by the generated path.
 	var behind_direction := player.global_basis.z.normalized()
 	var angle_offsets: Array[float] = [0.0, -0.35, 0.35, -0.7, 0.7, -1.05, 1.05]
+	# The higher the player's anxiety, the closer the thing hugs their back.
+	var anxiety_scale := 1.0 - anxiety_follow_distance_shrink * (_anxiety_level / 100.0)
 	var effective_follow_distance := maxf(
-		minimum_stalking_follow_distance,
-		stalking_follow_distance
+		minimum_stalking_follow_distance * 0.8,
+		(
+			stalking_follow_distance
 			- _threat_level() * stalking_distance_reduction_per_level
+		) * anxiety_scale
 	)
 
 	for angle in angle_offsets:

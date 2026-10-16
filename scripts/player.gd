@@ -307,6 +307,26 @@ func _physics_process(delta: float) -> void:
 	_update_interaction()
 
 
+## Called by the enemy: 0..1 closeness of an active threat (drives camera shake).
+var threat_proximity := 0.0
+var _trauma := 0.0
+
+
+func add_trauma(amount: float) -> void:
+	_trauma = minf(1.0, _trauma + amount)
+
+
+func _process(delta: float) -> void:
+	_trauma = maxf(0.0, _trauma - delta * 0.9)
+	var shake := maxf(_trauma * _trauma, threat_proximity * threat_proximity * 0.35)
+	if shake > 0.001:
+		camera.h_offset = randf_range(-1.0, 1.0) * 0.05 * shake
+		camera.v_offset = randf_range(-1.0, 1.0) * 0.05 * shake
+	else:
+		camera.h_offset = 0.0
+		camera.v_offset = 0.0
+
+
 func _update_stamina(delta: float, sprinting: bool) -> void:
 	if sprinting:
 		stamina = maxf(0.0, stamina - stamina_drain_per_second * delta)
