@@ -13,6 +13,8 @@ extends Control
 @onready var title_label: Label = $Center/Content/Title
 @onready var subtitle_label: Label = $Center/Content/Subtitle
 
+var _flicker_timer := 1.0
+
 
 func _ready() -> void:
 	get_tree().paused = false
@@ -39,6 +41,14 @@ func _ready() -> void:
 	)
 	fullscreen_toggle.toggled.connect(Settings.set_fullscreen)
 	play_button.grab_focus()
+
+
+func _process(delta: float) -> void:
+	# The title buzzes like a failing neon tube.
+	_flicker_timer -= delta
+	if _flicker_timer <= 0.0:
+		_flicker_timer = randf_range(0.04, 0.12) if randf() < 0.4 else randf_range(1.5, 5.0)
+		title_label.modulate.a = randf_range(0.25, 1.0) if _flicker_timer < 0.2 else 1.0
 
 
 func _unhandled_key_input(event: InputEvent) -> void:

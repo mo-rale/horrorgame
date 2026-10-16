@@ -1,0 +1,6 @@
+Main menu sound effects
+
+rain_loop.ogg - from 'Rain (loopable)' (Rain OGG.zip, 1.ogg), CC0
+  https://opengameart.org/content/rain-loopable
+thunder.ogg - from '100 CC0 SFX #2' (sfx100v2_thunder_01.ogg), CC0
+  https://opengameart.org/content/100-cc0-sfx-2

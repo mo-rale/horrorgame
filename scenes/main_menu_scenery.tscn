@@ -1,110 +1,61 @@
-[gd_scene load_steps=8 format=3 uid="uid://it3jj1eehpj0"]
+[gd_scene format=3 uid="uid://it3jj1eehpj0"]
 
-[ext_resource type="Script" path="res://scripts/menu_weather.gd" id="1_weather"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fq07u"]
-albedo_color = Color(0.022, 0.026, 0.034, 1)
-roughness = 0.88
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mccpo"]
-emission_enabled = true
-emission = Color(1, 1, 1, 1)
+[ext_resource type="Script" uid="uid://ccehxugwwrdj0" path="res://scripts/menu_weather.gd" id="1_weather"]
+[ext_resource type="Script" path="res://scripts/menu_scenery.gd" id="2_scenery"]
 
 [sub_resource type="Environment" id="Environment_mccpo"]
 background_mode = 1
-background_energy_multiplier = 0.0
-ambient_light_color = Color(0.18493772, 0.1187064, 0.09588977, 1)
-fog_enabled = true
-fog_light_color = Color(0.07481723, 0.08559755, 0.102372356, 1)
-fog_light_energy = 2.12
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_uimle"]
-emission_enabled = true
-emission = Color(1, 1, 1, 1)
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_rain"]
 emission_shape = 3
-emission_box_extents = Vector3(8, 0.5, 8)
-direction = Vector3(-0.08, -1, 0)
-spread = 4.0
+emission_box_extents = Vector3(20, 0.5, 22)
+direction = Vector3(-0.12, -1, 0)
+spread = 3.0
+initial_velocity_min = 16.0
+initial_velocity_max = 22.0
 gravity = Vector3(0, 0, 0)
-initial_velocity_min = 14.0
-initial_velocity_max = 20.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rain"]
 transparency = 1
 shading_mode = 0
 vertex_color_use_as_albedo = true
-albedo_color = Color(0.52, 0.68, 0.82, 0.52)
+albedo_color = Color(0.52, 0.68, 0.82, 0.4)
 billboard_mode = 1
 
 [sub_resource type="QuadMesh" id="QuadMesh_rain"]
 material = SubResource("StandardMaterial3D_rain")
-size = Vector2(0.018, 0.55)
+size = Vector2(0.02, 0.7)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground_wet"]
-albedo_color = Color(0.035, 0.045, 0.055, 1)
-metallic = 0.35
-roughness = 0.22
-
-[node name="main_menu_scenery" type="Node3D" unique_id=1080084037]
+[node name="main_menu_scenery" type="Node3D"]
 script = ExtResource("1_weather")
 
-[node name="Camera3D" type="Camera3D" parent="." unique_id=1672581389]
-transform = Transform3D(0.7008222, 0, -0.7133361, 0, 1, 0, 0.7133361, 0, 0.7008222, -3.162434, 0.5011872, 1.9283208)
-fov = 44.44592
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2, 1.65, 3)
+fov = 58.0
+current = true
 
-[node name="CSGBox3D" type="CSGBox3D" parent="." unique_id=2058118676]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5349426, 0.038190365, -2.1813965)
-material_override = SubResource("StandardMaterial3D_fq07u")
-size = Vector3(2.0698853, 0.98483276, 5.362793)
-
-[node name="CSGBox3D2" type="CSGBox3D" parent="." unique_id=1032689284]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.37791204, -0.38401377, -4.5412855)
-material_override = SubResource("StandardMaterial3D_ground_wet")
-size = Vector3(8.812382, 0.07299805, 13.452026)
-
-[node name="CSGBox3D3" type="CSGBox3D" parent="." unique_id=1918490249]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.185997, 0.7520853, -1.4576755)
-size = Vector3(0.30659485, 0.98483276, 0.27545166)
-
-[node name="CSGBox3D4" type="CSGBox3D" parent="." unique_id=1554751243]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.4391584, 0.78880835, -1.1622798)
-size = Vector3(2.0698853, 2.4860687, 2.0634766)
-
-[node name="CSGBox3D5" type="CSGBox3D" parent="." unique_id=41395035]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.49474835, -0.15092504, -1.944768)
-size = Vector3(0.1591568, 0.6552658, 0.6534729)
-
-[node name="CSGBox3D6" type="CSGBox3D" parent="." unique_id=1678007576]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5194292, 1.4358736, -0.5379064)
-material_override = SubResource("StandardMaterial3D_mccpo")
-size = Vector3(0.30659485, 0.98483276, 0.27545166)
-
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2062297943]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_mccpo")
 
 [node name="NightLight" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-52, -28, 0)
-light_color = Color(0.34, 0.44, 0.58, 1)
-light_energy = 0.32
+transform = Transform3D(0.88294756, 0.36994863, -0.2890356, 0, 0.6156615, 0.7880107, 0.46947157, -0.6957722, 0.5435968, 0, 0, 0)
+light_color = Color(0.34, 0.44, 0.62, 1)
+light_energy = 0.28
 shadow_enabled = true
 
 [node name="LightningLight" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-58, 35, 0)
+transform = Transform3D(0.81915206, -0.48642042, 0.3039492, 0, 0.52991927, 0.8480481, -0.57357645, -0.69468033, 0.43408445, 0, 0, 0)
 light_color = Color(0.69, 0.8, 1, 1)
 light_energy = 0.0
 shadow_enabled = true
 
 [node name="Rain" type="GPUParticles3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.162434, 6.2, -1.5)
-amount = 850
-lifetime = 1.2
-visibility_aabb = AABB(-10, -15, -10, 20, 22, 20)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 14, -8)
+amount = 2200
+lifetime = 1.0
+visibility_aabb = AABB(-22, -16, -24, 44, 24, 48)
 process_material = SubResource("ParticleProcessMaterial_rain")
 draw_pass_1 = SubResource("QuadMesh_rain")
 
-[node name="CSGBox3D7" type="CSGBox3D" parent="." unique_id=440026652]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.48711753, -0.12851214, -0.73873734)
-material_override = SubResource("StandardMaterial3D_uimle")
-size = Vector3(0.1591568, 0.30858994, 0.40046692)
+[node name="Set" type="Node3D" parent="."]
+script = ExtResource("2_scenery")

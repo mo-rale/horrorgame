@@ -1,7 +1,9 @@
 extends Node3D
 
-@export_range(1.0, 30.0, 0.1) var lightning_delay_min: float = 4.0
-@export_range(1.0, 30.0, 0.1) var lightning_delay_max: float = 10.0
+signal lightning_struck
+
+@export_range(1.0, 30.0, 0.1) var lightning_delay_min: float = 5.0
+@export_range(1.0, 30.0, 0.1) var lightning_delay_max: float = 11.0
 
 @onready var lightning_light: DirectionalLight3D = $LightningLight
 
@@ -13,7 +15,8 @@ var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	_rng.randomize()
-	_schedule_lightning()
+	# The first strike comes soon so the menu does not sit in silence.
+	_lightning_timer = _rng.randf_range(1.5, 3.0)
 	lightning_light.light_energy = 0.0
 
 
@@ -43,6 +46,7 @@ func _start_lightning() -> void:
 	_flash_timer = _rng.randf_range(0.06, 0.11)
 	_second_flash_timer = _rng.randf_range(0.11, 0.22)
 	lightning_light.rotation_degrees.y = _rng.randf_range(-160.0, 160.0)
+	lightning_struck.emit()
 	_schedule_lightning()
 
 
