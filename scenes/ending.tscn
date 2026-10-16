@@ -1,0 +1,166 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ending.gd" id="1_ending"]
+[ext_resource type="PackedScene" uid="uid://it3jj1eehpj0" path="res://scenes/main_menu_scenery.tscn" id="2_scenery"]
+[ext_resource type="Theme" path="res://assets/ui/horror_theme.tres" id="3_theme"]
+[ext_resource type="AudioStream" path="res://assets/sfx/ending/birds.ogg" id="4_birds"]
+[ext_resource type="AudioStream" path="res://assets/sfx/ending/gate_close.ogg" id="5_gate"]
+[ext_resource type="AudioStream" path="res://assets/sfx/enemy/enemySeen.mp3" id="6_sting"]
+
+[node name="Ending" type="Node3D"]
+script = ExtResource("1_ending")
+
+[node name="Scenery" parent="." instance=ExtResource("2_scenery")]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 8.0, 1.65, -11.0)
+current = true
+fov = 65.0
+
+[node name="Birds" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("4_birds")
+volume_db = -9.0
+bus = &"SFX"
+
+[node name="GateSound" type="AudioStreamPlayer3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 2, -32)
+stream = ExtResource("5_gate")
+volume_db = 3.0
+unit_size = 8.0
+max_distance = 60.0
+bus = &"SFX"
+
+[node name="Sting" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("6_sting")
+volume_db = -4.0
+bus = &"SFX"
+
+[node name="UI" type="CanvasLayer" parent="."]
+layer = 50
+
+[node name="TopBar" type="ColorRect" parent="UI"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 72.0
+grow_horizontal = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
+[node name="BottomBar" type="ColorRect" parent="UI"]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -72.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
+[node name="Narration" type="Label" parent="UI"]
+unique_name_in_owner = true
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -190.0
+offset_bottom = -90.0
+grow_horizontal = 2
+grow_vertical = 0
+theme = ExtResource("3_theme")
+theme_type_variation = &"HudTitle"
+theme_override_font_sizes/font_size = 30
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+modulate = Color(1, 1, 1, 0)
+
+[node name="Fade" type="ColorRect" parent="UI"]
+unique_name_in_owner = true
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
+[node name="SkipHint" type="Label" parent="UI"]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -260.0
+offset_top = -52.0
+offset_right = -24.0
+offset_bottom = -26.0
+grow_horizontal = 0
+grow_vertical = 0
+theme = ExtResource("3_theme")
+theme_type_variation = &"SubtleLabel"
+text = "[SPACE] skip"
+horizontal_alignment = 2
+
+[node name="FinalCard" type="Control" parent="UI"]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("3_theme")
+
+[node name="Backdrop" type="ColorRect" parent="UI/FinalCard"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+color = Color(0.01, 0.005, 0.005, 1)
+
+[node name="Center" type="CenterContainer" parent="UI/FinalCard"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Content" type="VBoxContainer" parent="UI/FinalCard/Center"]
+custom_minimum_size = Vector2(560, 0)
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Title" type="Label" parent="UI/FinalCard/Center/Content"]
+theme_type_variation = &"HeadingLabel"
+theme_override_font_sizes/font_size = 60
+text = "HALVERSON
+WORKS"
+horizontal_alignment = 1
+
+[node name="Epilogue" type="Label" parent="UI/FinalCard/Center/Content"]
+unique_name_in_owner = true
+theme_type_variation = &"HudTitle"
+theme_override_font_sizes/font_size = 22
+text = "You made it out. The plant did not let go.
+The next shift is always waiting."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Stats" type="Label" parent="UI/FinalCard/Center/Content"]
+unique_name_in_owner = true
+theme_type_variation = &"SubtleLabel"
+text = "TIME 00:00   NOTES 0/8"
+horizontal_alignment = 1
+
+[node name="PlayAgainButton" type="Button" parent="UI/FinalCard/Center/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 52)
+text = "PLAY AGAIN"
+
+[node name="MenuButton" type="Button" parent="UI/FinalCard/Center/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 48)
+text = "MAIN MENU"

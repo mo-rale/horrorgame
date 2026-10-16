@@ -6,6 +6,7 @@ const UiSounds := preload("res://scripts/ui_sounds.gd")
 const JUMPSCARE_SFX := preload("res://assets/sfx/ambience/freesound_community-jumpscare-68730.mp3")
 
 var _jumpscare_running := false
+var _run_started_msec := 0
 var _ui_sounds: Node
 
 @onready var screeching: AudioStreamPlayer = $Screeching
@@ -62,6 +63,8 @@ func _ready() -> void:
 			child.process_mode = Node.PROCESS_MODE_PAUSABLE
 
 	randomize()
+	_run_started_msec = Time.get_ticks_msec()
+	load("res://scripts/story_note.gd").notes_read.clear()
 	var post_fx := CanvasLayer.new()
 	post_fx.set_script(preload("res://scripts/post_fx.gd"))
 	post_fx.process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -547,7 +550,31 @@ func _on_victory_area_body_entered(body: Node3D) -> void:
 		return
 
 	print("[Factory] Player reached the powered exit")
-	_finish_game(victory_screen, play_again_button)
+	_start_ending()
+
+
+func _start_ending() -> void:
+	game_ended = true
+	player.controls_locked = true
+	var note_script: Script = load("res://scripts/story_note.gd")
+	Engine.set_meta("run_stats", {
+		"time": (Time.get_ticks_msec() - _run_started_msec) / 1000,
+		"notes": note_script.notes_read.size(),
+		"notes_total": $LevelMap/Notes.get_child_count(),
+	})
+	# Sink to black, then cut to the ending at the factory gate.
+	var cover := ColorRect.new()
+	cover.color = Color(0, 0, 0, 0)
+	cover.set_anchors_preset(Control.PRESET_FULL_RECT)
+	cover.mouse_filter = Control.MOUSE_FILTER_STOP
+	var layer := CanvasLayer.new()
+	layer.layer = 200
+	layer.add_child(cover)
+	add_child(layer)
+	var tween := cover.create_tween()
+	tween.tween_property(cover, "color:a", 1.0, 1.4)
+	await tween.finished
+	get_tree().change_scene_to_file("res://scenes/ending.tscn")
 
 
 func _on_fuel_changed(current_fuel: int, required_fuel: int) -> void:

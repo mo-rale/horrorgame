@@ -51,3 +51,11 @@ store), boiler room log, and Ellis's last log (generator hall).
 (`python tools/gen_level.py`). Edit the script, re-run it, and keep the
 spawn markers (`PlayerSpawn`, `EnemySpawn`, `GeneratorSpawn`, gas/fuse spawns,
 `ValveSpawns`) — `main.gd` and `level_map.gd` depend on them.
+
+## The ending
+
+Reaching the open gate fades to black and cuts to `scenes/ending.tscn`: dawn at
+the factory gate. The camera turns back to the plant, the windows go dark one by
+one, the gate slams, the foreman stands in the gateway and the dead sign comes
+back on: "NEXT SHIFT 22:00". A title card shows the run time and how many of the
+eight notes were read. SPACE skips to the card.
