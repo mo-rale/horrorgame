@@ -72,7 +72,7 @@ func _prepare_runtime() -> void:
 	var hum_stream := HUM_SFX.duplicate() as AudioStreamWAV
 	hum_stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 	hum_stream.loop_begin = 0
-	hum_stream.loop_end = hum_stream.data.size() / 2   # 16-bit mono
+	hum_stream.loop_end = hum_stream.data.size() >> 1   # 16-bit mono: 2 bytes per sample
 	_hum.stream = hum_stream
 	_label.visible = false
 

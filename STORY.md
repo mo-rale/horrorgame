@@ -70,3 +70,11 @@ godot --headless --path . --export-release "Windows Desktop" build/HalversonWork
 
 The preset embeds the data pack, so `build/HalversonWorks.exe` is a single file
 (about 135 MB) you can zip and share. `export_presets.cfg` holds the preset.
+
+After changing the level, regenerate and re-bake its navigation mesh:
+
+```
+python tools/gen_level.py
+godot --headless --path . res://tools/bake_navmesh.tscn
+python tools/gen_level.py
+```

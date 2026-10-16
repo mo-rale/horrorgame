@@ -178,7 +178,7 @@ func _show_best_run() -> void:
 	if Settings.best_time <= 0:
 		return
 	subtitle_label.text += "\nBEST ESCAPE %02d:%02d   NOTES %d/8" % [
-		Settings.best_time / 60, Settings.best_time % 60, Settings.best_notes
+		floori(Settings.best_time / 60.0), Settings.best_time % 60, Settings.best_notes
 	]
 
 

@@ -32,12 +32,7 @@
 [ext_resource type="Texture2D" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Stains/Horror_Stain_11-128x128.png" id="t25"]
 [ext_resource type="Texture2D" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Stains/Horror_Stain_13-128x128.png" id="t26"]
 [ext_resource type="Texture2D" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Metal/Horror_Metal_13-128x128.png" id="t27"]
-
-[sub_resource type="NavigationMesh" id="NavigationMesh_map"]
-agent_height = 1.8
-agent_radius = 0.45
-agent_max_climb = 0.4
-filter_baking_aabb = AABB(-30, -0.5, -10, 60, 3, 68)
+[ext_resource type="NavigationMesh" path="res://assets/level_navmesh.tres" id="navmesh_ext"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_e6xmq"]
 size = Vector3(23.749, 6.1136, 13.7307)
@@ -288,7 +283,7 @@ size = Vector2(2.4, 2.4)
 script = ExtResource("1_map")
 
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
-navigation_mesh = SubResource("NavigationMesh_map")
+navigation_mesh = ExtResource("navmesh_ext")
 
 [node name="Props" type="Node3D" parent="."]
 

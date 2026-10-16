@@ -146,7 +146,10 @@ func _enable_level_after_navigation_sync(
 	await get_tree().process_frame
 	navigation_region.set_navigation_map(get_world_3d().get_navigation_map())
 	navigation_map = navigation_region.get_navigation_map()
-	navigation_region.bake_navigation_mesh(false)
+	# The level ships with a pre-baked mesh (tools/bake_navmesh.gd). Only bake at
+	# runtime if it is missing, since runtime baking logs a performance warning.
+	if navigation_mesh.get_polygon_count() == 0:
+		navigation_region.bake_navigation_mesh(false)
 	var wait_frames := 0
 	var closest_owner := RID()
 	while wait_frames < 120:
@@ -596,7 +599,7 @@ func _start_ending() -> void:
 	player.controls_locked = true
 	var note_script: Script = load("res://scripts/story_note.gd")
 	Engine.set_meta("run_stats", {
-		"time": (Time.get_ticks_msec() - _run_started_msec) / 1000,
+		"time": floori((Time.get_ticks_msec() - _run_started_msec) / 1000.0),
 		"notes": note_script.notes_read.size(),
 		"notes_total": $LevelMap/Notes.get_child_count(),
 	})

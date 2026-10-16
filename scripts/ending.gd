@@ -33,7 +33,7 @@ func _ready() -> void:
 	var seconds := int(stats.get("time", 0))
 	var new_best := Settings.record_run(seconds, int(stats.get("notes", 0))) if seconds > 0 else false
 	stats_label.text = "TIME %02d:%02d     NOTES %d/%d" % [
-		seconds / 60, seconds % 60, int(stats.get("notes", 0)), int(stats.get("notes_total", 8))
+		floori(seconds / 60.0), seconds % 60, int(stats.get("notes", 0)), int(stats.get("notes_total", 8))
 	]
 	if new_best:
 		stats_label.text += "     NEW BEST"

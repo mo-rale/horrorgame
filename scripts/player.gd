@@ -106,6 +106,7 @@ var _stamina_bar: ProgressBar
 var _stamina_row: Control
 var _breath: AudioStreamPlayer
 var _heart_pitch := 1.0
+var _breath_gap := 0.0
 var _battery_bar: ProgressBar
 
 
@@ -113,15 +114,10 @@ func _ready():
 	_flashlight_base_energy = light.light_energy
 	_build_survival_hud()
 	_breath = AudioStreamPlayer.new()
-	var breath_stream := BREATH_SFX.duplicate() as AudioStreamWAV
-	breath_stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	breath_stream.loop_begin = 0
-	breath_stream.loop_end = breath_stream.data.size() / 2   # 16-bit mono
-	_breath.stream = breath_stream
+	_breath.stream = BREATH_SFX
 	_breath.bus = &"SFX"
-	_breath.volume_db = -80.0
+	_breath.volume_db = -16.0
 	add_child(_breath)
-	_breath.play()
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	mouse_sensitivity *= Settings.mouse_sensitivity
 	camera_default_pos = camera.position
@@ -353,9 +349,14 @@ func _update_body_audio(delta: float) -> void:
 	var tired := clampf((55.0 - stamina) / 55.0, 0.0, 1.0)
 	if _stamina_exhausted:
 		tired = 1.0
-	var target_db := lerpf(-80.0, -9.0, sqrt(tired)) if tired > 0.02 else -80.0
-	_breath.volume_db = lerpf(_breath.volume_db, target_db, minf(delta * 3.0, 1.0))
-	_breath.pitch_scale = 0.9 + tired * 0.35
+	# A single quiet breath now and then, closer together the more tired you are,
+	# and only once you are properly winded.
+	_breath_gap -= delta
+	if tired > 0.3 and _breath_gap <= 0.0 and not _breath.playing:
+		_breath.volume_db = lerpf(-20.0, -11.0, tired)
+		_breath.pitch_scale = randf_range(0.95, 1.05)
+		_breath.play()
+		_breath_gap = lerpf(4.5, 1.2, tired)
 
 	# The heartbeat races as the thing gets closer or anxiety climbs.
 	var fear := maxf(threat_proximity, anxiety_bar.value / 100.0 if _anxiety_active else 0.0)

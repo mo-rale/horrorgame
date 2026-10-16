@@ -592,10 +592,18 @@ head = ['[gd_scene format=3 uid="uid://dvuhqut63xyl0"]\n',
 for ident, ttype, path in ext:
     head.append('[ext_resource type="%s" path="%s" id="%s"]' % (ttype, path, ident))
 fixed_subs = [
-    '[sub_resource type="NavigationMesh" id="NavigationMesh_map"]\nagent_height = 1.8\nagent_radius = 0.45\n'
-    'agent_max_climb = 0.4\nfilter_baking_aabb = AABB(-30, -0.5, -10, 60, 3, 68)\n',
+    '[sub_resource type="NavigationMesh" id="NavigationMesh_map"]\nagent_height = 2.0\nagent_radius = 0.5\n'
+    'agent_max_climb = 0.25\nfilter_baking_aabb = AABB(-30, -0.5, -10, 60, 3, 68)\n',
     '[sub_resource type="BoxShape3D" id="BoxShape3D_e6xmq"]\nsize = Vector3(23.749, 6.1136, 13.7307)\n',
 ]
+import os
+NAVMESH_PATH = "assets/level_navmesh.tres"
+if os.path.exists(NAVMESH_PATH):
+    # Use the pre-baked navigation mesh (tools/bake_navmesh.gd) instead of an
+    # empty inline one, so the game never has to bake at runtime.
+    head.append('[ext_resource type="NavigationMesh" path="res://%s" id="navmesh_ext"]' % NAVMESH_PATH)
+    fixed_subs.pop(0)
+    nodes[:] = [n.replace('SubResource("NavigationMesh_map")', 'ExtResource("navmesh_ext")') for n in nodes]
 out = "\n".join(head) + "\n\n" + "\n".join(fixed_subs) + "\n" + "\n".join(subs) + "\n"
 out += '[node name="LevelMap" type="Node3D"]\nscript = ExtResource("1_map")\n\n'
 out += "\n".join(nodes)

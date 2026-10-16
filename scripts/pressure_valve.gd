@@ -69,7 +69,7 @@ func _prepare_runtime() -> void:
 	var leak_stream := LEAK_SFX.duplicate() as AudioStreamWAV
 	leak_stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 	leak_stream.loop_begin = 0
-	leak_stream.loop_end = leak_stream.data.size() / 2   # 16-bit mono
+	leak_stream.loop_end = leak_stream.data.size() >> 1   # 16-bit mono: 2 bytes per sample
 	_leak_player.stream = leak_stream
 	_label.visible = false
 	_outline.visible = false
