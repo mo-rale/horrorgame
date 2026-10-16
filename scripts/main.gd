@@ -79,6 +79,7 @@ func _ready() -> void:
 	victory_area.monitoring = false
 	_rebuild_level_and_randomize_pickups()
 	Settings.apply_brightness(world_environment.environment)
+	Settings.apply_quality(world_environment.environment)
 	enemy.reached_player.connect(_on_enemy_reached_player)
 	generator.generator_started.connect(_on_generator_started)
 	generator.fuel_changed.connect(_on_fuel_changed)

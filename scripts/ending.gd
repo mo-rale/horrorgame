@@ -31,9 +31,12 @@ func _ready() -> void:
 
 	var stats: Dictionary = Engine.get_meta("run_stats", {})
 	var seconds := int(stats.get("time", 0))
+	var new_best := Settings.record_run(seconds, int(stats.get("notes", 0))) if seconds > 0 else false
 	stats_label.text = "TIME %02d:%02d     NOTES %d/%d" % [
 		seconds / 60, seconds % 60, int(stats.get("notes", 0)), int(stats.get("notes_total", 8))
 	]
+	if new_best:
+		stats_label.text += "     NEW BEST"
 	play_again_button.pressed.connect(
 		func() -> void: get_tree().change_scene_to_file("res://scenes/main.tscn")
 	)
@@ -79,6 +82,7 @@ func _grade_for_dawn() -> void:
 	environment.fog_density = 0.017
 	environment.volumetric_fog_albedo = Color(0.95, 0.78, 0.66)
 	environment.volumetric_fog_density = 0.03
+	Settings.apply_quality(environment)
 	(weather.get_node("WorldEnvironment") as WorldEnvironment).environment = environment
 
 	var sun := weather.get_node("NightLight") as DirectionalLight3D

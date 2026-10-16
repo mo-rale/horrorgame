@@ -83,6 +83,10 @@ func _start_runtime() -> void:
 				_windows.append(material)
 				_window_phase.append(_rng.randf() * TAU)
 	_place_figure()
+	var world := get_parent().get_node_or_null("WorldEnvironment") as WorldEnvironment
+	if world and world.environment:
+		world.environment = world.environment.duplicate()
+		Settings.apply_quality(world.environment)
 
 
 func _process(delta: float) -> void:
@@ -182,6 +186,7 @@ func _build_environment() -> void:
 	environment.glow_bloom = 0.15
 	environment.adjustment_enabled = true
 	environment.adjustment_saturation = 0.75
+	Settings.apply_quality(environment)
 	existing.environment = environment
 
 

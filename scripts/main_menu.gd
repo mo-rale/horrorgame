@@ -12,6 +12,7 @@ const UiSounds := preload("res://scripts/ui_sounds.gd")
 @onready var sensitivity_slider: HSlider = %SensitivitySlider
 @onready var brightness_slider: HSlider = %BrightnessSlider
 @onready var fullscreen_toggle: CheckButton = %FullscreenToggle
+@onready var quality_button: Button = %QualityButton
 @onready var title_label: Label = $Center/Content/Title
 @onready var subtitle_label: Label = $Center/Content/Subtitle
 
@@ -43,6 +44,13 @@ func _ready() -> void:
 		func(value: float) -> void: Settings.set_brightness(value / 100.0)
 	)
 	fullscreen_toggle.toggled.connect(Settings.set_fullscreen)
+	_refresh_quality_text()
+	quality_button.pressed.connect(
+		func() -> void:
+			Settings.cycle_quality()
+			_refresh_quality_text()
+	)
+	_show_best_run()
 	UiSounds.attach(self)
 	play_button.grab_focus()
 
@@ -53,6 +61,19 @@ func _process(delta: float) -> void:
 	if _flicker_timer <= 0.0:
 		_flicker_timer = randf_range(0.04, 0.12) if randf() < 0.4 else randf_range(1.5, 5.0)
 		title_label.modulate.a = randf_range(0.25, 1.0) if _flicker_timer < 0.2 else 1.0
+
+
+func _refresh_quality_text() -> void:
+	quality_button.text = "GRAPHICS:  %s" % Settings.QUALITY_NAMES[Settings.quality]
+
+
+func _show_best_run() -> void:
+	if Settings.best_time <= 0:
+		return
+	subtitle_label.text += "
+BEST ESCAPE %02d:%02d   NOTES %d/8" % [
+		Settings.best_time / 60, Settings.best_time % 60, Settings.best_notes
+	]
 
 
 func _unhandled_key_input(event: InputEvent) -> void:

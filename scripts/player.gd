@@ -6,6 +6,8 @@ signal anxiety_calmed
 
 const HUD_THEME := preload("res://assets/ui/horror_theme.tres")
 
+const BREATH_SFX := preload("res://assets/sfx/player/breathing.wav")
+
 const SPEED = 5.0
 const SPRINT_SPEED = 9.0
 const CROUCH_SPEED = 2.5
@@ -102,12 +104,24 @@ var _flicker_timer := 0.0
 var _flicker_off_time := 0.0
 var _stamina_bar: ProgressBar
 var _stamina_row: Control
+var _breath: AudioStreamPlayer
+var _heart_pitch := 1.0
 var _battery_bar: ProgressBar
 
 
 func _ready():
 	_flashlight_base_energy = light.light_energy
 	_build_survival_hud()
+	_breath = AudioStreamPlayer.new()
+	var breath_stream := BREATH_SFX.duplicate() as AudioStreamWAV
+	breath_stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	breath_stream.loop_begin = 0
+	breath_stream.loop_end = breath_stream.data.size() / 2   # 16-bit mono
+	_breath.stream = breath_stream
+	_breath.bus = &"SFX"
+	_breath.volume_db = -80.0
+	add_child(_breath)
+	_breath.play()
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	mouse_sensitivity *= Settings.mouse_sensitivity
 	camera_default_pos = camera.position
@@ -323,6 +337,7 @@ func add_trauma(amount: float) -> void:
 
 
 func _process(delta: float) -> void:
+	_update_body_audio(delta)
 	_trauma = maxf(0.0, _trauma - delta * 0.9)
 	var shake := maxf(_trauma * _trauma, threat_proximity * threat_proximity * 0.35)
 	if shake > 0.001:
@@ -331,6 +346,26 @@ func _process(delta: float) -> void:
 	else:
 		camera.h_offset = 0.0
 		camera.v_offset = 0.0
+
+
+func _update_body_audio(delta: float) -> void:
+	# Breathing swells as stamina runs low and stays ragged while exhausted.
+	var tired := clampf((55.0 - stamina) / 55.0, 0.0, 1.0)
+	if _stamina_exhausted:
+		tired = 1.0
+	var target_db := lerpf(-80.0, -9.0, sqrt(tired)) if tired > 0.02 else -80.0
+	_breath.volume_db = lerpf(_breath.volume_db, target_db, minf(delta * 3.0, 1.0))
+	_breath.pitch_scale = 0.9 + tired * 0.35
+
+	# The heartbeat races as the thing gets closer or anxiety climbs.
+	var fear := maxf(threat_proximity, anxiety_bar.value / 100.0 if _anxiety_active else 0.0)
+	_heart_pitch = lerpf(_heart_pitch, 0.85 + fear * 0.6, minf(delta * 2.0, 1.0))
+	heartbeat.pitch_scale = _heart_pitch
+	heartbeat.volume_db = lerpf(-6.0, 3.0, fear)
+	if fear > 0.55 and not heartbeat.playing and not _anxiety_active:
+		heartbeat.play()
+	elif fear < 0.1 and heartbeat.playing and not _anxiety_active:
+		heartbeat.stop()
 
 
 func _update_stamina(delta: float, sprinting: bool) -> void:

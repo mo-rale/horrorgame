@@ -11,6 +11,13 @@ var volumes := {
 var mouse_sensitivity := 1.0
 var brightness := 1.0
 var fullscreen := false
+## 0 = low, 1 = medium, 2 = high. Controls fog, glow and shadow cost.
+var quality := 2
+const QUALITY_NAMES := ["LOW", "MEDIUM", "HIGH"]
+
+# Best run, kept between sessions (seconds, 0 = none yet) and notes found.
+var best_time := 0
+var best_notes := 0
 
 
 func _ready() -> void:
@@ -18,6 +25,7 @@ func _ready() -> void:
 	_load_settings()
 	_apply_all_volumes()
 	_apply_window_mode()
+	_apply_viewport_quality.call_deferred()
 
 
 func set_volume(bus_name: String, linear_value: float) -> void:
@@ -47,6 +55,35 @@ func set_fullscreen(enabled: bool) -> void:
 	fullscreen = enabled
 	_apply_window_mode()
 	_save_settings()
+
+
+func set_quality(value: int) -> void:
+	quality = clampi(value, 0, 2)
+	_apply_viewport_quality()
+	_save_settings()
+
+
+func cycle_quality() -> int:
+	set_quality((quality + 1) % 3)
+	return quality
+
+
+func apply_quality(environment: Environment) -> void:
+	if not environment:
+		return
+	environment.volumetric_fog_enabled = quality >= 2 and environment.volumetric_fog_enabled
+	environment.glow_enabled = quality >= 1 and environment.glow_enabled
+	environment.ssao_enabled = false
+
+
+func record_run(seconds: int, notes: int) -> bool:
+	# Returns true when this run beat the saved best (faster, or more notes on a tie).
+	var better := best_time == 0 or seconds < best_time
+	if better:
+		best_time = seconds
+	best_notes = maxi(best_notes, notes)
+	_save_settings()
+	return better
 
 
 func apply_brightness(environment: Environment) -> void:
@@ -101,6 +138,9 @@ func _load_settings() -> void:
 		1.5
 	)
 	fullscreen = bool(config.get_value("video", "fullscreen", fullscreen))
+	quality = clampi(int(config.get_value("video", "quality", quality)), 0, 2)
+	best_time = int(config.get_value("progress", "best_time", best_time))
+	best_notes = int(config.get_value("progress", "best_notes", best_notes))
 
 
 func _save_settings() -> void:
@@ -110,6 +150,9 @@ func _save_settings() -> void:
 	config.set_value("controls", "mouse_sensitivity", mouse_sensitivity)
 	config.set_value("video", "brightness", brightness)
 	config.set_value("video", "fullscreen", fullscreen)
+	config.set_value("video", "quality", quality)
+	config.set_value("progress", "best_time", best_time)
+	config.set_value("progress", "best_notes", best_notes)
 	config.save(SETTINGS_PATH)
 
 
@@ -118,4 +161,18 @@ func _apply_window_mode() -> void:
 		DisplayServer.WINDOW_MODE_FULLSCREEN
 		if fullscreen
 		else DisplayServer.WINDOW_MODE_WINDOWED
+	)
+
+
+func _apply_viewport_quality() -> void:
+	var viewport := get_viewport()
+	if viewport == null:
+		return
+	# MSAA and shadow filtering are the cheap, visible wins.
+	viewport.msaa_3d = [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X][quality]
+	RenderingServer.directional_soft_shadow_filter_set_quality(
+		[RenderingServer.SHADOW_QUALITY_HARD, RenderingServer.SHADOW_QUALITY_SOFT_LOW, RenderingServer.SHADOW_QUALITY_SOFT_HIGH][quality]
+	)
+	RenderingServer.positional_soft_shadow_filter_set_quality(
+		[RenderingServer.SHADOW_QUALITY_HARD, RenderingServer.SHADOW_QUALITY_SOFT_LOW, RenderingServer.SHADOW_QUALITY_SOFT_HIGH][quality]
 	)
