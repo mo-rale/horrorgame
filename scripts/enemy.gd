@@ -893,6 +893,13 @@ func _play_seen_sound() -> void:
 		_seen.play()
 
 
+func stop_all_sounds() -> void:
+	_footsteps.stop()
+	_chasing.stop()
+	_stalking.stop()
+	_seen.stop()
+
+
 func hear_noise(_sound_position: Vector3, _hearing_distance: float) -> void:
 	# The stalking-only design does not reveal or redirect the enemy through
 	# footsteps, thrown cans, or generator sounds.

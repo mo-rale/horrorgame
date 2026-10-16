@@ -2,6 +2,9 @@ extends Node3D
 
 const LIGHT_SWITCH_SFX := preload("res://assets/sfx/effects/light_switch.mp3")
 const GATE_OPEN_SFX := preload("res://assets/sfx/effects/gate_open.mp3")
+const JUMPSCARE_SFX := preload("res://assets/sfx/ambience/freesound_community-jumpscare-68730.mp3")
+
+var _jumpscare_running := false
 
 @onready var screeching: AudioStreamPlayer = $Screeching
 @onready var enemy: Enemy = $Enemy
@@ -361,9 +364,72 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 
 func _on_enemy_reached_player() -> void:
-	if game_ended:
+	if game_ended or _jumpscare_running:
 		return
 
+	_play_jumpscare()
+
+
+func _play_jumpscare() -> void:
+	_jumpscare_running = true
+	player.controls_locked = true
+	player.velocity = Vector3.ZERO
+	player.stop_stalking_heartbeat()
+	screeching.stop()
+	enemy.set_physics_process(false)
+	enemy.visible = true
+	enemy.stop_all_sounds()
+
+	# Snap the view onto the enemy's face and slam it into the camera.
+	var to_enemy := enemy.global_position - player.global_position
+	to_enemy.y = 0.0
+	if to_enemy.length() < 0.01:
+		to_enemy = -player.global_basis.z
+	var direction := to_enemy.normalized()
+	player.rotation.y = atan2(-direction.x, -direction.z)
+	player.camera.rotation = Vector3(deg_to_rad(18.0), 0.0, 0.0)
+	var start_position := player.global_position + direction * 2.4
+	start_position.y = enemy.global_position.y
+	var end_position := player.global_position + direction * 0.85
+	end_position.y = enemy.global_position.y
+	enemy.global_position = start_position
+	enemy.look_at(
+		Vector3(player.global_position.x, enemy.global_position.y, player.global_position.z),
+		Vector3.UP
+	)
+
+	var scream := AudioStreamPlayer.new()
+	scream.stream = JUMPSCARE_SFX
+	scream.bus = &"SFX"
+	scream.volume_db = 4.0
+	add_child(scream)
+	scream.play()
+
+	var flash := ColorRect.new()
+	flash.color = Color(0.8, 0.0, 0.0, 0.85)
+	flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var flash_layer := CanvasLayer.new()
+	flash_layer.layer = 60
+	flash_layer.process_mode = Node.PROCESS_MODE_PAUSABLE
+	flash_layer.add_child(flash)
+	add_child(flash_layer)
+
+	player.add_trauma(1.0)
+	get_tree().call_group("post_fx", "set_anxiety", 1.0)
+
+	var lunge := enemy.create_tween().set_parallel(true)
+	lunge.tween_property(enemy, "global_position", end_position, 0.12).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	lunge.tween_property(player.camera, "fov", 105.0, 0.12)
+	var fade := flash.create_tween()
+	fade.tween_property(flash, "color:a", 0.0, 0.45)
+
+	# Keep shaking and screaming for a beat before the game over screen.
+	for _i in 6:
+		player.add_trauma(0.5)
+		await get_tree().create_timer(0.2, false).timeout
+	flash_layer.queue_free()
+	scream.queue_free()
 	_finish_game(game_over_screen, restart_button)
 
 
