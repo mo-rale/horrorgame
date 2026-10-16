@@ -61,7 +61,7 @@ func _build_model() -> void:
 
 	_hint = Label3D.new()
 	_hint.name = "Hint"
-	_hint.text = "[E] READ"
+	_hint.text = "[%s] READ" % Settings.key_text("Interact")
 	_hint.font_size = 36
 	_hint.pixel_size = 0.004
 	_hint.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -129,7 +129,7 @@ func _open() -> void:
 	text.custom_minimum_size = Vector2(600.0, 0.0)
 	column.add_child(text)
 	var footer := Label.new()
-	footer.text = "[E] close"
+	footer.text = "[%s] close" % Settings.key_text("Interact")
 	footer.add_theme_font_size_override("font_size", 13)
 	footer.add_theme_color_override("font_color", Color(0.6, 0.55, 0.45))
 	column.add_child(footer)

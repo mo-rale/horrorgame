@@ -316,7 +316,7 @@ func show_outline() -> void:
 	if activated or turning:
 		return
 	_outline.visible = true
-	_label.text = "%s\n[E] CLOSE" % display_name
+	_label.text = "%s\n[%s] CLOSE" % [display_name, Settings.key_text("Interact")]
 	_label.modulate = Color(1.0, 0.8, 0.35)
 	_label.visible = true
 

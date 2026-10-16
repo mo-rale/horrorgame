@@ -15,6 +15,21 @@ var fullscreen := false
 var quality := 2
 const QUALITY_NAMES := ["LOW", "MEDIUM", "HIGH"]
 
+## Rebindable keyboard actions: [InputMap action, label shown in the menu].
+const REBINDABLE := [
+	["Forward", "MOVE FORWARD"],
+	["Backward", "MOVE BACK"],
+	["Left", "MOVE LEFT"],
+	["Right", "MOVE RIGHT"],
+	["Sprint", "SPRINT"],
+	["Crouch", "CROUCH"],
+	["Jump", "JUMP"],
+	["Flashlight", "FLASHLIGHT"],
+	["Interact", "INTERACT / PICK UP"],
+]
+var _default_keys := {}
+signal bindings_changed
+
 # Best run, kept between sessions (seconds, 0 = none yet) and notes found.
 var best_time := 0
 var best_notes := 0
@@ -22,6 +37,8 @@ var best_notes := 0
 
 func _ready() -> void:
 	_ensure_audio_buses()
+	for entry in REBINDABLE:
+		_default_keys[entry[0]] = _action_keycode(entry[0])
 	_load_settings()
 	_apply_all_volumes()
 	_apply_window_mode()
@@ -55,6 +72,52 @@ func set_fullscreen(enabled: bool) -> void:
 	fullscreen = enabled
 	_apply_window_mode()
 	_save_settings()
+
+
+func key_text(action: String) -> String:
+	var code := _action_keycode(action)
+	return "UNBOUND" if code == KEY_NONE else OS.get_keycode_string(code).to_upper()
+
+
+func action_for_key(keycode: int, ignore_action := "") -> String:
+	for entry in REBINDABLE:
+		if entry[0] != ignore_action and _action_keycode(entry[0]) == keycode:
+			return entry[0]
+	return ""
+
+
+func rebind(action: String, keycode: int) -> void:
+	# A key already used by another action is swapped onto this one's old key.
+	var other := action_for_key(keycode, action)
+	if other != "":
+		_set_action_key(other, _action_keycode(action))
+	_set_action_key(action, keycode)
+	_save_settings()
+	bindings_changed.emit()
+
+
+func reset_bindings() -> void:
+	for action in _default_keys:
+		_set_action_key(action, _default_keys[action])
+	_save_settings()
+	bindings_changed.emit()
+
+
+func _action_keycode(action: String) -> int:
+	for event in InputMap.action_get_events(action):
+		if event is InputEventKey:
+			var key := event as InputEventKey
+			return key.physical_keycode if key.physical_keycode != KEY_NONE else key.keycode
+	return KEY_NONE
+
+
+func _set_action_key(action: String, keycode: int) -> void:
+	InputMap.action_erase_events(action)
+	if keycode == KEY_NONE:
+		return
+	var event := InputEventKey.new()
+	event.physical_keycode = keycode as Key
+	InputMap.action_add_event(action, event)
 
 
 func set_quality(value: int) -> void:
@@ -139,6 +202,9 @@ func _load_settings() -> void:
 	)
 	fullscreen = bool(config.get_value("video", "fullscreen", fullscreen))
 	quality = clampi(int(config.get_value("video", "quality", quality)), 0, 2)
+	for entry in REBINDABLE:
+		var saved := int(config.get_value("keys", entry[0], _default_keys.get(entry[0], KEY_NONE)))
+		_set_action_key(entry[0], saved)
 	best_time = int(config.get_value("progress", "best_time", best_time))
 	best_notes = int(config.get_value("progress", "best_notes", best_notes))
 
@@ -151,6 +217,8 @@ func _save_settings() -> void:
 	config.set_value("video", "brightness", brightness)
 	config.set_value("video", "fullscreen", fullscreen)
 	config.set_value("video", "quality", quality)
+	for entry in REBINDABLE:
+		config.set_value("keys", entry[0], _action_keycode(entry[0]))
 	config.set_value("progress", "best_time", best_time)
 	config.set_value("progress", "best_notes", best_notes)
 	config.save(SETTINGS_PATH)

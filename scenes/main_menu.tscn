@@ -118,131 +118,134 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "QUIT"
 
-[node name="SettingsPanel" type="VBoxContainer" parent="Center/Content" unique_id=180006174]
+[node name="SettingsPanel" type="VBoxContainer" parent="Center/Content"]
 unique_name_in_owner = true
 visible = false
-layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SettingsTitle" type="Label" parent="Center/Content/SettingsPanel"]
+theme_type_variation = &"HeadingLabel"
+theme_override_font_sizes/font_size = 40
+text = "SETTINGS"
+horizontal_alignment = 1
+
+[node name="Tabs" type="HBoxContainer" parent="Center/Content/SettingsPanel"]
 theme_override_constants/separation = 6
 
-[node name="Heading" type="Label" parent="Center/Content/SettingsPanel" unique_id=11717118]
-theme_type_variation = &"CaptionLabel"
-layout_mode = 2
+[node name="AudioTab" type="Button" parent="Center/Content/SettingsPanel/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+toggle_mode = true
 text = "AUDIO"
-horizontal_alignment = 1
 
-[node name="MasterLabel" type="Label" parent="Center/Content/SettingsPanel" unique_id=1843405494]
-layout_mode = 2
+[node name="DisplayTab" type="Button" parent="Center/Content/SettingsPanel/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+toggle_mode = true
+text = "DISPLAY"
+
+[node name="ControlsTab" type="Button" parent="Center/Content/SettingsPanel/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+toggle_mode = true
+text = "CONTROLS"
+
+[node name="AudioPage" type="VBoxContainer" parent="Center/Content/SettingsPanel"]
+unique_name_in_owner = true
+theme_override_constants/separation = 8
+
+[node name="MasterLabel" type="Label" parent="Center/Content/SettingsPanel/AudioPage"]
+theme_type_variation = &"SubtleLabel"
 text = "MASTER VOLUME"
 
-[node name="MasterSlider" type="HSlider" parent="Center/Content/SettingsPanel" unique_id=1827055880]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(400, 34)
-layout_mode = 2
-
-[node name="MusicLabel" type="Label" parent="Center/Content/SettingsPanel" unique_id=617701136]
-layout_mode = 2
-text = "AMBIENCE VOLUME"
-
-[node name="MusicSlider" type="HSlider" parent="Center/Content/SettingsPanel" unique_id=630370620]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(400, 34)
-layout_mode = 2
-
-[node name="SFXLabel" type="Label" parent="Center/Content/SettingsPanel" unique_id=1672784207]
-layout_mode = 2
-text = "EFFECTS VOLUME"
-
-[node name="SFXSlider" type="HSlider" parent="Center/Content/SettingsPanel" unique_id=931750108]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(400, 34)
-layout_mode = 2
-
-[node name="DisplayHeading" type="Label" parent="Center/Content/SettingsPanel" unique_id=424596086]
-theme_type_variation = &"CaptionLabel"
-layout_mode = 2
-text = "DISPLAY & CONTROLS"
-horizontal_alignment = 1
-
-[node name="BrightnessLabel" type="Label" parent="Center/Content/SettingsPanel" unique_id=370725045]
-layout_mode = 2
-text = "BRIGHTNESS"
-
-[node name="BrightnessSlider" type="HSlider" parent="Center/Content/SettingsPanel" unique_id=1760452849]
+[node name="MasterSlider" type="HSlider" parent="Center/Content/SettingsPanel/AudioPage"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(400, 30)
-layout_mode = 2
+
+[node name="MusicLabel" type="Label" parent="Center/Content/SettingsPanel/AudioPage"]
+theme_type_variation = &"SubtleLabel"
+text = "AMBIENCE VOLUME"
+
+[node name="MusicSlider" type="HSlider" parent="Center/Content/SettingsPanel/AudioPage"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(400, 30)
+
+[node name="SFXLabel" type="Label" parent="Center/Content/SettingsPanel/AudioPage"]
+theme_type_variation = &"SubtleLabel"
+text = "EFFECTS VOLUME"
+
+[node name="SFXSlider" type="HSlider" parent="Center/Content/SettingsPanel/AudioPage"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(400, 30)
+
+[node name="DisplayPage" type="VBoxContainer" parent="Center/Content/SettingsPanel"]
+unique_name_in_owner = true
+visible = false
+theme_override_constants/separation = 8
+
+[node name="BrightnessLabel" type="Label" parent="Center/Content/SettingsPanel/DisplayPage"]
+theme_type_variation = &"SubtleLabel"
+text = "BRIGHTNESS"
+
+[node name="BrightnessSlider" type="HSlider" parent="Center/Content/SettingsPanel/DisplayPage"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(400, 30)
 min_value = 50.0
 max_value = 150.0
 value = 50.0
 
-[node name="SensitivityLabel" type="Label" parent="Center/Content/SettingsPanel" unique_id=1965172613]
-layout_mode = 2
+[node name="FullscreenToggle" type="CheckButton" parent="Center/Content/SettingsPanel/DisplayPage"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(400, 46)
+text = "FULLSCREEN"
+
+[node name="QualityButton" type="Button" parent="Center/Content/SettingsPanel/DisplayPage"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(400, 46)
+text = "GRAPHICS:  HIGH"
+
+[node name="ControlsPage" type="VBoxContainer" parent="Center/Content/SettingsPanel"]
+unique_name_in_owner = true
+visible = false
+theme_override_constants/separation = 8
+
+[node name="SensitivityLabel" type="Label" parent="Center/Content/SettingsPanel/ControlsPage"]
+theme_type_variation = &"SubtleLabel"
 text = "MOUSE SENSITIVITY"
 
-[node name="SensitivitySlider" type="HSlider" parent="Center/Content/SettingsPanel" unique_id=1956062137]
+[node name="SensitivitySlider" type="HSlider" parent="Center/Content/SettingsPanel/ControlsPage"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(400, 30)
-layout_mode = 2
 min_value = 25.0
 max_value = 250.0
 value = 25.0
 
-[node name="FullscreenToggle" type="CheckButton" parent="Center/Content/SettingsPanel" unique_id=81372026]
+[node name="KeybindList" type="VBoxContainer" parent="Center/Content/SettingsPanel/ControlsPage"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(400, 42)
-layout_mode = 2
-text = "FULLSCREEN"
+theme_override_constants/separation = 4
 
-[node name="QualityButton" type="Button" parent="Center/Content/SettingsPanel"]
+[node name="KeybindHint" type="Label" parent="Center/Content/SettingsPanel/ControlsPage"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(400, 46)
-layout_mode = 2
-text = "GRAPHICS:  HIGH"
-
-[node name="ControlsButton" type="Button" parent="Center/Content/SettingsPanel" unique_id=1931869350]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(400, 46)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "VIEW CONTROLS"
-
-[node name="BackButton" type="Button" parent="Center/Content/SettingsPanel" unique_id=2088564347]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(400, 52)
-layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "BACK  [ESC]"
-
-[node name="ControlsPanel" type="VBoxContainer" parent="Center/Content" unique_id=370414197]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="Heading" type="Label" parent="Center/Content/ControlsPanel" unique_id=1170496923]
-theme_type_variation = &"CaptionLabel"
-layout_mode = 2
-text = "CONTROLS"
+theme_type_variation = &"SubtleLabel"
+theme_override_font_sizes/font_size = 13
+text = "CLICK A KEY, THEN PRESS A NEW ONE  (ESC CANCELS)"
 horizontal_alignment = 1
 
-[node name="Movement" type="Label" parent="Center/Content/ControlsPanel" unique_id=1293155687]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.78, 0.78, 0.78, 1)
-theme_override_font_sizes/font_size = 18
-text = "WASD     MOVE
-SHIFT     SPRINT
-CTRL      CROUCH
-SPACE     JUMP
-F         FLASHLIGHT
-E         INTERACT / PICK UP
-LEFT CLICK     USE / THROW
-ESC       PAUSE"
-horizontal_alignment = 1
+[node name="ResetKeysButton" type="Button" parent="Center/Content/SettingsPanel/ControlsPage"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(400, 40)
+theme_override_font_sizes/font_size = 16
+text = "RESET TO DEFAULTS"
 
-[node name="ControlsBackButton" type="Button" parent="Center/Content/ControlsPanel" unique_id=494458199]
+[node name="BackButton" type="Button" parent="Center/Content/SettingsPanel"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(400, 52)
-layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "BACK  [ESC]"
 

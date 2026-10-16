@@ -101,6 +101,8 @@ func _ready() -> void:
 		generator.get_required_pressure_valves()
 	)
 	_ui_sounds = UiSounds.attach(self)
+	_refresh_controls_hint()
+	Settings.bindings_changed.connect(_refresh_controls_hint)
 	_fade_controls_after_delay()
 	start_random_screeches()
 
@@ -651,6 +653,18 @@ func _on_pressure_changed(current_valves: int, required_valves: int) -> void:
 	else:
 		pressure_label.modulate = Color(0.35, 1.0, 0.55)
 		_on_fuse_changed(generator.get_current_fuses(), generator.get_required_fuses())
+
+
+func _refresh_controls_hint() -> void:
+	controls_label.text = (
+		"%s%s%s%s Move   %s Sprint (uses stamina)   %s Crouch   %s Flashlight (battery drains, recharges when off)
+"
+		+ "%s Interact / Pick Up   LEFT CLICK Use / Throw   ESC Pause"
+	) % [
+		Settings.key_text("Forward"), Settings.key_text("Left"), Settings.key_text("Backward"),
+		Settings.key_text("Right"), Settings.key_text("Sprint"), Settings.key_text("Crouch"),
+		Settings.key_text("Flashlight"), Settings.key_text("Interact"),
+	]
 
 
 func _fade_controls_after_delay() -> void:
