@@ -2,9 +2,11 @@ extends Node3D
 
 const LIGHT_SWITCH_SFX := preload("res://assets/sfx/effects/light_switch.mp3")
 const GATE_OPEN_SFX := preload("res://assets/sfx/effects/gate_open.mp3")
+const UiSounds := preload("res://scripts/ui_sounds.gd")
 const JUMPSCARE_SFX := preload("res://assets/sfx/ambience/freesound_community-jumpscare-68730.mp3")
 
 var _jumpscare_running := false
+var _ui_sounds: Node
 
 @onready var screeching: AudioStreamPlayer = $Screeching
 @onready var enemy: Enemy = $Enemy
@@ -93,6 +95,7 @@ func _ready() -> void:
 		generator.get_current_pressure_valves(),
 		generator.get_required_pressure_valves()
 	)
+	_ui_sounds = UiSounds.attach(self)
 	_fade_controls_after_delay()
 	start_random_screeches()
 
@@ -608,6 +611,8 @@ func _finish_game(screen: CanvasLayer, focus_button: Button) -> void:
 
 
 func _set_player_paused(paused: bool) -> void:
+	if paused != player_paused and _ui_sounds:
+		_ui_sounds.play("pause_open" if paused else "pause_close")
 	player_paused = paused
 	pause_screen.visible = paused
 	get_tree().paused = paused

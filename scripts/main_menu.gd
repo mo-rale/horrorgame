@@ -1,5 +1,7 @@
 extends Control
 
+const UiSounds := preload("res://scripts/ui_sounds.gd")
+
 @onready var main_buttons: VBoxContainer = %MainButtons
 @onready var settings_panel: VBoxContainer = %SettingsPanel
 @onready var controls_panel: VBoxContainer = %ControlsPanel
@@ -14,6 +16,7 @@ extends Control
 @onready var subtitle_label: Label = $Center/Content/Subtitle
 
 var _flicker_timer := 1.0
+var _starting := false
 
 
 func _ready() -> void:
@@ -40,6 +43,7 @@ func _ready() -> void:
 		func(value: float) -> void: Settings.set_brightness(value / 100.0)
 	)
 	fullscreen_toggle.toggled.connect(Settings.set_fullscreen)
+	UiSounds.attach(self)
 	play_button.grab_focus()
 
 
@@ -73,6 +77,18 @@ func _setup_slider(slider: HSlider, bus_name: String) -> void:
 
 
 func _play_game() -> void:
+	if _starting:
+		return
+	_starting = true
+	# The start sting plays while the screen sinks to black, then the game loads.
+	var fade := ColorRect.new()
+	fade.color = Color(0, 0, 0, 0)
+	fade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fade.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(fade)
+	var tween := create_tween()
+	tween.tween_property(fade, "color:a", 1.0, 0.9)
+	await tween.finished
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 

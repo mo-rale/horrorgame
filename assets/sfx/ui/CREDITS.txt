@@ -1,0 +1,6 @@
+UI sound effects
+
+hover.wav, click.wav, back.wav, slider.wav - Kenney '51 UI sound effects (buttons, switches and clicks)', CC0,
+  pitched down and layered with synthesized thumps by tools/prepare_ui_audio.py
+  https://opengameart.org/content/51-ui-sound-effects-buttons-switches-and-clicks
+start.wav, pause_open.wav, pause_close.wav - synthesized by tools/prepare_ui_audio.py (no third-party audio)

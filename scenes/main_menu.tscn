@@ -6,6 +6,8 @@
 
 [ext_resource type="FontFile" path="res://assets/fonts/Cinzel,Irish_Grover/Cinzel/static/Cinzel-Bold.ttf" id="4_title_font"]
 
+[ext_resource type="Theme" path="res://assets/ui/horror_theme.tres" id="5_theme"]
+
 [node name="MainMenu" type="Control" unique_id=1355067125]
 layout_mode = 3
 anchors_preset = 15
@@ -14,6 +16,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_menu")
+theme = ExtResource("5_theme")
 
 [node name="Scenery" parent="." unique_id=514623186 instance=ExtResource("3_scenery")]
 
@@ -43,6 +46,25 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.025, 0.006, 0.009, 0.22)
 
+[node name="SideShade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_right = 540.0
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="SideEdge" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_left = 540.0
+offset_right = 543.0
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.36, 0.08, 0.06, 0.9)
+
 [node name="Center" type="CenterContainer" parent="." unique_id=1587304887]
 layout_mode = 1
 anchor_bottom = 1.0
@@ -57,20 +79,16 @@ theme_override_constants/separation = 28
 alignment = 1
 
 [node name="Title" type="Label" parent="Center/Content" unique_id=1265226878]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.78, 0.06, 0.06, 1)
-theme_override_colors/font_outline_color = Color(0.1, 0, 0, 1)
-theme_override_constants/outline_size = 6
-theme_override_fonts/font = ExtResource("4_title_font")
+theme_type_variation = &"HeadingLabel"
 theme_override_font_sizes/font_size = 64
+layout_mode = 2
 text = "HALVERSON
 WORKS"
 horizontal_alignment = 1
 
 [node name="Subtitle" type="Label" parent="Center/Content" unique_id=969531153]
+theme_type_variation = &"SubtleLabel"
 layout_mode = 2
-theme_override_colors/font_color = Color(0.55, 0.55, 0.55, 1)
-theme_override_font_sizes/font_size = 16
 text = "NIGHT SHIFT. NOBODY CLOCKED OUT."
 horizontal_alignment = 1
 
@@ -107,8 +125,8 @@ layout_mode = 2
 theme_override_constants/separation = 6
 
 [node name="Heading" type="Label" parent="Center/Content/SettingsPanel" unique_id=11717118]
+theme_type_variation = &"CaptionLabel"
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
 text = "AUDIO"
 horizontal_alignment = 1
 
@@ -140,8 +158,8 @@ custom_minimum_size = Vector2(400, 34)
 layout_mode = 2
 
 [node name="DisplayHeading" type="Label" parent="Center/Content/SettingsPanel" unique_id=424596086]
+theme_type_variation = &"CaptionLabel"
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
 text = "DISPLAY & CONTROLS"
 horizontal_alignment = 1
 
@@ -196,8 +214,8 @@ layout_mode = 2
 theme_override_constants/separation = 12
 
 [node name="Heading" type="Label" parent="Center/Content/ControlsPanel" unique_id=1170496923]
+theme_type_variation = &"CaptionLabel"
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
 text = "CONTROLS"
 horizontal_alignment = 1
 
@@ -223,6 +241,7 @@ theme_override_font_sizes/font_size = 20
 text = "BACK  [ESC]"
 
 [node name="Version" type="Label" parent="." unique_id=163737994]
+theme_type_variation = &"SubtleLabel"
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
@@ -235,6 +254,5 @@ offset_right = -18.0
 offset_bottom = -18.0
 grow_horizontal = 0
 grow_vertical = 0
-theme_override_colors/font_color = Color(0.35, 0.35, 0.35, 1)
 text = "EARLY BUILD"
 horizontal_alignment = 2

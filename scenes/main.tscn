@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" uid="uid://dvuhqut63xyl0" path="res://scenes/level_map.tscn" id="13_level_map"]
 [ext_resource type="PackedScene" path="res://scenes/fuse.tscn" id="14_fuse"]
 [ext_resource type="PackedScene" path="res://scenes/pressure_valve.tscn" id="15_valve"]
+[ext_resource type="Theme" path="res://assets/ui/horror_theme.tres" id="99_theme"]
 
 [sub_resource type="Environment" id="Environment_tefeu"]
 background_mode = 1
@@ -202,6 +203,7 @@ mouse_filter = 1
 color = Color(0.035, 0, 0, 0.92)
 
 [node name="CenterContainer" type="CenterContainer" parent="GameOverScreen" unique_id=2082671753]
+theme = ExtResource("99_theme")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -214,16 +216,17 @@ theme_override_constants/separation = 18
 alignment = 1
 
 [node name="Title" type="Label" parent="GameOverScreen/CenterContainer/Content" unique_id=1445225805]
+theme_type_variation = &"HeadingLabel"
+theme_override_font_sizes/font_size = 48
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.08, 0.08, 1)
-theme_override_font_sizes/font_size = 48
 text = "YOU WERE CAUGHT"
 horizontal_alignment = 1
 
 [node name="Hint" type="Label" parent="GameOverScreen/CenterContainer/Content" unique_id=1753280973]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_type_variation = &"SubtleLabel"
 theme_override_font_sizes/font_size = 18
+layout_mode = 2
 text = "The darkness found you."
 horizontal_alignment = 1
 
@@ -256,6 +259,7 @@ mouse_filter = 1
 color = Color(0, 0.025, 0.015, 0.92)
 
 [node name="CenterContainer" type="CenterContainer" parent="VictoryScreen" unique_id=1274119127]
+theme = ExtResource("99_theme")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -268,16 +272,17 @@ theme_override_constants/separation = 18
 alignment = 1
 
 [node name="Title" type="Label" parent="VictoryScreen/CenterContainer/Content" unique_id=640629842]
+theme_type_variation = &"HeadingLabel"
+theme_override_font_sizes/font_size = 48
 layout_mode = 2
 theme_override_colors/font_color = Color(0.25, 0.85, 0.45, 1)
-theme_override_font_sizes/font_size = 48
 text = "POWER RESTORED"
 horizontal_alignment = 1
 
 [node name="Hint" type="Label" parent="VictoryScreen/CenterContainer/Content" unique_id=651656312]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_type_variation = &"SubtleLabel"
 theme_override_font_sizes/font_size = 18
+layout_mode = 2
 text = "You survived the darkness."
 horizontal_alignment = 1
 
@@ -310,6 +315,7 @@ mouse_filter = 1
 color = Color(0, 0, 0, 0.75)
 
 [node name="CenterContainer" type="CenterContainer" parent="PauseScreen" unique_id=1768440011]
+theme = ExtResource("99_theme")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -322,9 +328,9 @@ theme_override_constants/separation = 18
 alignment = 1
 
 [node name="Title" type="Label" parent="PauseScreen/CenterContainer/Content" unique_id=525510129]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
+theme_type_variation = &"HeadingLabel"
 theme_override_font_sizes/font_size = 48
+layout_mode = 2
 text = "PAUSED"
 horizontal_alignment = 1
 
@@ -336,9 +342,8 @@ theme_override_font_sizes/font_size = 20
 text = "RESUME  [ESC]"
 
 [node name="AudioHeading" type="Label" parent="PauseScreen/CenterContainer/Content" unique_id=1266071086]
+theme_type_variation = &"CaptionLabel"
 layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
-theme_override_font_sizes/font_size = 16
 text = "AUDIO"
 horizontal_alignment = 1
 
@@ -387,6 +392,8 @@ text = "QUIT"
 layer = 10
 
 [node name="ObjectivePanel" type="PanelContainer" parent="ObjectiveHUD" unique_id=2007775568]
+theme = ExtResource("99_theme")
+theme_type_variation = &"HudPanel"
 offset_left = 24.0
 offset_top = 24.0
 offset_right = 650.0
@@ -405,9 +412,9 @@ layout_mode = 2
 theme_override_constants/separation = 6
 
 [node name="ObjectiveLabel" type="Label" parent="ObjectiveHUD/ObjectivePanel/Margin/Content" unique_id=567469342]
+theme_type_variation = &"HudTitle"
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
 text = "OBJECTIVE: FIND GAS CANS"
 
 [node name="FuseLabel" type="Label" parent="ObjectiveHUD/ObjectivePanel/Margin/Content" unique_id=242830657]
@@ -429,9 +436,9 @@ theme_override_font_sizes/font_size = 18
 text = "FUEL: 0 / 3"
 
 [node name="ControlsLabel" type="Label" parent="ObjectiveHUD/ObjectivePanel/Margin/Content" unique_id=1585089155]
+theme_type_variation = &"SubtleLabel"
+theme_override_font_sizes/font_size = 14
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.72, 0.72, 0.72, 1)
-theme_override_font_sizes/font_size = 14
 text = "WASD Move   SHIFT Sprint (uses stamina)   CTRL Crouch   F Flashlight (battery drains, recharges when off)
 E Interact / Pick Up   LEFT CLICK Use / Throw   ESC Pause"

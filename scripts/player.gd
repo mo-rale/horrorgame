@@ -4,6 +4,8 @@ class_name Player
 signal calm_pressed(amount: float)
 signal anxiety_calmed
 
+const HUD_THEME := preload("res://assets/ui/horror_theme.tres")
+
 const SPEED = 5.0
 const SPRINT_SPEED = 9.0
 const CROUCH_SPEED = 2.5
@@ -99,6 +101,7 @@ var _flashlight_base_energy := 1.0
 var _flicker_timer := 0.0
 var _flicker_off_time := 0.0
 var _stamina_bar: ProgressBar
+var _stamina_row: Control
 var _battery_bar: ProgressBar
 
 
@@ -127,6 +130,9 @@ func _ready():
 	_held_object_clearance_shape.radius = held_object_clearance_radius
 	calm_button.pressed.connect(_register_calm_press)
 	anxiety_hud.visible = false
+	for hud_child in anxiety_hud.get_children():
+		if hud_child is Control:
+			(hud_child as Control).theme = HUD_THEME
 
 func _input(event):
 	if controls_locked:
@@ -342,11 +348,11 @@ func _update_stamina(delta: float, sprinting: bool) -> void:
 
 	_stamina_bar.value = stamina
 	_stamina_bar.modulate = (
-		Color(1.0, 0.3, 0.25) if _stamina_exhausted else Color(0.85, 0.85, 0.85)
+		Color(1.0, 0.3, 0.25) if _stamina_exhausted else Color(0.8, 0.78, 0.7)
 	)
-	# Fade the bar out when full so it does not clutter the screen.
-	var target_alpha := 0.0 if stamina >= 99.9 and not _stamina_exhausted else 0.9
-	_stamina_bar.modulate.a = lerpf(_stamina_bar.modulate.a, target_alpha, 0.2)
+	# Fade the row out when full so it does not clutter the screen.
+	var target_alpha := 0.0 if stamina >= 99.9 and not _stamina_exhausted else 0.95
+	_stamina_row.modulate.a = lerpf(_stamina_row.modulate.a, target_alpha, 0.2)
 
 
 func _update_flashlight(delta: float) -> void:
@@ -396,33 +402,50 @@ func _build_survival_hud() -> void:
 	layer.layer = 20
 	add_child(layer)
 	var box := VBoxContainer.new()
+	box.theme = HUD_THEME
 	box.anchor_top = 1.0
 	box.anchor_bottom = 1.0
 	box.offset_left = 28.0
-	box.offset_top = -80.0
+	box.offset_top = -92.0
 	box.offset_bottom = -24.0
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_theme_constant_override("separation", 6)
+	box.add_theme_constant_override("separation", 5)
 	layer.add_child(box)
-	_stamina_bar = _make_hud_bar(box)
-	_battery_bar = _make_hud_bar(box)
-	_stamina_bar.modulate.a = 0.0
+	_stamina_bar = _make_hud_bar(box, "STAMINA", Color.WHITE)
+	_battery_bar = _make_hud_bar(box, "BATTERY", Color.WHITE)
+	_stamina_row.modulate.a = 0.0
 
 
-func _make_hud_bar(parent: Control) -> ProgressBar:
+func _make_hud_bar(parent: Control, caption: String, color: Color) -> ProgressBar:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(row)
+	if caption == "STAMINA":
+		_stamina_row = row
+	var label := Label.new()
+	label.text = caption
+	label.theme_type_variation = &"CaptionLabel"
+	label.custom_minimum_size = Vector2(84.0, 0.0)
+	label.add_theme_font_size_override("font_size", 12)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(label)
 	var bar := ProgressBar.new()
-	bar.custom_minimum_size = Vector2(180.0, 8.0)
+	bar.custom_minimum_size = Vector2(170.0, 8.0)
+	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bar.show_percentage = false
 	bar.max_value = 100.0
 	bar.value = 100.0
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var fill := StyleBoxFlat.new()
-	fill.bg_color = Color(1, 1, 1, 0.9)
+	fill.bg_color = color
 	var back := StyleBoxFlat.new()
-	back.bg_color = Color(0, 0, 0, 0.45)
+	back.bg_color = Color(0.03, 0.025, 0.025, 0.7)
+	back.border_color = Color(0.3, 0.1, 0.08)
+	back.set_border_width_all(1)
 	bar.add_theme_stylebox_override("fill", fill)
 	bar.add_theme_stylebox_override("background", back)
-	parent.add_child(bar)
+	row.add_child(bar)
 	return bar
 
 
