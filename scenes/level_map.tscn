@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" path="res://scenes/story_note.tscn" id="note_scene"]
 [ext_resource type="Script" path="res://scripts/flicker_light.gd" id="flicker_script"]
 [ext_resource type="PackedScene" path="res://scenes/fuse_box.tscn" id="fusebox_scene"]
+[ext_resource type="Script" path="res://scripts/hide_spot.gd" id="hide_script"]
 [ext_resource type="PackedScene" uid="uid://cp861k7cohx8e" path="res://scenes/gas_can.tscn" id="gascan_scene"]
 [ext_resource type="Texture2D" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Wall/Horror_Wall_09-128x128.png" id="t1"]
 [ext_resource type="Texture2D" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Metal/Horror_Metal_12-128x128.png" id="t2"]
@@ -1953,6 +1954,42 @@ spread = 0.0
 initial_velocity_min = 0.0
 initial_velocity_max = 0.0
 gravity = Vector3(0, -6, 0)
+
+[node name="HideLocker1" type="StaticBody3D" parent="NavigationRegion3D"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -29.2, 0, 47.5)
+script = ExtResource("hide_script")
+
+[node name="HideLocker2" type="StaticBody3D" parent="NavigationRegion3D"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -29.2, 0, 50)
+script = ExtResource("hide_script")
+
+[node name="HideLocker3" type="StaticBody3D" parent="NavigationRegion3D"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -29.2, 0, 52.5)
+script = ExtResource("hide_script")
+
+[node name="HideLocker4" type="StaticBody3D" parent="NavigationRegion3D"]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 29.2, 0, 49)
+script = ExtResource("hide_script")
+
+[node name="HideLocker5" type="StaticBody3D" parent="NavigationRegion3D"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -29.2, 0, 43.3)
+script = ExtResource("hide_script")
+
+[node name="HideLocker6" type="StaticBody3D" parent="NavigationRegion3D"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -29.2, 0, 25)
+script = ExtResource("hide_script")
+
+[node name="HideLocker7" type="StaticBody3D" parent="NavigationRegion3D"]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 29.2, 0, 25)
+script = ExtResource("hide_script")
+
+[node name="HideLocker8" type="StaticBody3D" parent="NavigationRegion3D"]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 29.2, 0, 5.5)
+script = ExtResource("hide_script")
+
+[node name="HideLocker9" type="StaticBody3D" parent="NavigationRegion3D"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -29.2, 0, 6.6)
+script = ExtResource("hide_script")
 
 [node name="Floor2" type="CSGBox3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1435, -0.2368, -20.9892)

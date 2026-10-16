@@ -410,6 +410,15 @@ for i, (x, z) in enumerate([(-20.5, 36.5), (-18.0, 14.0), (21.0, 16.0), (-20.0, 
         ("initial_velocity_min", "0.0"), ("initial_velocity_max", "0.0"),
         ("gravity", "Vector3(0, -6, 0)")])
 
+# Lockers the player can hide in (see scripts/hide_spot.gd). They sit against the
+# outer walls under the navigation region so the enemy paths around them.
+HIDE_SPOTS = [(-29.2, 47.5, math.pi / 2), (-29.2, 50.0, math.pi / 2), (-29.2, 52.5, math.pi / 2),
+              (29.2, 49.0, -math.pi / 2), (-29.2, 43.3, math.pi / 2), (-29.2, 25.0, math.pi / 2),
+              (29.2, 25.0, -math.pi / 2), (29.2, 5.5, -math.pi / 2), (-29.2, 6.6, math.pi / 2)]
+for i, (x, z, ry) in enumerate(HIDE_SPOTS):
+    node("HideLocker%d" % (i + 1), "StaticBody3D", R, [
+        ("transform", xform(x, 0, z, ry)), ("script", 'ExtResource("hide_script")')])
+
 # ── Exit corridor (gate, outside yard, victory trigger) ─────────────────────
 node("Floor2", "CSGBox3D", ".", [
     ("transform", "Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1435, -0.2368, -20.9892)"),
@@ -588,6 +597,7 @@ head = ['[gd_scene format=3 uid="uid://dvuhqut63xyl0"]\n',
         '[ext_resource type="PackedScene" path="res://scenes/story_note.tscn" id="note_scene"]',
         '[ext_resource type="Script" path="res://scripts/flicker_light.gd" id="flicker_script"]',
         '[ext_resource type="PackedScene" path="res://scenes/fuse_box.tscn" id="fusebox_scene"]',
+        '[ext_resource type="Script" path="res://scripts/hide_spot.gd" id="hide_script"]',
         '[ext_resource type="PackedScene" uid="uid://cp861k7cohx8e" path="res://scenes/gas_can.tscn" id="gascan_scene"]']
 for ident, ttype, path in ext:
     head.append('[ext_resource type="%s" path="%s" id="%s"]' % (ttype, path, ident))

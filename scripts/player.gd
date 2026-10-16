@@ -94,6 +94,10 @@ var _calm_keys: Array[int] = [KEY_Q, KEY_C, KEY_Z, KEY_X]
 @export var enemy_flicker_distance := 14.0
 
 var controls_locked := false
+var is_hidden := false
+var _hide_spot: Node3D
+var _hide_base_yaw := 0.0
+var _hide_overlay: CanvasLayer
 var stamina := 100.0
 var battery := 100.0
 var _stamina_exhausted := false
@@ -145,7 +149,7 @@ func _ready():
 			(hud_child as Control).theme = HUD_THEME
 
 func _input(event):
-	if controls_locked:
+	if controls_locked and not is_hidden:
 		return
 
 	if (
@@ -163,6 +167,10 @@ func _input(event):
 	if event is InputEventMouseMotion:
 		# Rotate player left/right
 		rotate_y(-event.relative.x * mouse_sensitivity)
+		if is_hidden:
+			# Inside a locker you can only look around the door, not through walls.
+			var yaw := wrapf(rotation.y - _hide_base_yaw, -PI, PI)
+			rotation.y = _hide_base_yaw + clampf(yaw, -0.7, 0.7)
 
 		# Rotate camera up/down
 		pitch -= event.relative.y * mouse_sensitivity
@@ -190,6 +198,13 @@ func _input(event):
 			drop_object()
 
 func _physics_process(delta: float) -> void:
+	# Hiding: frozen inside the locker until Interact climbs back out.
+	if is_hidden:
+		velocity = Vector3.ZERO
+		if Input.is_action_just_pressed("Interact"):
+			exit_hide()
+		return
+
 	# Gravity
 	if not is_on_floor():
 		velocity += get_gravity() * delta
@@ -326,6 +341,73 @@ func _physics_process(delta: float) -> void:
 ## Called by the enemy: 0..1 closeness of an active threat (drives camera shake).
 var threat_proximity := 0.0
 var _trauma := 0.0
+
+
+func hide_in(spot: Node3D) -> void:
+	if is_hidden or controls_locked or not spot.has_method("hide_position"):
+		return
+	# Let the enemy judge whether it saw you duck in, before you vanish.
+	get_tree().call_group("enemy", "player_hiding", spot.global_position)
+	is_hidden = true
+	_hide_spot = spot
+	if is_flashlight_on:
+		is_flashlight_on = false
+		light.visible = false
+	if grabbed_object:
+		drop_object()
+	spot.set_occupied(true)
+	collision_shape.set_deferred("disabled", true)
+	global_position = spot.hide_position()
+	velocity = Vector3.ZERO
+	# Face out through the door (the locker's +Z side).
+	rotation.y = spot.global_rotation.y + PI
+	_hide_base_yaw = rotation.y
+	pitch = 0.0
+	camera.rotation = Vector3.ZERO
+	current_interactable = null
+	_show_hide_overlay(true)
+
+
+func exit_hide() -> void:
+	if not is_hidden:
+		return
+	is_hidden = false
+	global_position = _hide_spot.exit_position()
+	_hide_spot.set_occupied(false)
+	collision_shape.set_deferred("disabled", false)
+	_show_hide_overlay(false)
+	get_tree().call_group("enemy", "player_left_hiding")
+	_hide_spot = null
+
+
+func _show_hide_overlay(shown: bool) -> void:
+	if _hide_overlay == null:
+		_hide_overlay = CanvasLayer.new()
+		_hide_overlay.layer = 18
+		for index in 2:
+			var bar := ColorRect.new()
+			bar.color = Color(0.0, 0.0, 0.0, 0.97)
+			bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			bar.anchor_right = 1.0
+			if index == 0:
+				bar.anchor_bottom = 0.42
+			else:
+				bar.anchor_top = 0.58
+				bar.anchor_bottom = 1.0
+			_hide_overlay.add_child(bar)
+		var label := Label.new()
+		label.text = "HIDING   [%s] climb out" % Settings.key_text("Interact")
+		label.theme = HUD_THEME
+		label.theme_type_variation = &"SubtleLabel"
+		label.anchor_left = 0.5
+		label.anchor_right = 0.5
+		label.anchor_top = 0.9
+		label.offset_left = -200.0
+		label.offset_right = 200.0
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_hide_overlay.add_child(label)
+		add_child(_hide_overlay)
+	_hide_overlay.visible = shown
 
 
 func add_trauma(amount: float) -> void:

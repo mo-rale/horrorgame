@@ -412,6 +412,11 @@ func _on_enemy_reached_player() -> void:
 
 func _play_jumpscare() -> void:
 	_jumpscare_running = true
+	var hint_label := game_over_screen.get_node_or_null("CenterContainer/Content/Hint") as Label
+	if hint_label and enemy.last_catch_hint != "":
+		hint_label.text = enemy.last_catch_hint
+		hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		hint_label.custom_minimum_size = Vector2(560.0, 0.0)
 	player.controls_locked = true
 	player.velocity = Vector3.ZERO
 	player.stop_stalking_heartbeat()
@@ -637,6 +642,8 @@ func _on_fuel_changed(current_fuel: int, required_fuel: int) -> void:
 
 
 func _on_fuse_changed(current_fuses: int, required_fuses: int) -> void:
+	if current_fuses >= required_fuses:
+		enemy.set_phase(3)
 	fuse_label.text = "FUSES: %d / %d" % [current_fuses, required_fuses]
 	if generator.get_current_pressure_valves() < generator.get_required_pressure_valves():
 		return
@@ -649,6 +656,8 @@ func _on_fuse_changed(current_fuses: int, required_fuses: int) -> void:
 
 
 func _on_pressure_changed(current_valves: int, required_valves: int) -> void:
+	if current_valves >= required_valves:
+		enemy.set_phase(2)
 	pressure_label.text = "PRESSURE VALVES: %d / %d" % [current_valves, required_valves]
 	if current_valves < required_valves:
 		objective_label.text = "OBJECTIVE: CLOSE THE LEAKING PRESSURE VALVES"

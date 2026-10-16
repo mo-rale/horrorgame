@@ -139,6 +139,30 @@ var _vanish_sequence_id := 0
 ## -1 picks randomly; 0 = behind, 1 = flank, 2 = statue (for testing).
 @export_range(-1, 2) var forced_stalk_style := -1
 
+@export_group("Behaviour Rules")
+@export var chase_warning_time := 1.1
+@export var hide_search_time := 2.6
+@export var hide_open_chance_unseen := 0.2
+@export var flashlight_stagger_time := 1.6
+@export var flashlight_stagger_cooldown := 7.0
+@export var patrol_duration_phase2 := 26.0
+@export var patrol_duration_phase3 := 40.0
+
+## Escalation: 1 = stalking only, 2 = valves closed (adds patrols),
+## 3 = fuse box powered (shorter cooldowns, faster, more patrols).
+var phase := 1
+## Shown on the game over screen to explain what went wrong.
+var last_catch_hint := ""
+
+var _pending_hint := ""
+var _warning_timer := 0.0
+var _lit_time := 0.0
+var _stagger_timer := 0.0
+var _stagger_cooldown := 0.0
+var _hidden_known := false
+var _hide_wait := 0.0
+var _waiting_at_hide := false
+var _patrol_timer := 0.0
 var _stalk_pause_timer := 0.0
 var _next_stalk_pause := 0.0
 var _ambient_cue_timer := 0.0
@@ -192,6 +216,9 @@ func _ready() -> void:
 		player.anxiety_calmed.connect(_on_player_anxiety_calmed)
 	print("[Enemy] First stalking event scheduled in %.1f seconds" % _stalking_cooldown)
 	_nav_map = get_world_3d().get_navigation_map()
+	# The body origin floats above the navmesh; offset the agent's path so its
+	# waypoints are reachable (otherwise it never advances past the first one).
+	navigation_agent.path_height_offset = -_root_position_from_nav_point(Vector3.ZERO).y
 	_sync_map_then_start_dormant()
 
 
@@ -252,6 +279,9 @@ func _physics_process(delta: float) -> void:
 		return
 	_stalking_cooldown = maxf(_stalking_cooldown - delta, 0.0)
 	_detection_grace_timer = maxf(_detection_grace_timer - delta, 0.0)
+	_stagger_cooldown = maxf(_stagger_cooldown - delta, 0.0)
+	_stagger_timer = maxf(_stagger_timer - delta, 0.0)
+	_update_flashlight_reaction(delta)
 	if (
 		_stalking_cooldown <= 0.0
 		and _state == State.DORMANT
@@ -287,6 +317,9 @@ func _physics_process(delta: float) -> void:
 			return
 		State.CHASING:
 			_update_chasing(delta)
+			if _warning_timer > 0.0 or _waiting_at_hide:
+				velocity = Vector3.ZERO
+				return
 			if _state == State.CHASING and not _catch_emitted:
 				var lunge := 1.0
 				if (
@@ -294,7 +327,8 @@ func _physics_process(delta: float) -> void:
 					and global_position.distance_to(player.global_position) < chase_lunge_distance
 				):
 					lunge = chase_lunge_multiplier
-				_move_direct_path(delta, _active_chasing_speed * lunge, false)
+				var stagger := 0.12 if _stagger_timer > 0.0 else 1.0
+				_move_direct_path(delta, _active_chasing_speed * lunge * stagger, false)
 			return
 		State.SEARCHING:
 			_update_searching(delta)
@@ -338,7 +372,7 @@ func _enter_state(new_state: State, data := {}) -> void:
 		_stalking_cooldown = maxf(
 			minimum_stalking_cooldown,
 			stalking_cooldown_time - _threat_level() * cooldown_reduction_per_level
-		)
+		) * [1.0, 0.75, 0.5][phase - 1]
 		if is_instance_valid(player):
 			player.end_stalking_anxiety()
 	_state = new_state
@@ -360,6 +394,8 @@ func _enter_state(new_state: State, data := {}) -> void:
 
 		State.ROAMING:
 			_travel_to_random_position()
+			if _patrol_timer <= 0.0:
+				_patrol_timer = 20.0
 
 		State.INVESTIGATING:
 			if not data.has("sound_position"):
@@ -419,8 +455,15 @@ func _enter_state(new_state: State, data := {}) -> void:
 		
 		State.CHASING:
 			_active_chasing_speed = (
-				chasing_speed + _threat_level() * chase_speed_bonus_per_level
+				chasing_speed
+				+ _threat_level() * chase_speed_bonus_per_level
+				+ (phase - 1) * 0.5
 			)
+			last_catch_hint = _pending_hint
+			_warning_timer = chase_warning_time
+			_waiting_at_hide = false
+			_hide_wait = 0.0
+			_stagger_timer = 0.0
 			_chase_timer = (
 				chase_max_time + _threat_level() * chase_time_bonus_per_level
 			)
@@ -454,13 +497,21 @@ func _update_roaming(_delta: float) -> void:
 	if navigation_agent.is_navigation_finished():
 		_travel_to_random_position()
 
+	_patrol_timer -= _delta
+	if _patrol_timer <= 0.0:
+		_enter_state(State.DORMANT)
+		return
+
 	if _detection_grace_timer <= 0.0 and is_player_in_view():
-		_enter_state(State.CHASING)
+		_start_chase(
+			"He was walking the plant and spotted you. Listen for his footsteps, "
+			+ "and break line of sight or hide before he sees you."
+		)
 
 
 func _update_investigating(delta: float) -> void:
 	if _detection_grace_timer <= 0.0 and is_player_in_view():
-		_enter_state(State.CHASING)
+		_start_chase("You made noise and he came to look. Running and thrown things are loud.")
 		return
 
 	_investigation_timer -= delta
@@ -477,6 +528,16 @@ func _update_investigating(delta: float) -> void:
 
 func _update_stalking(delta: float) -> void:
 	_stalking_path_timer -= delta
+
+	# A player hiding in a locker is invisible: it loses interest after a while.
+	if is_instance_valid(player) and player.is_hidden:
+		_hide_wait += delta
+		if _hide_wait > 3.0 and not _hidden_known:
+			print("[Enemy] STALKING player hidden - losing interest")
+			_hide_wait = 0.0
+			_enter_state(State.VANISHING)
+		return
+	_hide_wait = 0.0
 
 	var distance_to_player := global_position.distance_to(player.global_position)
 	var has_line_of_sight := (
@@ -511,7 +572,7 @@ func _update_stalking(delta: float) -> void:
 		print("[Enemy] ANXIETY HIGH — heartbeat warning started")
 	if _anxiety_level >= 100.0:
 		print("[Enemy] ANXIETY MAXED — chase started")
-		_enter_state(State.CHASING)
+		_start_chase("You let the dread build. When your heart pounds, calm yourself with the on-screen key.")
 		return
 
 	# The stalker continually follows the player's back. It can navigate
@@ -534,7 +595,7 @@ func _update_statue(delta: float, watched: bool, distance_to_player: float) -> v
 	_statue_watch_time = maxf(_statue_watch_time - delta * 0.5, 0.0)
 	if distance_to_player <= statue_catch_distance:
 		print("[Enemy] STATUE reached the player — chase started")
-		_enter_state(State.CHASING)
+		_start_chase("He only moves when you look away. Keep your eyes on him.")
 
 
 func _update_stalk_pause(delta: float) -> bool:
@@ -693,6 +754,21 @@ func _move_direct_path(delta: float, speed: float, face_player: bool) -> void:
 
 
 func _update_chasing(delta: float) -> void:
+	# The warning beat: it roars and stares, frozen, before it gives chase.
+	if _warning_timer > 0.0:
+		_warning_timer -= delta
+		velocity = Vector3.ZERO
+		_face_player()
+		return
+
+	if is_instance_valid(player) and player.is_hidden:
+		_update_hidden_search(delta)
+		if _catch_emitted or _state != State.CHASING:
+			return
+	else:
+		_waiting_at_hide = false
+		_hide_wait = 0.0
+
 	if _try_catch_player():
 		return
 
@@ -769,7 +845,7 @@ func _update_searching(delta: float) -> void:
 		_go_to_position_around_last_seen()
 	
 	if _detection_grace_timer <= 0.0 and is_player_in_view():
-		_enter_state(State.CHASING)
+		_start_chase("He lost you but kept looking. Get far away and out of sight before he finds you again.")
 
 
 # ── Movement (shared by all states) ─────────────────────────────────────
@@ -900,10 +976,154 @@ func stop_all_sounds() -> void:
 	_seen.stop()
 
 
-func hear_noise(_sound_position: Vector3, _hearing_distance: float) -> void:
-	# The stalking-only design does not reveal or redirect the enemy through
-	# footsteps, thrown cans, or generator sounds.
-	return
+func hear_noise(sound_position: Vector3, hearing_distance: float) -> void:
+	if not _map_synchronized or (is_instance_valid(player) and player.is_hidden):
+		return
+	var radius := hearing_distance * (1.0 + 0.25 * (phase - 1))
+	match _state:
+		State.DORMANT:
+			# Loud play wakes it sooner: every footstep eats into its cooldown.
+			_stalking_cooldown = maxf(_stalking_cooldown - radius * 0.02, 0.0)
+		State.ROAMING, State.SEARCHING:
+			if global_position.distance_to(sound_position) <= radius * 2.0:
+				_enter_state(State.INVESTIGATING, {"sound_position": sound_position})
+
+
+func set_phase(new_phase: int) -> void:
+	new_phase = clampi(new_phase, 1, 3)
+	if new_phase <= phase:
+		return
+	phase = new_phase
+	print("[Enemy] PHASE %d" % phase)
+
+
+func player_hiding(spot_position: Vector3) -> void:
+	# Judge, just before the player vanishes, whether it saw them duck in.
+	_hidden_known = (
+		visible
+		and _state != State.DORMANT
+		and global_position.distance_to(spot_position) < 18.0
+		and not _is_blocked_to(spot_position)
+	)
+	_hide_wait = 0.0
+	if _hidden_known:
+		_player_last_seen_position = spot_position
+		print("[Enemy] saw the player hide")
+
+
+func player_left_hiding() -> void:
+	_hidden_known = false
+	_waiting_at_hide = false
+	_hide_wait = 0.0
+
+
+func _is_blocked_to(target: Vector3) -> bool:
+	var query := PhysicsRayQueryParameters3D.create(
+		_eye.global_position, target + Vector3.UP, collision_mask, [get_rid()]
+	)
+	query.collide_with_areas = false
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		return false
+	var collider := hit["collider"] as Node
+	# Hitting the locker it is hiding in does not count as an obstruction.
+	return not (collider != null and collider.is_in_group("hide_spot"))
+
+
+func _update_hidden_search(delta: float) -> void:
+	# The player is in a locker. If it saw where they went it camps outside and
+	# opens it; otherwise it checks the spot it last saw them and gives up.
+	if _hidden_known:
+		_player_last_seen_position = player.global_position
+		_chase_timer = chase_max_time
+	var distance := Vector2(
+		global_position.x - player.global_position.x,
+		global_position.z - player.global_position.z
+	).length()
+	if distance > 1.9:
+		_waiting_at_hide = false
+		return
+	_waiting_at_hide = true
+	_face_player()
+	velocity = Vector3.ZERO
+	_hide_wait += delta
+	if int(_hide_wait * 2.0) != int((_hide_wait - delta) * 2.0):
+		player.add_trauma(0.25)   # knocking on the door
+	if _hide_wait < hide_search_time:
+		return
+	_hide_wait = 0.0
+	_waiting_at_hide = false
+	if _hidden_known or randf() < hide_open_chance_unseen:
+		last_catch_hint = "He saw you hide. Never hide where he can watch you go in."
+		print("[Enemy] OPENED the locker")
+		_catch_emitted = true
+		reached_player.emit()
+	else:
+		print("[Enemy] hide spot checked - nothing found")
+		_enter_state(
+			State.SEARCHING,
+			{"player_last_seen_position": _player_last_seen_position}
+		)
+
+
+func _update_flashlight_reaction(delta: float) -> void:
+	if not visible or not is_instance_valid(player) or player.is_hidden:
+		_lit_time = 0.0
+		return
+	var lit := false
+	if player.is_flashlight_on and _state != State.DORMANT:
+		var to_enemy := _eye.global_position - player.camera.global_position
+		var distance := to_enemy.length()
+		var aimed := -player.camera.global_basis.z.normalized().dot(to_enemy.normalized())
+		lit = distance < 16.0 and aimed > 0.93 and not is_line_of_sight_broken()
+	_lit_time = _lit_time + delta if lit else maxf(_lit_time - delta * 2.0, 0.0)
+	if (
+		_state == State.CHASING
+		and _warning_timer <= 0.0
+		and _lit_time > 0.5
+		and _stagger_cooldown <= 0.0
+	):
+		_lit_time = 0.0
+		_stagger_timer = flashlight_stagger_time
+		_stagger_cooldown = flashlight_stagger_cooldown
+		_play_seen_sound()
+		player.add_trauma(0.35)
+		print("[Enemy] STAGGERED by the flashlight")
+
+
+func _start_chase(reason: String) -> void:
+	_pending_hint = reason
+	_enter_state(State.CHASING)
+
+
+func _start_patrol() -> void:
+	# From phase 2 it also walks the plant in the open, footsteps and all.
+	var angle := randf() * TAU
+	for distance in [32.0, 26.0, 40.0, 20.0]:
+		var requested: Vector3 = player.global_position + Vector3(cos(angle), 0.0, sin(angle)) * float(distance)
+		var nav_point := NavigationServer3D.map_get_closest_point(_nav_map, requested)
+		if Vector2(nav_point.x - requested.x, nav_point.z - requested.z).length() > 6.0:
+			angle += 1.3
+			continue
+		var root_position := _root_position_from_nav_point(nav_point)
+		if not _has_stalking_clearance(root_position):
+			continue
+		# Skip walled-off slivers of navmesh: the spot must connect to the player.
+		var route := NavigationServer3D.map_get_path(_nav_map, nav_point, player.global_position, true)
+		if route.is_empty() or route[route.size() - 1].distance_to(
+			NavigationServer3D.map_get_closest_point(_nav_map, player.global_position)
+		) > 2.0:
+			angle += 0.9
+			continue
+		visible = true
+		_collision_shape.set_deferred("disabled", false)
+		global_position = root_position
+		_patrol_timer = patrol_duration_phase2 if phase == 2 else patrol_duration_phase3
+		_enter_state(State.ROAMING)
+		_current_speed = roaming_speed * (1.0 if phase == 2 else 1.5)
+		print("[Enemy] PATROL started at ", global_position)
+		return
+	_stalking_cooldown = stalking_blocked_retry_delay
 
 
 func _threat_level() -> int:
@@ -936,6 +1156,9 @@ func _stalk_direction() -> Vector3:
 
 
 func _try_start_stalking() -> void:
+	if phase >= 2 and randf() < (0.35 if phase == 2 else 0.5):
+		_start_patrol()
+		return
 	_stalk_style = _choose_stalk_style()
 	_flank_side = 1.0 if randf() < 0.5 else -1.0
 	var placement := _find_safe_stalking_teleport()
@@ -1287,6 +1510,16 @@ func _travel_to_random_position() -> void:
 
 
 func _pick_roam_target() -> Vector3:
+	# Only choose targets the enemy can actually walk to (not walled-off slivers).
+	for _attempt in 12:
+		var target := _pick_roam_target_unchecked()
+		var route := NavigationServer3D.map_get_path(_nav_map, global_position, target, true)
+		if route.size() > 1 and route[route.size() - 1].distance_to(target) < 1.0:
+			return target
+	return _pick_roam_target_unchecked()
+
+
+func _pick_roam_target_unchecked() -> Vector3:
 	# map_get_random_point has been unreliable in this project (returning
 	# (0,0,0) regardless of layer/uniform settings). Instead, sample a
 	# random point within roam_radius of the enemy's current position and
@@ -1339,11 +1572,22 @@ func _random_point_in_circle(radius: float) -> Vector3:
 func is_player_in_view() -> bool:
 	if not is_instance_valid(player):
 		return false
+	if player.is_hidden:
+		return false
+
+	# A lit flashlight shows you from much farther; crouching in the dark shrinks it.
+	var spotting := max_spotting_distance
+	var cone := 0.3
+	if player.is_flashlight_on:
+		spotting *= 1.6
+		cone = -0.1
+	elif player.is_crouching:
+		spotting *= 0.6
 
 	var vec_to_player := player.global_position - global_position
 	var distance_to_player := vec_to_player.length()
 	
-	if distance_to_player > max_spotting_distance:
+	if distance_to_player > spotting:
 		return false
 	if is_line_of_sight_broken():
 		return false
@@ -1353,7 +1597,7 @@ func is_player_in_view() -> bool:
 	if distance_to_player <= close_detection_distance:
 		return true
 
-	return -_eye.global_basis.z.normalized().dot(vec_to_player.normalized()) > 0.3
+	return -_eye.global_basis.z.normalized().dot(vec_to_player.normalized()) > cone
 
 
 func _can_see_player_during_chase() -> bool:
