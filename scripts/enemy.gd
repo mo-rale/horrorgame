@@ -9,6 +9,16 @@ enum State { DORMANT, ROAMING, INVESTIGATING, STALKING, VANISHING, CHASING, SEAR
 
 var _state: State = State.DORMANT
 
+# How a stalking encounter plays out. BEHIND hugs the player's back, FLANK
+# paces beside them at the edge of vision, STATUE stands in plain sight far
+# ahead and only creeps closer while nobody is looking at it.
+enum StalkStyle { BEHIND, FLANK, STATUE }
+
+var _stalk_style: StalkStyle = StalkStyle.BEHIND
+var _flank_side := 1.0
+var _statue_watch_time := 0.0
+var _statue_frozen := false
+
 # ── Tunables ─────────────────────────────────────────────────────────────
 @export_group("Detection")
 @export var max_spotting_distance := 50.0
@@ -119,6 +129,15 @@ var _vanish_sequence_id := 0
 @export var chase_lunge_distance := 6.0
 @export var chase_lunge_multiplier := 1.25
 @export var searching_whisper_interval := 4.0
+
+@export_group("Stalk Styles")
+@export var flank_distance := 6.5
+@export var statue_spawn_distance := 14.0
+@export var statue_creep_speed := 3.4
+@export var statue_catch_distance := 2.2
+@export var statue_max_watch_time := 9.0
+## -1 picks randomly; 0 = behind, 1 = flank, 2 = statue (for testing).
+@export_range(-1, 2) var forced_stalk_style := -1
 
 var _stalk_pause_timer := 0.0
 var _next_stalk_pause := 0.0
@@ -253,11 +272,15 @@ func _physics_process(delta: float) -> void:
 			if _state == State.STALKING and _update_stalk_pause(delta):
 				return
 			if _state == State.STALKING:
-				_move_direct_path(
-					delta,
-					stalking_speed + _threat_level() * stalking_speed_bonus_per_level,
-					true
+				var creep_speed := (
+					stalking_speed + _threat_level() * stalking_speed_bonus_per_level
 				)
+				if _stalk_style == StalkStyle.STATUE:
+					creep_speed = (
+						statue_creep_speed
+						+ _threat_level() * stalking_speed_bonus_per_level
+					)
+				_move_direct_path(delta, creep_speed, true)
 			return
 		State.VANISHING:
 			velocity = Vector3.ZERO
@@ -356,6 +379,8 @@ func _enter_state(new_state: State, data := {}) -> void:
 				_enter_state(State.DORMANT)
 				return
 			_stalking_path_timer = 0.0
+			_statue_watch_time = 0.0
+			_statue_frozen = false
 			_stalk_pause_timer = 0.0
 			_next_stalk_pause = randf_range(
 				stalk_pause_interval_min,
@@ -378,7 +403,7 @@ func _enter_state(new_state: State, data := {}) -> void:
 			_update_stalking_follow_path()
 			_face_player()
 			print(
-				"[Enemy] STALKING chosen — teleported behind player to ",
+				"[Enemy] STALKING chosen (%s) — teleported to " % StalkStyle.keys()[_stalk_style],
 				stalking_teleport_position
 			)
 			print("[Enemy] STALKING path waypoints: ", _direct_path.size())
@@ -460,7 +485,11 @@ func _update_stalking(delta: float) -> void:
 	)
 
 	var player_is_watching := has_line_of_sight and _is_player_looking_at_enemy()
-	if player_is_watching:
+	if _stalk_style == StalkStyle.STATUE:
+		_update_statue(delta, player_is_watching, distance_to_player)
+		if _state != State.STALKING:
+			return
+	elif player_is_watching:
 		print(
 			"[Enemy] STALKER SEEN — disappearing in %.2f seconds"
 			% seen_vanish_delay
@@ -492,7 +521,32 @@ func _update_stalking(delta: float) -> void:
 		_update_stalking_follow_path()
 
 
+func _update_statue(delta: float, watched: bool, distance_to_player: float) -> void:
+	_statue_frozen = watched
+	if watched:
+		# Meeting its stare only works for so long before it slips away.
+		_statue_watch_time += delta
+		if _statue_watch_time >= statue_max_watch_time:
+			print("[Enemy] STATUE outstared — vanishing")
+			_enter_state(State.VANISHING)
+		return
+
+	_statue_watch_time = maxf(_statue_watch_time - delta * 0.5, 0.0)
+	if distance_to_player <= statue_catch_distance:
+		print("[Enemy] STATUE reached the player — chase started")
+		_enter_state(State.CHASING)
+
+
 func _update_stalk_pause(delta: float) -> bool:
+	if _stalk_style == StalkStyle.STATUE:
+		# Frozen solid while watched; no random pauses otherwise.
+		if _statue_frozen:
+			velocity = Vector3.ZERO
+			move_and_slide()
+			_face_player()
+			return true
+		return false
+
 	# Now and then it stops dead and stares in total silence, then resumes.
 	if _stalk_pause_timer > 0.0:
 		_stalk_pause_timer -= delta
@@ -849,8 +903,39 @@ func _threat_level() -> int:
 	return mini(_stalking_encounters, max_threat_level)
 
 
+func _choose_stalk_style() -> StalkStyle:
+	if forced_stalk_style >= 0:
+		return forced_stalk_style as StalkStyle
+	# The first encounter is always the classic one so the player learns it.
+	if _stalking_encounters == 0:
+		return StalkStyle.BEHIND
+	var roll := randf()
+	if roll < 0.4:
+		return StalkStyle.BEHIND
+	if roll < 0.7:
+		return StalkStyle.FLANK
+	return StalkStyle.STATUE
+
+
+func _stalk_direction() -> Vector3:
+	# Horizontal direction, from the player, where this style wants the enemy.
+	var forward := -player.global_basis.z
+	match _stalk_style:
+		StalkStyle.FLANK:
+			return player.global_basis.x.normalized() * _flank_side
+		StalkStyle.STATUE:
+			return forward.normalized()
+	return player.global_basis.z.normalized()
+
+
 func _try_start_stalking() -> void:
+	_stalk_style = _choose_stalk_style()
+	_flank_side = 1.0 if randf() < 0.5 else -1.0
 	var placement := _find_safe_stalking_teleport()
+	if not bool(placement["found"]) and _stalk_style != StalkStyle.BEHIND:
+		# No room for the fancy placement: fall back to the classic ambush.
+		_stalk_style = StalkStyle.BEHIND
+		placement = _find_safe_stalking_teleport()
 	if not bool(placement["found"]):
 		_stalking_cooldown = stalking_blocked_retry_delay
 		print(
@@ -863,6 +948,19 @@ func _try_start_stalking() -> void:
 
 
 func _update_stalking_follow_path() -> void:
+	if _stalk_style == StalkStyle.STATUE:
+		# Head straight for the player; movement itself pauses while watched.
+		var player_nav_point := NavigationServer3D.map_get_closest_point(
+			_nav_map, player.global_position
+		)
+		var path := NavigationServer3D.map_get_path(
+			_nav_map, global_position, player_nav_point, true
+		)
+		if not path.is_empty():
+			_direct_path = path
+			_direct_path_index = 0
+		return
+
 	var placement := _find_stalking_follow_target()
 	if not bool(placement["found"]):
 		return
@@ -899,14 +997,17 @@ func _find_stalking_follow_target() -> Dictionary:
 	# Following is intentionally less restrictive than the initial teleport.
 	# The enemy is already in the world, so it only needs a reachable navmesh
 	# point behind the player; walls are handled by the generated path.
-	var behind_direction := player.global_basis.z.normalized()
+	var behind_direction := _stalk_direction()
 	var angle_offsets: Array[float] = [0.0, -0.35, 0.35, -0.7, 0.7, -1.05, 1.05]
 	# The higher the player's anxiety, the closer the thing hugs their back.
 	var anxiety_scale := 1.0 - anxiety_follow_distance_shrink * (_anxiety_level / 100.0)
+	var base_follow_distance := stalking_follow_distance
+	if _stalk_style == StalkStyle.FLANK:
+		base_follow_distance = flank_distance
 	var effective_follow_distance := maxf(
 		minimum_stalking_follow_distance * 0.8,
 		(
-			stalking_follow_distance
+			base_follow_distance
 			- _threat_level() * stalking_distance_reduction_per_level
 		) * anxiety_scale
 	)
@@ -970,13 +1071,24 @@ func _find_stalking_follow_target() -> Dictionary:
 
 
 func _find_safe_stalking_teleport() -> Dictionary:
-	var behind_direction := player.global_basis.z.normalized()
+	var behind_direction := _stalk_direction()
+	var min_distance := stalking_min_teleport_distance
 	var angle_offsets: Array[float] = [0.0, -0.35, 0.35, -0.7, 0.7, -1.05, 1.05]
 	var distances: Array[float] = [
 		stalking_min_teleport_distance,
 		maxf(stalking_teleport_distance - 1.0, stalking_min_teleport_distance),
 		maxf(stalking_teleport_distance, stalking_min_teleport_distance),
 	]
+	if _stalk_style == StalkStyle.STATUE:
+		min_distance = statue_spawn_distance * 0.6
+		distances = [
+			statue_spawn_distance,
+			statue_spawn_distance - 2.0,
+			statue_spawn_distance + 2.0,
+			statue_spawn_distance * 0.65,
+		]
+	elif _stalk_style == StalkStyle.FLANK:
+		distances = [flank_distance, flank_distance + 1.5, flank_distance - 1.0]
 
 	for distance in distances:
 		for angle in angle_offsets:
@@ -995,7 +1107,7 @@ func _find_safe_stalking_teleport() -> Dictionary:
 
 			var player_to_point := nav_point - player.global_position
 			player_to_point.y = 0.0
-			if player_to_point.length() < stalking_min_teleport_distance:
+			if player_to_point.length() < minf(min_distance, distances.min()) - 0.01:
 				continue
 			if player_to_point.normalized().dot(behind_direction) < 0.25:
 				continue

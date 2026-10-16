@@ -1,16 +1,21 @@
 extends Node3D
-# Run: Godot --path . res://tests/nav_probe.tscn
-# Loads the real game, forces a stalking event in the real level and logs it.
+# Run: Godot --path . res://tests/nav_probe.tscn -- <style 0|1|2>
+# Forces a stalking encounter of one style in the real level and logs it.
 
 var main: Node
 var frame := 0
 var last_state := -1
+var style := 0
 
 
 func _ready() -> void:
+	var args := OS.get_cmdline_user_args()
+	if args.size() > 0:
+		style = int(args[0])
 	main = load("res://scenes/main.tscn").instantiate()
 	main.play_intro = false
 	add_child(main)
+	(main.get_node("Enemy") as Enemy).forced_stalk_style = style
 
 
 func _process(_delta: float) -> void:
@@ -21,7 +26,8 @@ func _process(_delta: float) -> void:
 	if enemy._state != last_state:
 		last_state = enemy._state
 		print("[Nav] frame=%d enemy state=%d pos=%s" % [frame, enemy._state, enemy.global_position])
-	if frame == 220:
-		enemy._anxiety_level = 99.0
-	if frame == 900:
+	if frame > 200 and frame % 120 == 0 and enemy._state == Enemy.State.STALKING:
+		var p := main.get_node("player") as Player
+		print("[Nav] style=%d dist=%.1f frozen=%s watch=%.1f" % [style, enemy.global_position.distance_to(p.global_position), enemy._statue_frozen, enemy._statue_watch_time])
+	if frame == 1100:
 		get_tree().quit()
