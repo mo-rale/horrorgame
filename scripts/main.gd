@@ -21,6 +21,7 @@ var _jumpscare_running := false
 @onready var pause_music_slider: HSlider = %PauseMusicSlider
 @onready var pause_sfx_slider: HSlider = %PauseSFXSlider
 @onready var objective_label: Label = %ObjectiveLabel
+@onready var pressure_label: Label = %PressureLabel
 @onready var fuse_label: Label = %FuseLabel
 @onready var fuel_label: Label = %FuelLabel
 @onready var controls_label: Label = %ControlsLabel
@@ -76,6 +77,7 @@ func _ready() -> void:
 	generator.generator_started.connect(_on_generator_started)
 	generator.fuel_changed.connect(_on_fuel_changed)
 	generator.fuse_changed.connect(_on_fuse_changed)
+	generator.pressure_changed.connect(_on_pressure_changed)
 	victory_area.body_entered.connect(_on_victory_area_body_entered)
 	restart_button.pressed.connect(_restart_game)
 	play_again_button.pressed.connect(_restart_game)
@@ -87,7 +89,10 @@ func _ready() -> void:
 	_setup_volume_slider(pause_master_slider, "Master")
 	_setup_volume_slider(pause_music_slider, "Music")
 	_setup_volume_slider(pause_sfx_slider, "SFX")
-	_on_fuse_changed(generator.get_current_fuses(), generator.get_required_fuses())
+	_on_pressure_changed(
+		generator.get_current_pressure_valves(),
+		generator.get_required_pressure_valves()
+	)
 	_fade_controls_after_delay()
 	start_random_screeches()
 
@@ -466,6 +471,8 @@ func _on_generator_started() -> void:
 	fuel_label.modulate = Color(0.35, 1.0, 0.55)
 	fuse_label.text = "FUSES ONLINE"
 	fuse_label.modulate = Color(0.35, 1.0, 0.55)
+	pressure_label.text = "PRESSURE ONLINE"
+	pressure_label.modulate = Color(0.35, 1.0, 0.55)
 	_run_factory_power_sequence()
 
 
@@ -542,6 +549,8 @@ func _on_victory_area_body_entered(body: Node3D) -> void:
 
 func _on_fuel_changed(current_fuel: int, required_fuel: int) -> void:
 	fuel_label.text = "FUEL: %d / %d" % [current_fuel, required_fuel]
+	if generator.get_current_pressure_valves() < generator.get_required_pressure_valves():
+		return
 	if generator.get_current_fuses() < generator.get_required_fuses():
 		return
 
@@ -558,12 +567,24 @@ func _on_fuel_changed(current_fuel: int, required_fuel: int) -> void:
 
 func _on_fuse_changed(current_fuses: int, required_fuses: int) -> void:
 	fuse_label.text = "FUSES: %d / %d" % [current_fuses, required_fuses]
+	if generator.get_current_pressure_valves() < generator.get_required_pressure_valves():
+		return
 	if current_fuses < required_fuses:
 		objective_label.text = "OBJECTIVE: FIND THE FUSES AND PUT THEM IN THE FUSE BOX"
 		fuse_label.modulate = Color(1.0, 0.3, 0.25) if current_fuses == 0 else Color(1.0, 0.8, 0.25)
 	else:
 		fuse_label.modulate = Color(0.35, 1.0, 0.55)
 		_on_fuel_changed(generator.get_current_fuel(), generator.get_required_fuel())
+
+
+func _on_pressure_changed(current_valves: int, required_valves: int) -> void:
+	pressure_label.text = "PRESSURE VALVES: %d / %d" % [current_valves, required_valves]
+	if current_valves < required_valves:
+		objective_label.text = "OBJECTIVE: CLOSE THE LEAKING PRESSURE VALVES"
+		pressure_label.modulate = Color(1.0, 0.3, 0.25) if current_valves == 0 else Color(1.0, 0.8, 0.25)
+	else:
+		pressure_label.modulate = Color(0.35, 1.0, 0.55)
+		_on_fuse_changed(generator.get_current_fuses(), generator.get_required_fuses())
 
 
 func _fade_controls_after_delay() -> void:

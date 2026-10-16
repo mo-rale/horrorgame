@@ -3,9 +3,11 @@ extends Node3D
 signal generator_started
 signal fuel_changed(current_fuel: int, required_fuel: int)
 signal fuse_changed(current_fuses: int, required_fuses: int)
+signal pressure_changed(current_valves: int, required_valves: int)
 
 const REQUIRED_FUEL := 3
 const REQUIRED_FUSES := 3
+const REQUIRED_PRESSURE_VALVES := 3
 
 @onready var start: AudioStreamPlayer3D = $start
 @onready var running: AudioStreamPlayer3D = $running
@@ -21,6 +23,7 @@ const REQUIRED_FUSES := 3
 var started := false
 var fuel := 0
 var installed_fuses: Array[String] = []
+var opened_pressure_valves: Array[String] = []
 var can_interact := true  # Cooldown flag
 var is_outline_visible := false  # Track outline state to prevent flickering
 
@@ -42,11 +45,15 @@ func _ready() -> void:
 	gas_detect_area.body_exited.connect(_on_gas_detect_area_body_exited)
 	_update_fuel_display()
 	fuse_changed.emit(installed_fuses.size(), REQUIRED_FUSES)
+	pressure_changed.emit(opened_pressure_valves.size(), REQUIRED_PRESSURE_VALVES)
 
 
 func _update_fuel_display() -> void:
-	if installed_fuses.size() < REQUIRED_FUSES:
-		fuelcount.text = "FUSES: %d/%d" % [installed_fuses.size(), REQUIRED_FUSES]
+	if opened_pressure_valves.size() < REQUIRED_PRESSURE_VALVES:
+		fuelcount.text = "VALVES: %d/%d" % [opened_pressure_valves.size(), REQUIRED_PRESSURE_VALVES]
+		fuelcount.modulate = Color.RED if opened_pressure_valves.is_empty() else Color.YELLOW
+	elif installed_fuses.size() < REQUIRED_FUSES:
+		fuelcount.text = "FUSE BOX: %d/%d" % [installed_fuses.size(), REQUIRED_FUSES]
 		fuelcount.modulate = Color.RED if installed_fuses.is_empty() else Color.YELLOW
 	elif fuel < REQUIRED_FUEL:
 		fuelcount.text = "FUEL: " + str(fuel) + "/" + str(REQUIRED_FUEL)
@@ -56,8 +63,11 @@ func _update_fuel_display() -> void:
 		fuelcount.modulate = Color.GREEN
 
 func fueled() -> bool:
+	if opened_pressure_valves.size() < REQUIRED_PRESSURE_VALVES:
+		_reject_action("CLOSE THE PRESSURE VALVES FIRST!")
+		return false
 	if installed_fuses.size() < REQUIRED_FUSES:
-		_reject_action("INSTALL FUSES FIRST!")
+		_reject_action("POWER THE FUSE BOX FIRST!")
 		return false
 	if fuel < REQUIRED_FUEL:
 		fuel += 1
@@ -70,14 +80,28 @@ func fueled() -> bool:
 
 
 func install_fuse(fuse_type: String) -> bool:
+	if opened_pressure_valves.size() < REQUIRED_PRESSURE_VALVES:
+		_reject_action("CLOSE THE PRESSURE VALVES FIRST!")
+		return false
 	if started or installed_fuses.has(fuse_type) or installed_fuses.size() >= REQUIRED_FUSES:
 		_reject_action("FUSE ALREADY INSTALLED!")
 		return false
+	# The fuse box plays its own sound; the generator only records the fuse.
 	installed_fuses.append(fuse_type)
-	correct.play()
-	_emit_noise(fuel_insert_noise_radius)
 	_update_fuel_display()
 	fuse_changed.emit(installed_fuses.size(), REQUIRED_FUSES)
+	return true
+
+
+func open_pressure_valve(valve_id: String) -> bool:
+	if started or opened_pressure_valves.has(valve_id):
+		return false
+	opened_pressure_valves.append(valve_id)
+	correct.pitch_scale = randf_range(0.82, 0.94)
+	correct.play()
+	_emit_noise(error_noise_radius)
+	_update_fuel_display()
+	pressure_changed.emit(opened_pressure_valves.size(), REQUIRED_PRESSURE_VALVES)
 	return true
 
 
@@ -96,6 +120,14 @@ func get_current_fuses() -> int:
 func get_required_fuses() -> int:
 	return REQUIRED_FUSES
 
+
+func get_current_pressure_valves() -> int:
+	return opened_pressure_valves.size()
+
+
+func get_required_pressure_valves() -> int:
+	return REQUIRED_PRESSURE_VALVES
+
 func show_outline() -> void:
 	# Only show outline if the generator hasn't started yet and not already visible
 	if not started and not is_outline_visible:
@@ -113,9 +145,18 @@ func interact() -> void:
 	if not can_interact or started:
 		return
 
-	if installed_fuses.size() < REQUIRED_FUSES:
+	if opened_pressure_valves.size() < REQUIRED_PRESSURE_VALVES:
 		can_interact = false
-		fuelcount.text = "MISSING FUSES: %d/%d" % [installed_fuses.size(), REQUIRED_FUSES]
+		fuelcount.text = "VALVES STILL LEAKING: %d/%d" % [opened_pressure_valves.size(), REQUIRED_PRESSURE_VALVES]
+		fuelcount.modulate = Color.RED
+		error.play()
+		_emit_noise(error_noise_radius)
+		await error.finished
+		can_interact = true
+		_update_fuel_display()
+	elif installed_fuses.size() < REQUIRED_FUSES:
+		can_interact = false
+		fuelcount.text = "FUSE BOX UNPOWERED: %d/%d" % [installed_fuses.size(), REQUIRED_FUSES]
 		fuelcount.modulate = Color.RED
 		error.play()
 		_emit_noise(error_noise_radius)
