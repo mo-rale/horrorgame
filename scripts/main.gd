@@ -120,7 +120,12 @@ func _enable_level_after_navigation_sync(
 	var navigation_mesh := navigation_region.navigation_mesh
 	# CSG geometry finishes its collision/mesh update after entering the tree.
 	# Baking before this frame can produce an empty navigation mesh.
-	await get_tree().physics_frame
+	# On some launches the CSG meshes are not ready on the very first physics
+	# frame and the bake returns an empty mesh, so give them a few frames and
+	# re-bake below if the result is still empty.
+	for _warmup in 3:
+		await get_tree().physics_frame
+	await get_tree().process_frame
 	navigation_region.set_navigation_map(get_world_3d().get_navigation_map())
 	navigation_map = navigation_region.get_navigation_map()
 	navigation_region.bake_navigation_mesh(false)
@@ -129,6 +134,8 @@ func _enable_level_after_navigation_sync(
 	while wait_frames < 120:
 		await get_tree().physics_frame
 		wait_frames += 1
+		if navigation_mesh.get_polygon_count() == 0 and wait_frames % 10 == 0:
+			navigation_region.bake_navigation_mesh(false)
 		var current_iteration := NavigationServer3D.map_get_iteration_id(
 			navigation_map
 		)
