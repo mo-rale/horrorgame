@@ -3,6 +3,7 @@ extends Node3D
 const LIGHT_SWITCH_SFX := preload("res://assets/sfx/effects/light_switch.mp3")
 const GATE_OPEN_SFX := preload("res://assets/sfx/effects/gate_open.mp3")
 const UiSounds := preload("res://scripts/ui_sounds.gd")
+const JUMPSCARE_FACE_DISTANCE := 0.72
 const JUMPSCARE_SFX := preload("res://assets/sfx/ambience/freesound_community-jumpscare-68730.mp3")
 
 var _jumpscare_running := false
@@ -413,23 +414,40 @@ func _play_jumpscare() -> void:
 	enemy.visible = true
 	enemy.stop_all_sounds()
 
-	# Snap the view onto the enemy's face and slam it into the camera.
+	# Turn the player to face the enemy, then slam its face into the camera.
 	var to_enemy := enemy.global_position - player.global_position
 	to_enemy.y = 0.0
 	if to_enemy.length() < 0.01:
 		to_enemy = -player.global_basis.z
 	var direction := to_enemy.normalized()
 	player.rotation.y = atan2(-direction.x, -direction.z)
-	player.camera.rotation = Vector3(deg_to_rad(18.0), 0.0, 0.0)
+	var camera := player.camera
+	camera.rotation = Vector3.ZERO
+	var head := enemy.get_node_or_null("Model/Torso/Head") as Node3D
+
+	# The face must end up level with the lens, so lower or raise the whole body
+	# by the head's height above the enemy's origin (the model hovers a little).
+	var head_height := 0.95
+	if head:
+		head_height = head.global_position.y - enemy.global_position.y
+	var face_level_y := player.camera.global_position.y - head_height
 	var start_position := player.global_position + direction * 2.4
-	start_position.y = enemy.global_position.y
-	var end_position := player.global_position + direction * 0.85
-	end_position.y = enemy.global_position.y
+	start_position.y = face_level_y
 	enemy.global_position = start_position
 	enemy.look_at(
 		Vector3(player.global_position.x, enemy.global_position.y, player.global_position.z),
 		Vector3.UP
 	)
+	# The head leans toward the player, so stop the body far enough back that the
+	# face ends up about half a metre from the lens, filling the screen.
+	var head_forward := 0.2
+	if head:
+		var offset := head.global_position - enemy.global_position
+		offset.y = 0.0
+		head_forward = maxf(offset.dot(-direction), 0.0)
+	var end_position := player.global_position + direction * (JUMPSCARE_FACE_DISTANCE + head_forward)
+	end_position.y = face_level_y
+	_aim_camera_at_face(head)
 
 	var scream := AudioStreamPlayer.new()
 	scream.stream = JUMPSCARE_SFX
@@ -451,19 +469,36 @@ func _play_jumpscare() -> void:
 	player.add_trauma(1.0)
 	get_tree().call_group("post_fx", "set_anxiety", 1.0)
 
-	var lunge := enemy.create_tween().set_parallel(true)
-	lunge.tween_property(enemy, "global_position", end_position, 0.12).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
-	lunge.tween_property(player.camera, "fov", 105.0, 0.12)
+	var lunge := create_tween().set_parallel(true)
+	lunge.tween_method(
+		func(progress: float) -> void:
+			enemy.global_position = start_position.lerp(end_position, progress)
+			_aim_camera_at_face(head),
+		0.0, 1.0, 0.14
+	).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	lunge.tween_property(camera, "fov", 82.0, 0.14)
 	var fade := flash.create_tween()
 	fade.tween_property(flash, "color:a", 0.0, 0.45)
 
-	# Keep shaking and screaming for a beat before the game over screen.
-	for _i in 6:
-		player.add_trauma(0.5)
-		await get_tree().create_timer(0.2, false).timeout
+	# Hold on the face, shaking and screaming, for a beat before game over.
+	var elapsed := 0.0
+	var next_shake := 0.0
+	while elapsed < 1.3:
+		await get_tree().process_frame
+		elapsed += get_process_delta_time()
+		_aim_camera_at_face(head)
+		if elapsed >= next_shake:
+			player.add_trauma(0.5)
+			next_shake += 0.2
 	flash_layer.queue_free()
 	scream.queue_free()
 	_finish_game(game_over_screen, restart_button)
+
+
+func _aim_camera_at_face(head: Node3D) -> void:
+	# Keep the lens locked on the enemy's face (it sways and twitches).
+	if head != null and is_instance_valid(head) and player.camera.is_inside_tree():
+		player.camera.look_at(head.global_position, Vector3.UP)
 
 
 func _on_generator_started() -> void:

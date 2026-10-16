@@ -51,5 +51,9 @@ func _physics_process(_delta: float) -> void:
 	if _shot_wait >= 0:
 		_shot_wait += 1
 		if _shot_wait == 14:
+			var e := main.get_node("Enemy") as Node3D
+			var cam := (main.get_node("player") as Player).camera
+			var h := e.get_node("Model/Torso/Head") as Node3D
+			print("[Nav] cam=%s head=%s enemy=%s enemy_fwd=%s cam_fwd=%s dist=%.2f" % [cam.global_position, h.global_position, e.global_position, -e.global_basis.z, -cam.global_basis.z, cam.global_position.distance_to(h.global_position)])
 			get_viewport().get_texture().get_image().save_png("user://jumpscare_shot.png")
 			print("[Nav] jumpscare screenshot saved")
