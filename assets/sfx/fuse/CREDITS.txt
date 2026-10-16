@@ -1,0 +1,7 @@
+Fuse and fuse box sound effects
+
+spark.wav, power_up.wav - from 'Electricity Game Sound Pack', CC0
+  https://opengameart.org/content/electricity-game-sound-pack
+insert_click.wav - from Kenney '51 UI sound effects (buttons, switches and clicks)', CC0
+  https://opengameart.org/content/51-ui-sound-effects-buttons-switches-and-clicks
+transformer_hum.wav - synthesized by tools/prepare_fuse_audio.py (no third-party audio)

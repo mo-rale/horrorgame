@@ -230,12 +230,6 @@ uv1_scale = Vector3(1.0, 1.0, 1.0)
 albedo_texture = ExtResource("t27")
 uv1_scale = Vector3(3.15, 3.15, 3.15)
 
-[sub_resource type="StandardMaterial3D" id="m38"]
-albedo_color = Color(0.9, 0.3, 0.05, 1)
-emission_enabled = true
-emission = Color(1.0, 0.35, 0.05, 1)
-emission_energy_multiplier = 0.7
-
 [sub_resource type="QuadMesh" id="StainQuad"]
 size = Vector2(2.4, 2.4)
 
@@ -1037,13 +1031,8 @@ use_collision = true
 size = Vector3(0.9, 0.6, 0.5)
 
 [node name="FuseBox" type="StaticBody3D" parent="Props"]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 29.2, 0, 42.2)
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 29.25, 0, 42.2)
 script = ExtResource("fusebox_script")
-
-[node name="FuseBoxSign" type="CSGBox3D" parent="Props"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 29.6, 3.3, 42.2)
-material_override = SubResource("m38")
-size = Vector3(0.1, 0.5, 1.6)
 
 [node name="Floor2" type="CSGBox3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1435, -0.2368, -20.9892)

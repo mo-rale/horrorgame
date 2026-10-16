@@ -299,10 +299,8 @@ csg_box(P, "Toolbox", 21, 0.3, 5.5, 0.9, 0.6, 0.5, DARK)
 
 # The fuse box on the east wall of the electrical room (front faces west, -X).
 node("FuseBox", "StaticBody3D", "Props", [
-    ("transform", xform(29.2, 0, 42.2, -math.pi / 2)),
+    ("transform", xform(29.25, 0, 42.2, -math.pi / 2)),
     ("script", 'ExtResource("fusebox_script")')])
-# A lit panel above the box so players can find it in the dark.
-csg_box(P, "FuseBoxSign", 29.6, 3.3, 42.2, 0.1, 0.5, 1.6, mat(color=(0.9, 0.3, 0.05, 1), emit=(1.0, 0.35, 0.05), energy=0.7), solid=False, collide=False)
 
 # ── Exit corridor (gate, outside yard, victory trigger) ─────────────────────
 node("Floor2", "CSGBox3D", ".", [

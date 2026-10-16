@@ -1,29 +1,52 @@
 extends RigidBody3D
 
+const FuseModel := preload("res://scripts/fuse_model.gd")
+
 @export_enum("RED", "BLUE", "YELLOW") var fuse_type: String = "RED"
 @export var fuse_color := Color(0.85, 0.08, 0.06, 1.0)
 
-@onready var mesh: MeshInstance3D = $MeshInstance3D
-@onready var outline: MeshInstance3D = $Outline
 @onready var label: Label3D = $Label
 @onready var collision_shape: CollisionShape3D = $CollisionShape3D
 
 var is_grabbed := false
 var is_used := false
 
+var _outline: MeshInstance3D
+var _glow_light: OmniLight3D
+
 
 func _ready() -> void:
 	add_to_group("grabable")
 	add_to_group("fuse")
-	outline.visible = false
 	label.visible = false
-	var material := mesh.material_override as StandardMaterial3D
-	if material:
-		material = material.duplicate()
-		material.albedo_color = fuse_color
-		material.emission_enabled = true
-		material.emission = fuse_color * 0.28
-		mesh.material_override = material
+
+	# The cartridge lies along local Z so it sits in the hand like before.
+	var model := FuseModel.build(fuse_color)
+	model.rotation.x = PI * 0.5
+	add_child(model)
+
+	var outline_mesh := CylinderMesh.new()
+	outline_mesh.top_radius = 0.11
+	outline_mesh.bottom_radius = 0.11
+	outline_mesh.height = 0.68
+	var outline_material := StandardMaterial3D.new()
+	outline_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	outline_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	outline_material.albedo_color = Color(1.0, 0.82, 0.18, 0.34)
+	_outline = MeshInstance3D.new()
+	_outline.mesh = outline_mesh
+	_outline.material_override = outline_material
+	_outline.rotation.x = PI * 0.5
+	_outline.visible = false
+	add_child(_outline)
+
+	# A faint coloured glow makes a dropped fuse findable in the dark.
+	_glow_light = OmniLight3D.new()
+	_glow_light.light_color = fuse_color
+	_glow_light.light_energy = 0.45
+	_glow_light.omni_range = 2.6
+	_glow_light.shadow_enabled = false
+	add_child(_glow_light)
 
 
 func _process(_delta: float) -> void:
@@ -36,14 +59,14 @@ func _process(_delta: float) -> void:
 func show_outline() -> void:
 	if is_grabbed or is_used:
 		return
-	outline.visible = true
+	_outline.visible = true
 	label.text = "%s FUSE" % fuse_type
 	label.modulate = fuse_color.lightened(0.25)
 	label.visible = true
 
 
 func hide_outline() -> void:
-	outline.visible = false
+	_outline.visible = false
 	label.visible = false
 
 
@@ -53,6 +76,7 @@ func grab() -> void:
 	hide_outline()
 	freeze = true
 	gravity_scale = 0.0
+	_glow_light.visible = false
 
 
 func drop() -> void:
@@ -60,6 +84,7 @@ func drop() -> void:
 	collision_shape.disabled = false
 	freeze = false
 	gravity_scale = 1.0
+	_glow_light.visible = true
 
 
 func use(target: Node) -> void:
