@@ -6,6 +6,8 @@ extends SceneTree
 #
 # Run from the project root:
 #   godot --headless --path . --script res://tools/bake_scenes.gd
+# Add "-- name" to bake only scenes whose path contains that name.
+# NOTE: baking overwrites the scenes, including any edits made in the editor.
 
 # [output path, kind, source]  (kind: "script" builds a root from a script,
 # "scene" instantiates an existing scene that already has the script attached)
@@ -34,8 +36,22 @@ func _process(_delta: float) -> bool:
 	if _index >= BAKES.size():
 		quit()
 		return false
+	if not _wanted(BAKES[_index][0]):
+		_index += 1
+		return false
 	_pending = _start(BAKES[_index][1], BAKES[_index][2])
 	get_root().add_child(_pending)
+	return false
+
+
+func _wanted(path: String) -> bool:
+	# Pass scene names after "--" to bake only those, e.g. "-- enemy_model".
+	var filters := OS.get_cmdline_user_args()
+	if filters.is_empty():
+		return true
+	for filter in filters:
+		if path.contains(filter):
+			return true
 	return false
 
 

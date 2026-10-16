@@ -14,6 +14,7 @@ var _arm_left: Node3D
 var _arm_right: Node3D
 var _leg_left: Node3D
 var _leg_right: Node3D
+var _strips: Array[Node3D] = []
 var _body: CharacterBody3D
 var _time := 0.0
 var _walk_phase := 0.0
@@ -29,6 +30,8 @@ func _ready() -> void:
 		_leg_left = $LegLeft
 		_leg_right = $LegRight
 		_eye_material = $Torso/Head/EyeLeft.material_override as StandardMaterial3D
+		for index in 4:
+			_strips.append(get_node("Torso/CoatStrip%d" % index) as Node3D)
 	else:
 		_build_body()
 	# Randomise so duplicated enemies would not move in lockstep.
@@ -68,6 +71,8 @@ func _build_body() -> void:
 	_leg_left = _make_limb("LegLeft", self, Vector3(-0.11, -0.12, 0.0), 0.07, 0.9)
 	_leg_right = _make_limb("LegRight", self, Vector3(0.11, -0.12, 0.0), 0.07, 0.9)
 
+	_build_clothes()
+
 	var eye_light := OmniLight3D.new()
 	eye_light.name = "EyeLight"
 	eye_light.light_color = Color(1.0, 0.1, 0.05)
@@ -76,6 +81,83 @@ func _build_body() -> void:
 	eye_light.shadow_enabled = false
 	_head.add_child(eye_light)
 	eye_light.position = Vector3(0.0, 0.0, -0.3)
+
+
+func _build_clothes() -> void:
+	# A torn foreman's coat, a dented hard hat and a hollow mouth.
+	var cloth := StandardMaterial3D.new()
+	cloth.albedo_color = Color(0.2, 0.17, 0.14)
+	cloth.roughness = 1.0
+	var hat_material := StandardMaterial3D.new()
+	hat_material.albedo_color = Color(0.3, 0.23, 0.06)
+	hat_material.roughness = 0.7
+	var dark := StandardMaterial3D.new()
+	dark.albedo_color = Color(0.0, 0.0, 0.0)
+	dark.roughness = 1.0
+
+	var coat_mesh := CylinderMesh.new()
+	coat_mesh.top_radius = 0.2
+	coat_mesh.bottom_radius = 0.33
+	coat_mesh.height = 0.78
+	coat_mesh.radial_segments = 14
+	var coat := MeshInstance3D.new()
+	coat.name = "Coat"
+	coat.mesh = coat_mesh
+	coat.material_override = cloth
+	coat.position = Vector3(0.0, -0.08, 0.0)
+	_torso.add_child(coat)
+	# Tattered strips hanging from the hem; they sway in _process.
+	for index in 4:
+		var angle := index * PI * 0.5 + PI * 0.25
+		var pivot := Node3D.new()
+		pivot.name = "CoatStrip%d" % index
+		pivot.position = Vector3(sin(angle) * 0.31, -0.46, cos(angle) * 0.31)
+		pivot.rotation.y = angle
+		_torso.add_child(pivot)
+		var strip_mesh := BoxMesh.new()
+		strip_mesh.size = Vector3(0.1, 0.4, 0.012)
+		var strip := MeshInstance3D.new()
+		strip.name = "Strip"
+		strip.mesh = strip_mesh
+		strip.material_override = cloth
+		strip.position = Vector3(0.0, -0.2, 0.0)
+		pivot.add_child(strip)
+		_strips.append(pivot)
+
+	var hat_mesh := SphereMesh.new()
+	hat_mesh.radius = 0.175
+	hat_mesh.height = 0.35
+	hat_mesh.is_hemisphere = true
+	hat_mesh.radial_segments = 14
+	hat_mesh.rings = 6
+	var hat := MeshInstance3D.new()
+	hat.name = "HardHat"
+	hat.mesh = hat_mesh
+	hat.material_override = hat_material
+	hat.position = Vector3(0.0, 0.14, 0.03)
+	hat.rotation = Vector3(deg_to_rad(-30.0), 0.0, deg_to_rad(7.0))
+	hat.scale = Vector3(1.0, 0.85, 1.1)
+	_head.add_child(hat)
+	var brim_mesh := CylinderMesh.new()
+	brim_mesh.top_radius = 0.215
+	brim_mesh.bottom_radius = 0.215
+	brim_mesh.height = 0.02
+	brim_mesh.radial_segments = 14
+	var brim := MeshInstance3D.new()
+	brim.name = "HatBrim"
+	brim.mesh = brim_mesh
+	brim.material_override = hat_material
+	brim.position = Vector3(0.0, 0.14, 0.0)
+	brim.rotation.x = deg_to_rad(-30.0)
+	_head.add_child(brim)
+
+	var mouth := MeshInstance3D.new()
+	mouth.name = "Mouth"
+	mouth.mesh = _sphere(0.05)
+	mouth.material_override = dark
+	mouth.position = Vector3(0.0, -0.085, -0.115)
+	mouth.scale = Vector3(1.2, 1.2, 0.5)
+	_head.add_child(mouth)
 
 
 func _process(delta: float) -> void:
@@ -103,6 +185,8 @@ func _process(delta: float) -> void:
 		twitch = sin(_time * 90.0) * 0.12
 	_head.rotation.z = sin(_time * 0.6) * 0.22 + twitch
 	_head.rotation.x = deg_to_rad(8.0) + sin(_time * 0.4) * 0.05
+	for index in _strips.size():
+		_strips[index].rotation.x = sin(_time * 1.7 + index) * 0.1 + swing * 0.25 * (1.0 if index % 2 == 0 else -1.0)
 	# Eyes pulse faintly.
 	_eye_material.emission_energy_multiplier = 3.5 + sin(_time * 5.0) * 0.8
 
@@ -113,6 +197,13 @@ func _make_limb(limb_name: String, parent: Node3D, pivot_position: Vector3, radi
 	pivot.position = pivot_position
 	parent.add_child(pivot)
 	_add_part(pivot, "Mesh", _capsule(radius, length), Vector3(0.0, -length * 0.5, 0.0))
+	if limb_name.begins_with("Arm"):
+		# A thin hand with three long fingers.
+		_add_part(pivot, "Hand", _sphere(0.055), Vector3(0.0, -length - 0.02, 0.0), Vector3(1.0, 1.3, 0.6))
+		for finger in 3:
+			_add_part(pivot, "Finger%d" % finger, _capsule(0.012, 0.13), Vector3((finger - 1) * 0.028, -length - 0.14, 0.0))
+	else:
+		_add_part(pivot, "Boot", _box_mesh(Vector3(0.13, 0.1, 0.26)), Vector3(0.0, -length - 0.02, -0.06))
 	return pivot
 
 
@@ -136,6 +227,12 @@ func _capsule(radius: float, height: float) -> CapsuleMesh:
 	mesh.height = maxf(height, radius * 2.0)
 	mesh.radial_segments = 12
 	mesh.rings = 4
+	return mesh
+
+
+func _box_mesh(size: Vector3) -> BoxMesh:
+	var mesh := BoxMesh.new()
+	mesh.size = size
 	return mesh
 
 
