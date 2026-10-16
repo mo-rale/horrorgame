@@ -56,6 +56,10 @@ func _ready() -> void:
 			child.process_mode = Node.PROCESS_MODE_PAUSABLE
 
 	randomize()
+	var post_fx := CanvasLayer.new()
+	post_fx.set_script(preload("res://scripts/post_fx.gd"))
+	post_fx.process_mode = Node.PROCESS_MODE_PAUSABLE
+	add_child(post_fx)
 	if play_intro:
 		_build_intro_overlay()
 	factory_lights.visible = true

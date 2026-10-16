@@ -654,6 +654,7 @@ func update_stalking_anxiety(value: float, heartbeat_threshold: float) -> void:
 	if not _anxiety_active:
 		return
 	anxiety_bar.value = clampf(value, 0.0, 100.0)
+	get_tree().call_group("post_fx", "set_anxiety", anxiety_bar.value / 100.0)
 	anxiety_value_label.text = "%d%%" % roundi(anxiety_bar.value)
 	if value >= heartbeat_threshold and not _calm_phase_started:
 		_calm_phase_started = true
@@ -667,6 +668,7 @@ func end_stalking_anxiety() -> void:
 	_calm_press_count = 0
 	calm_button.visible = false
 	anxiety_hud.visible = false
+	get_tree().call_group("post_fx", "set_anxiety", 0.0)
 	stop_stalking_heartbeat()
 
 
