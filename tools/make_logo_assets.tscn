@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tools/make_logo_assets.gd" id="1"]
+
+[node name="MakeLogoAssets" type="Node"]
+script = ExtResource("1")

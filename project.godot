@@ -14,6 +14,11 @@ config/name="horror"
 run/main_scene="res://scenes/main_menu.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
+boot_splash/bg_color=Color(0.02, 0.014, 0.014, 1)
+boot_splash/show_image=true
+boot_splash/image="res://assets/ui/splash.png"
+boot_splash/fullsize=false
+boot_splash/use_filter=true
 
 [autoload]
 
