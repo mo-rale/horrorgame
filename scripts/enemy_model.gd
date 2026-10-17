@@ -31,7 +31,10 @@ func _ready() -> void:
 		_leg_right = $LegRight
 		_eye_material = $Torso/Head/EyeLeft.material_override as StandardMaterial3D
 		for index in 4:
-			_strips.append(get_node("Torso/CoatStrip%d" % index) as Node3D)
+			# Older baked copies (e.g. the menu backdrop's figure) have no coat strips.
+			var strip := get_node_or_null("Torso/CoatStrip%d" % index) as Node3D
+			if strip:
+				_strips.append(strip)
 	else:
 		_build_body()
 	# Randomise so duplicated enemies would not move in lockstep.
