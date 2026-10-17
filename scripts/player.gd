@@ -83,10 +83,10 @@ var _calm_key := KEY_NONE
 var _calm_keys: Array[int] = [KEY_Q, KEY_C, KEY_Z, KEY_X]
 
 @export_group("Stamina")
-@export var stamina_drain_per_second := 22.0
-@export var stamina_regen_per_second := 14.0
-@export var stamina_regen_delay := 1.0
-@export var stamina_resume_threshold := 25.0
+@export var stamina_drain_per_second := 13.0
+@export var stamina_regen_per_second := 18.0
+@export var stamina_regen_delay := 0.8
+@export var stamina_resume_threshold := 20.0
 
 @export_group("Flashlight Battery")
 @export var battery_drain_per_second := 1.1

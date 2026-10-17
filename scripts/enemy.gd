@@ -72,7 +72,7 @@ var _statue_frozen := false
 @export var stalking_speed_bonus_per_level := 0.35
 @export var stalking_distance_reduction_per_level := 0.3
 @export var minimum_stalking_follow_distance := 2.0
-@export var chase_speed_bonus_per_level := 0.4
+@export var chase_speed_bonus_per_level := 0.25
 @export var chase_time_bonus_per_level := 1.5
 
 @export_group("Searching")
@@ -127,7 +127,7 @@ var _vanish_sequence_id := 0
 @export var ambient_cue_distance_min := 14.0
 @export var ambient_cue_distance_max := 24.0
 @export var chase_lunge_distance := 6.0
-@export var chase_lunge_multiplier := 1.25
+@export var chase_lunge_multiplier := 1.08
 @export var searching_whisper_interval := 4.0
 
 @export_group("Stalk Styles")
@@ -141,6 +141,8 @@ var _vanish_sequence_id := 0
 
 @export_group("Behaviour Rules")
 @export var chase_warning_time := 1.1
+@export var phase_chase_speed_bonus := 0.25
+@export var max_chase_speed := 8.6
 @export var hide_search_time := 2.6
 @export var hide_open_chance_unseen := 0.2
 @export var flashlight_stagger_time := 1.6
@@ -383,7 +385,7 @@ func _enter_state(new_state: State, data := {}) -> void:
 		_stalking_cooldown = maxf(
 			minimum_stalking_cooldown,
 			stalking_cooldown_time - _threat_level() * cooldown_reduction_per_level
-		) * [1.0, 0.75, 0.5][phase - 1]
+		) * [1.0, 0.8, 0.65][phase - 1]
 		if is_instance_valid(player):
 			player.end_stalking_anxiety()
 	_state = new_state
@@ -465,10 +467,13 @@ func _enter_state(new_state: State, data := {}) -> void:
 			_delay_then_vanish(_vanish_sequence_id)
 		
 		State.CHASING:
-			_active_chasing_speed = (
+			# Phases and repeat encounters speed him up, but never past what a
+			# sprinting player can hold (SPRINT 9.0), so running can save you.
+			_active_chasing_speed = minf(
 				chasing_speed
 				+ _threat_level() * chase_speed_bonus_per_level
-				+ (phase - 1) * 0.5
+				+ (phase - 1) * phase_chase_speed_bonus,
+				max_chase_speed
 			)
 			last_catch_hint = _pending_hint
 			_warning_timer = chase_warning_time
@@ -1018,7 +1023,7 @@ func set_phase(new_phase: int) -> void:
 	if new_phase <= phase:
 		return
 	phase = new_phase
-	print("[Enemy] PHASE %d" % phase)
+	print("[Enemy] PHASE %d (%s)" % [phase, ["", "STALK", "PATROL", "HUNT"][phase]])
 
 
 func player_hiding(spot_position: Vector3) -> void:
