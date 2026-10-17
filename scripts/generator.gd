@@ -80,9 +80,7 @@ func fueled() -> bool:
 
 
 func install_fuse(fuse_type: String) -> bool:
-	if opened_pressure_valves.size() < REQUIRED_PRESSURE_VALVES:
-		_reject_action("CLOSE THE PRESSURE VALVES FIRST!")
-		return false
+	# Fuses and valves can be done in either order.
 	if started or installed_fuses.has(fuse_type) or installed_fuses.size() >= REQUIRED_FUSES:
 		_reject_action("FUSE ALREADY INSTALLED!")
 		return false

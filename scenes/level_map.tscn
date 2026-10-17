@@ -2241,7 +2241,7 @@ paper_size = Vector3(0.05, 0.6, 0.45)
 [node name="NoteElect" parent="Notes" instance=ExtResource("note_scene")]
 transform = Transform3D(0.9801, 0, 0.1987, 0, 1, 0, -0.1987, 0, 0.9801, 20, 0.83, 43.4)
 title = "ELECTRICIAN'S NOTE"
-body = "02:11 - Main breaker tripped. The whole plant is dark and the gate seal clamped shut on its own.\n\nI pulled the generator fuses and hid them around the plant. If Ellis restarts the line, he'll send more men into that boiler.\n\nWhoever reads this: you need three fuses - red, blue, yellow. Push them into the FUSE BOX on this wall. Close the pressure valves first, or the plant will blow."
+body = "02:11 - Main breaker tripped. The whole plant is dark and the gate seal clamped shut on its own.\n\nI pulled the generator fuses and hid them around the plant. If Ellis restarts the line, he'll send more men into that boiler.\n\nWhoever reads this: you need three fuses - red, blue, yellow. Push them into the FUSE BOX on this wall. Shut the pressure valves too, or the plant will blow once it runs."
 paper_size = Vector3(0.4, 0.03, 0.3)
 
 [node name="NoteFuel" parent="Notes" instance=ExtResource("note_scene")]

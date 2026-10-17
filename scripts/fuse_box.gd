@@ -366,12 +366,6 @@ func install_fuse(fuse_type: String) -> bool:
 	var generator := get_tree().get_first_node_in_group("generator")
 	if generator == null:
 		return false
-	if (
-		generator.has_method("get_current_pressure_valves")
-		and generator.get_current_pressure_valves() < generator.get_required_pressure_valves()
-	):
-		_reject("CLOSE THE PRESSURE VALVES FIRST")
-		return false
 	if installed_fuses.has(fuse_type) or not SLOT_COLORS.has(fuse_type):
 		_reject("THIS SLOT IS ALREADY FILLED")
 		return false

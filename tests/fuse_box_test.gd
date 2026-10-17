@@ -47,7 +47,8 @@ func _process(_delta: float) -> void:
 		fuse.use(generator)
 		print("[Fuse] into generator: fuses=%d used=%s (want 0, false)" % [generator.get_current_fuses(), fuse.is_used])
 		fuse.use(box)
-		print("[Fuse] into box before valves: box=%d used=%s (want 0, false)" % [box.installed_fuses.size(), fuse.is_used])
+		print("[Fuse] into box with valves open: box=%d used=%s (want 1, true)" % [box.installed_fuses.size(), fuse.is_used])
+		print("[Fuse] first fuse woke the enemy: %s (want true)" % main.enemy.awakened)
 		_stand_in_front(box, 2.6, 4.0)
 		box.show_outline()
 	if frame == 112:

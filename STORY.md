@@ -81,8 +81,8 @@ python tools/gen_level.py
 
 ## Enemy rules (what the player can learn)
 
-- **Waking:** the plant is quiet until you close the first valve. That draws a distant whisper, and the first stalking comes 10-16 s later.
-- **Phases:** valves closed -> he also patrols the plant in the open; fuse box powered -> shorter cooldowns, faster, more patrols.
+- **Waking:** the plant is quiet until you close the first valve or seat the first fuse (either one). That draws a distant whisper, and the first stalking comes 10-16 s later.
+- **Phases:** finishing the valves *or* the fuse box adds open patrols; finishing both gives shorter cooldowns, faster chases, more patrols. Valves and fuses can be done in either order; fuel needs both.
 - **Light:** a lit flashlight shows you from much farther (and in a wider cone). Held on a chasing foreman for half a second it staggers him (7 s cooldown). Crouching in the dark shrinks how far he sees you.
 - **Noise:** footsteps (sprinting most of all) shorten the wait before he next appears, and draw a patrolling foreman to the sound.
 - **Hiding:** lockers (press Interact). If he saw you go in, he waits outside and opens the door after ~2.6 s. If not, he checks the spot he last saw you and gives up. While stalking he loses interest in a hidden player.

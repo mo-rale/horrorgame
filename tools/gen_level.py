@@ -505,7 +505,7 @@ NOTES = [
     ("NoteElect", (20.0, 0.83, 43.4), 0.2, (0.4, 0.03, 0.3), "ELECTRICIAN'S NOTE",
      "02:11 - Main breaker tripped. The whole plant is dark and the gate seal clamped shut on its own.\\n\\n"
      "I pulled the generator fuses and hid them around the plant. If Ellis restarts the line, he'll send more men into that boiler.\\n\\n"
-     "Whoever reads this: you need three fuses - red, blue, yellow. Push them into the FUSE BOX on this wall. Close the pressure valves first, or the plant will blow."),
+     "Whoever reads this: you need three fuses - red, blue, yellow. Push them into the FUSE BOX on this wall. Shut the pressure valves too, or the plant will blow once it runs."),
     ("NoteFuel", (-20.0, 1.03, -8.0), 0.5, (0.4, 0.03, 0.3), "SCRAWLED ON A CRATE",
      "Generator fuel is kept here. Three cans left, maybe four.\\n\\nSomething walks the catwalk above us. Slow. Patient. It stops whenever I look at it.\\n\\n"
      "Don't look away from it. And don't let it get behind you."),

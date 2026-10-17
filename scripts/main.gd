@@ -625,48 +625,67 @@ func _start_ending() -> void:
 
 func _on_fuel_changed(current_fuel: int, required_fuel: int) -> void:
 	fuel_label.text = "FUEL: %d / %d" % [current_fuel, required_fuel]
-	if generator.get_current_pressure_valves() < generator.get_required_pressure_valves():
-		return
-	if generator.get_current_fuses() < generator.get_required_fuses():
-		return
-
 	if current_fuel <= 0:
-		objective_label.text = "OBJECTIVE: FIND GAS CANS"
 		fuel_label.modulate = Color(1.0, 0.3, 0.25)
 	elif current_fuel < required_fuel:
-		objective_label.text = "OBJECTIVE: BRING FUEL TO THE GENERATOR"
 		fuel_label.modulate = Color(1.0, 0.8, 0.25)
 	else:
-		objective_label.text = "OBJECTIVE: START THE GENERATOR"
 		fuel_label.modulate = Color(0.35, 1.0, 0.55)
+	_refresh_objective()
+
+
+func _refresh_objective() -> void:
+	# Valves and fuses can be done in either order; fuel needs both.
+	if generator_powered:
+		return
+	var valves_left: int = generator.get_required_pressure_valves() - generator.get_current_pressure_valves()
+	var fuses_left: int = generator.get_required_fuses() - generator.get_current_fuses()
+	if valves_left > 0 and fuses_left > 0:
+		objective_label.text = "OBJECTIVE: CLOSE THE LEAKING VALVES AND POWER THE FUSE BOX"
+	elif valves_left > 0:
+		objective_label.text = "OBJECTIVE: CLOSE THE LEAKING PRESSURE VALVES"
+	elif fuses_left > 0:
+		objective_label.text = "OBJECTIVE: FIND THE FUSES AND PUT THEM IN THE FUSE BOX"
+	else:
+		var fuel: int = generator.get_current_fuel()
+		if fuel <= 0:
+			objective_label.text = "OBJECTIVE: FIND GAS CANS"
+		elif fuel < generator.get_required_fuel():
+			objective_label.text = "OBJECTIVE: BRING FUEL TO THE GENERATOR"
+		else:
+			objective_label.text = "OBJECTIVE: START THE GENERATOR"
+
+
+func _update_enemy_progress() -> void:
+	# The first valve or the first fuse wakes him; each finished task raises his phase.
+	if generator.get_current_pressure_valves() >= 1 or generator.get_current_fuses() >= 1:
+		enemy.awaken()
+	var done := 0
+	if generator.get_current_pressure_valves() >= generator.get_required_pressure_valves():
+		done += 1
+	if generator.get_current_fuses() >= generator.get_required_fuses():
+		done += 1
+	enemy.set_phase(1 + done)
 
 
 func _on_fuse_changed(current_fuses: int, required_fuses: int) -> void:
-	if current_fuses >= required_fuses:
-		enemy.set_phase(3)
 	fuse_label.text = "FUSES: %d / %d" % [current_fuses, required_fuses]
-	if generator.get_current_pressure_valves() < generator.get_required_pressure_valves():
-		return
 	if current_fuses < required_fuses:
-		objective_label.text = "OBJECTIVE: FIND THE FUSES AND PUT THEM IN THE FUSE BOX"
 		fuse_label.modulate = Color(1.0, 0.3, 0.25) if current_fuses == 0 else Color(1.0, 0.8, 0.25)
 	else:
 		fuse_label.modulate = Color(0.35, 1.0, 0.55)
-		_on_fuel_changed(generator.get_current_fuel(), generator.get_required_fuel())
+	_update_enemy_progress()
+	_refresh_objective()
 
 
 func _on_pressure_changed(current_valves: int, required_valves: int) -> void:
-	if current_valves >= 1:
-		enemy.awaken()
-	if current_valves >= required_valves:
-		enemy.set_phase(2)
 	pressure_label.text = "PRESSURE VALVES: %d / %d" % [current_valves, required_valves]
 	if current_valves < required_valves:
-		objective_label.text = "OBJECTIVE: CLOSE THE LEAKING PRESSURE VALVES"
 		pressure_label.modulate = Color(1.0, 0.3, 0.25) if current_valves == 0 else Color(1.0, 0.8, 0.25)
 	else:
 		pressure_label.modulate = Color(0.35, 1.0, 0.55)
-		_on_fuse_changed(generator.get_current_fuses(), generator.get_required_fuses())
+	_update_enemy_progress()
+	_refresh_objective()
 
 
 func _refresh_controls_hint() -> void:
