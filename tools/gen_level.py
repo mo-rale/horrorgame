@@ -502,41 +502,40 @@ label("SignGate", "SHIFT SEAL ENGAGED\\nPOWER REQUIRED", -0.57, 3.4, -9.6, 0.0, 
 label("SignPSI", "182 PSI", -29.55, 3.4, 33.2, PI / 2, 72, (1.0, 0.15, 0.1))
 
 # ── Story notes ─────────────────────────────────────────────────────────────
-NOTES = [
-    ("NoteLobby", (-11.7, 1.5, 56.4), 0.0, (0.05, 0.75, 0.55), "NIGHT SHIFT NOTICE",
-     "HALVERSON WORKS - NIGHT SHIFT\\n\\nOutput target: 4,000 units by 06:00.\\nBoiler pressure limit: 140 PSI. Do NOT override.\\n\\n"
-     "In a power loss the gate SEAL engages automatically. It releases only when the plant generator is running.\\n\\n- Plant Management"),
-    ("NoteLocker", (-21.4, 0.55, 51.0), 0.4, (0.4, 0.03, 0.3), "A LETTER, NEVER SENT",
-     "Dad,\\n\\nEllis cancelled our break again. Nobody leaves until quota, he says. Half of us haven't slept.\\n\\n"
-     "I keep hearing someone walking the catwalks after the lights flicker. Nobody will say it out loud, but we've all heard it.\\n\\n"
-     "If I'm late home, tell Ma I'm okay.\\n\\n- Mara"),
-    ("NoteBreak", (24.0, 0.83, 51.0), -0.3, (0.4, 0.03, 0.3), "FOREMAN'S MEMO",
-     "ATTN ALL HANDS\\n\\nLine 3 is behind. The valves stay OPEN. Pressure is a number on a dial - production is the job.\\n\\n"
-     "Anyone who touches those valves answers to me. Nobody clocks out until the shift is done.\\n\\n- F. Ellis, Night Foreman"),
-    ("NoteSteam", (-29.7, 1.55, 40.5), 0.0, (0.05, 0.6, 0.45), "PRESSURE LOG",
-     "02:07 - Gauge past 180 PSI and still climbing. Line 3 split. Steam everywhere.\\n\\n"
-     "Ellis screamed at us to keep running. I'm closing valve A anyway.\\n\\nSomebody has to shut B and C too, or this whole place goes.\\n\\n"
-     "Ellis went down to the boiler room to override B himself."),
-    ("NoteElect", (20.0, 0.83, 43.4), 0.2, (0.4, 0.03, 0.3), "ELECTRICIAN'S NOTE",
-     "02:11 - Main breaker tripped. The whole plant is dark and the gate seal clamped shut on its own.\\n\\n"
-     "I pulled the generator fuses and hid them around the plant. If Ellis restarts the line, he'll send more men into that boiler.\\n\\n"
-     "Whoever reads this: you need three fuses - red, blue, yellow. Push them into the FUSE BOX on this wall. Shut the pressure valves too, or the plant will blow once it runs."),
-    ("NoteFuel", (-20.0, 1.03, -8.0), 0.5, (0.4, 0.03, 0.3), "SCRAWLED ON A CRATE",
-     "Generator fuel is kept here. Three cans left, maybe four.\\n\\nSomething walks the catwalk above us. Slow. Patient. It stops whenever I look at it.\\n\\n"
-     "Don't look away from it. And don't let it get behind you."),
-    ("NoteBoiler", (-29.7, 1.5, 21.5), 0.0, (0.05, 0.6, 0.45), "BOILER ROOM LOG",
-     "The boiler hatch is welded shut - from the INSIDE.\\n\\nWe heard Ellis hammering and shouting for an hour. Then quiet. Then the hatch started to glow.\\n\\n"
-     "Then the first of us went missing.\\n\\nIt isn't done with the shift."),
-    ("NoteGen", (-11.7, 1.5, 4.6), 0.0, (0.05, 0.6, 0.45), "FOREMAN'S LAST LOG",
-     "SHIFT LOG - F. ELLIS\\n\\n02:40 - Pressure holding. Quota on track.\\n\\nThe men keep leaving. That's fine. I'll keep working until the next shift arrives.\\n\\n"
-     "The gate opens when the plant runs. It always opens... for the next shift.\\n\\nDon't stop. Don't stop. Don't stop."),
+NOTES = [  # name, position, y rotation, paper size, title, date line, body, signature
+    ("NoteLobby", (-11.7, 1.5, 56.4), 0.0, (0.05, 0.75, 0.55), "NIGHT SHIFT NOTICE", "Halverson Works — night shift",
+     "Output target: 4,000 units by 06:00.\\nBoiler pressure limit: 140 PSI. Do NOT override.\\n\\nIn a power loss the gate SEAL engages automatically. It releases only when the plant generator is running.",
+     "Plant Management"),
+    ("NoteLocker", (-21.4, 0.55, 51.0), 0.4, (0.4, 0.03, 0.3), "A LETTER, NEVER SENT", "",
+     "Dad,\\n\\nEllis cancelled our break again. Nobody leaves until quota, he says. Half of us haven't slept.\\n\\nI keep hearing someone walking the catwalks after the lights flicker. Nobody will say it out loud, but we've all heard it.\\n\\nIf I'm late home, tell Ma I'm okay.",
+     "Mara"),
+    ("NoteBreak", (24.0, 0.83, 51.0), -0.3, (0.4, 0.03, 0.3), "FOREMAN'S MEMO", "Attn: all hands",
+     "Line 3 is behind. The valves stay OPEN. Pressure is a number on a dial — production is the job.\\n\\nAnyone who touches those valves answers to me. Nobody clocks out until the shift is done.",
+     "F. Ellis, Night Foreman"),
+    ("NoteSteam", (-29.7, 1.55, 40.5), 0.0, (0.05, 0.6, 0.45), "PRESSURE LOG", "2:07 a.m.",
+     "Gauge past 180 PSI and still climbing. Line 3 split. Steam everywhere.\\n\\nEllis screamed at us to keep running. I'm closing valve A anyway.\\n\\nSomebody has to shut B and C too, or this whole place goes.\\n\\nEllis went down to the boiler room to override B himself.",
+     ""),
+    ("NoteElect", (20.0, 0.83, 43.4), 0.2, (0.4, 0.03, 0.3), "ELECTRICIAN'S NOTE", "2:11 a.m.",
+     "Main breaker tripped. The whole plant is dark and the gate seal clamped shut on its own.\\n\\nI pulled the generator fuses and hid them around the plant. If Ellis restarts the line, he'll send more men into that boiler.\\n\\nWhoever reads this: you need three fuses — red, blue, yellow. Push them into the FUSE BOX on this wall. Shut the pressure valves too, or the plant will blow once it runs.",
+     ""),
+    ("NoteFuel", (-20.0, 1.03, -8.0), 0.5, (0.4, 0.03, 0.3), "SCRAWLED ON A CRATE", "",
+     "Generator fuel is kept here. Three cans left, maybe four.\\n\\nSomething walks the catwalk above us. Slow. Patient. It stops whenever I look at it.\\n\\nDon't look away from it. And don't let it get behind you.",
+     ""),
+    ("NoteBoiler", (-29.7, 1.5, 21.5), 0.0, (0.05, 0.6, 0.45), "BOILER ROOM LOG", "",
+     "The boiler hatch is welded shut — from the INSIDE.\\n\\nWe heard Ellis hammering and shouting for an hour. Then quiet. Then the hatch started to glow.\\n\\nThen the first of us went missing.\\n\\nIt isn't done with the shift.",
+     ""),
+    ("NoteGen", (-11.7, 1.5, 4.6), 0.0, (0.05, 0.6, 0.45), "FOREMAN'S LAST LOG", "Shift log, F. Ellis — 2:40 a.m.",
+     "Pressure holding. Quota on track.\\n\\nThe men keep leaving. That's fine. I'll keep working until the next shift arrives.\\n\\nThe gate opens when the plant runs. It always opens... for the next shift.\\n\\nDon't stop. Don't stop. Don't stop.",
+     ""),
 ]
-for name, (x, y, z), ry, (sx, sy, sz), title, body in NOTES:
+for name, (x, y, z), ry, (sx, sy, sz), title, date_line, body, signature in NOTES:
     nl = chr(10)
     nodes.append('[node name="%s" parent="Notes" instance=ExtResource("note_scene")]' % name + nl
                  + 'transform = ' + xform(x, y, z, ry) + nl
                  + 'title = "%s"' % title + nl
+                 + ('date_line = "%s"' % date_line + nl if date_line else '')
                  + 'body = "%s"' % body + nl
+                 + ('signature = "%s"' % signature + nl if signature else '')
                  + 'paper_size = ' + vec(sx, sy, sz) + nl)
 
 # ── Lights ──────────────────────────────────────────────────────────────────

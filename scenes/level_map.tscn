@@ -2277,31 +2277,38 @@ font_size = 72
 [node name="NoteLobby" parent="Notes" instance=ExtResource("note_scene")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, -11.7, 1.5, 56.4)
 title = "NIGHT SHIFT NOTICE"
-body = "HALVERSON WORKS - NIGHT SHIFT\n\nOutput target: 4,000 units by 06:00.\nBoiler pressure limit: 140 PSI. Do NOT override.\n\nIn a power loss the gate SEAL engages automatically. It releases only when the plant generator is running.\n\n- Plant Management"
+date_line = "Halverson Works — night shift"
+body = "Output target: 4,000 units by 06:00.\nBoiler pressure limit: 140 PSI. Do NOT override.\n\nIn a power loss the gate SEAL engages automatically. It releases only when the plant generator is running."
+signature = "Plant Management"
 paper_size = Vector3(0.05, 0.75, 0.55)
 
 [node name="NoteLocker" parent="Notes" instance=ExtResource("note_scene")]
 transform = Transform3D(0.9211, 0, 0.3894, 0, 1, 0, -0.3894, 0, 0.9211, -21.4, 0.55, 51)
 title = "A LETTER, NEVER SENT"
-body = "Dad,\n\nEllis cancelled our break again. Nobody leaves until quota, he says. Half of us haven't slept.\n\nI keep hearing someone walking the catwalks after the lights flicker. Nobody will say it out loud, but we've all heard it.\n\nIf I'm late home, tell Ma I'm okay.\n\n- Mara"
+body = "Dad,\n\nEllis cancelled our break again. Nobody leaves until quota, he says. Half of us haven't slept.\n\nI keep hearing someone walking the catwalks after the lights flicker. Nobody will say it out loud, but we've all heard it.\n\nIf I'm late home, tell Ma I'm okay."
+signature = "Mara"
 paper_size = Vector3(0.4, 0.03, 0.3)
 
 [node name="NoteBreak" parent="Notes" instance=ExtResource("note_scene")]
 transform = Transform3D(0.9553, 0, -0.2955, 0, 1, 0, 0.2955, 0, 0.9553, 24, 0.83, 51)
 title = "FOREMAN'S MEMO"
-body = "ATTN ALL HANDS\n\nLine 3 is behind. The valves stay OPEN. Pressure is a number on a dial - production is the job.\n\nAnyone who touches those valves answers to me. Nobody clocks out until the shift is done.\n\n- F. Ellis, Night Foreman"
+date_line = "Attn: all hands"
+body = "Line 3 is behind. The valves stay OPEN. Pressure is a number on a dial — production is the job.\n\nAnyone who touches those valves answers to me. Nobody clocks out until the shift is done."
+signature = "F. Ellis, Night Foreman"
 paper_size = Vector3(0.4, 0.03, 0.3)
 
 [node name="NoteSteam" parent="Notes" instance=ExtResource("note_scene")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, -29.7, 1.55, 40.5)
 title = "PRESSURE LOG"
-body = "02:07 - Gauge past 180 PSI and still climbing. Line 3 split. Steam everywhere.\n\nEllis screamed at us to keep running. I'm closing valve A anyway.\n\nSomebody has to shut B and C too, or this whole place goes.\n\nEllis went down to the boiler room to override B himself."
+date_line = "2:07 a.m."
+body = "Gauge past 180 PSI and still climbing. Line 3 split. Steam everywhere.\n\nEllis screamed at us to keep running. I'm closing valve A anyway.\n\nSomebody has to shut B and C too, or this whole place goes.\n\nEllis went down to the boiler room to override B himself."
 paper_size = Vector3(0.05, 0.6, 0.45)
 
 [node name="NoteElect" parent="Notes" instance=ExtResource("note_scene")]
 transform = Transform3D(0.9801, 0, 0.1987, 0, 1, 0, -0.1987, 0, 0.9801, 20, 0.83, 43.4)
 title = "ELECTRICIAN'S NOTE"
-body = "02:11 - Main breaker tripped. The whole plant is dark and the gate seal clamped shut on its own.\n\nI pulled the generator fuses and hid them around the plant. If Ellis restarts the line, he'll send more men into that boiler.\n\nWhoever reads this: you need three fuses - red, blue, yellow. Push them into the FUSE BOX on this wall. Shut the pressure valves too, or the plant will blow once it runs."
+date_line = "2:11 a.m."
+body = "Main breaker tripped. The whole plant is dark and the gate seal clamped shut on its own.\n\nI pulled the generator fuses and hid them around the plant. If Ellis restarts the line, he'll send more men into that boiler.\n\nWhoever reads this: you need three fuses — red, blue, yellow. Push them into the FUSE BOX on this wall. Shut the pressure valves too, or the plant will blow once it runs."
 paper_size = Vector3(0.4, 0.03, 0.3)
 
 [node name="NoteFuel" parent="Notes" instance=ExtResource("note_scene")]
@@ -2313,13 +2320,14 @@ paper_size = Vector3(0.4, 0.03, 0.3)
 [node name="NoteBoiler" parent="Notes" instance=ExtResource("note_scene")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, -29.7, 1.5, 21.5)
 title = "BOILER ROOM LOG"
-body = "The boiler hatch is welded shut - from the INSIDE.\n\nWe heard Ellis hammering and shouting for an hour. Then quiet. Then the hatch started to glow.\n\nThen the first of us went missing.\n\nIt isn't done with the shift."
+body = "The boiler hatch is welded shut — from the INSIDE.\n\nWe heard Ellis hammering and shouting for an hour. Then quiet. Then the hatch started to glow.\n\nThen the first of us went missing.\n\nIt isn't done with the shift."
 paper_size = Vector3(0.05, 0.6, 0.45)
 
 [node name="NoteGen" parent="Notes" instance=ExtResource("note_scene")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, -11.7, 1.5, 4.6)
 title = "FOREMAN'S LAST LOG"
-body = "SHIFT LOG - F. ELLIS\n\n02:40 - Pressure holding. Quota on track.\n\nThe men keep leaving. That's fine. I'll keep working until the next shift arrives.\n\nThe gate opens when the plant runs. It always opens... for the next shift.\n\nDon't stop. Don't stop. Don't stop."
+date_line = "Shift log, F. Ellis — 2:40 a.m."
+body = "Pressure holding. Quota on track.\n\nThe men keep leaving. That's fine. I'll keep working until the next shift arrives.\n\nThe gate opens when the plant runs. It always opens... for the next shift.\n\nDon't stop. Don't stop. Don't stop."
 paper_size = Vector3(0.05, 0.6, 0.45)
 
 [node name="Emergency_locker" type="OmniLight3D" parent="EmergencyLights"]
