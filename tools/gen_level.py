@@ -419,6 +419,21 @@ for i, (x, z, ry) in enumerate(HIDE_SPOTS):
     node("HideLocker%d" % (i + 1), "StaticBody3D", R, [
         ("transform", xform(x, 0, z, ry)), ("script", 'ExtResource("hide_script")')])
 
+# The front door the inspector walked in through (it locks behind him in the intro).
+DOOR_MAT = mat(tex("Metal", 9), uv=0.6, rough=0.7)
+LOCK_LAMP = mat(color=(0.9, 0.05, 0.03, 1), emit=(1.0, 0.05, 0.03), energy=0.0)
+WINDOW_MAT = mat(color=(0.22, 0.26, 0.3, 1), emit=(0.45, 0.55, 0.75), energy=0.25)
+csg_box(P, "EntranceFrame", 7.0, 1.75, 57.62, 2.6, 3.5, 0.2, DARK, solid=False)
+csg_box(P, "EntranceDoor", 7.0, 1.6, 57.52, 2.1, 3.2, 0.1, DOOR_MAT, solid=False)
+csg_box(P, "EntranceWindow", 7.0, 2.55, 57.46, 0.9, 0.7, 0.03, WINDOW_MAT, solid=False, collide=False)
+csg_box(P, "EntranceLamp", 7.0, 3.3, 57.4, 0.28, 0.14, 0.1, LOCK_LAMP, solid=False, collide=False)
+node("EntranceLight", "OmniLight3D", P, [("transform", "Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 3.0, 56.4)"),
+     ("light_color", "Color(1, 0.12, 0.08, 1)"), ("light_energy", "0.0"), ("omni_range", "6.5")])
+csg_box(P, "EntranceBar", 7.0, 1.1, 57.38, 1.5, 0.07, 0.07, GIRDER, solid=False, collide=False)
+node("SignDoor", "Label3D", "Signs", [("transform", xform(7.0, 3.55, 57.4, math.pi)),
+     ("pixel_size", "0.006"), ("modulate", "Color(0.85, 0.8, 0.62, 1)"), ("outline_size", "6"),
+     ("double_sided", "false"), ("text", '"STAFF ENTRANCE"'), ("font_size", "56")])
+
 # ── Exit corridor (gate, outside yard, victory trigger) ─────────────────────
 node("Floor2", "CSGBox3D", ".", [
     ("transform", "Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1435, -0.2368, -20.9892)"),

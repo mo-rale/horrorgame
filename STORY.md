@@ -1,6 +1,6 @@
 # Halverson Works — the story
 
-You are a **night inspector** sent to Halverson Works after the plant went dark
+You are a **state safety inspector** sent to Halverson Works after the plant went dark
 at **2:07 AM**. Fourteen night-shift workers; nobody answers the radio.
 
 ## What happened
@@ -87,3 +87,11 @@ python tools/gen_level.py
 - **Noise:** footsteps (sprinting most of all) shorten the wait before he next appears, and draw a patrolling foreman to the sound.
 - **Hiding:** lockers (press Interact). If he saw you go in, he waits outside and opens the door after ~2.6 s. If not, he checks the spot he last saw you and gives up. While stalking he loses interest in a hidden player.
 - **Fair play:** every chase starts with a roar and a ~1 s freeze, and the game over screen says what went wrong.
+
+## The opening
+
+Black screen, rain on the roof, and the dispatcher on the radio: the plant has been
+silent since 02:07, fourteen men on shift, boiler alarms then nothing, you are the
+nearest inspector. Fade up in the lobby at 04:52. A metal clang deep inside, then the
+staff-entrance door slams and its lamp turns red: the gate seal engaged when the
+power failed. You call dispatch, get only static, and take control. SPACE skips it.

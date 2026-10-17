@@ -3,6 +3,12 @@ extends Node3D
 const LIGHT_SWITCH_SFX := preload("res://assets/sfx/effects/light_switch.mp3")
 const GATE_OPEN_SFX := preload("res://assets/sfx/effects/gate_open.mp3")
 const UiSounds := preload("res://scripts/ui_sounds.gd")
+const INTRO_RAIN_SFX := preload("res://assets/sfx/menu/rain_loop.ogg")
+const RADIO_STATIC_SFX := preload("res://assets/sfx/intro/radio_static.wav")
+const RADIO_OPEN_SFX := preload("res://assets/sfx/intro/radio_open.wav")
+const RADIO_LOST_SFX := preload("res://assets/sfx/intro/radio_lost.wav")
+const DOOR_SLAM_SFX := preload("res://assets/sfx/ending/gate_close.ogg")
+const DISTANT_CLANG_SFX := preload("res://assets/sfx/valve/metal_slam.ogg")
 const JUMPSCARE_FACE_DISTANCE := 0.72
 const JUMPSCARE_SFX := preload("res://assets/sfx/ambience/freesound_community-jumpscare-68730.mp3")
 
@@ -45,6 +51,9 @@ var generator_powered := false
 var _intro_layer: CanvasLayer
 var _intro_black: ColorRect
 var _intro_label: Label
+var _intro_speaker: Label
+var _intro_audio := {}
+var _intro_start_yaw := 0.0
 var _intro_skipped := false
 
 @export_group("Ending")
@@ -211,6 +220,7 @@ func _enable_level_after_navigation_sync(
 		# The enemy stays frozen until the intro hands control to the player.
 		_play_intro()
 	else:
+		_lock_entrance_door()
 		enemy.set_physics_process(true)
 	print(
 		"[Map] Navigation ready with %d polygons after %d frames"
@@ -221,6 +231,7 @@ func _enable_level_after_navigation_sync(
 
 func _build_intro_overlay() -> void:
 	player.controls_locked = true
+	$ObjectiveHUD.visible = false
 	_intro_layer = CanvasLayer.new()
 	_intro_layer.layer = 50
 	_intro_layer.process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -232,56 +243,207 @@ func _build_intro_overlay() -> void:
 	_intro_black.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_intro_layer.add_child(_intro_black)
 
+	# Letterbox bars slide away when the scene begins.
+	for index in 2:
+		var bar := ColorRect.new()
+		bar.color = Color.BLACK
+		bar.name = "Bar%d" % index
+		bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		bar.anchor_right = 1.0
+		if index == 0:
+			bar.anchor_bottom = 0.0
+			bar.offset_bottom = 70.0
+		else:
+			bar.anchor_top = 1.0
+			bar.anchor_bottom = 1.0
+			bar.offset_top = -70.0
+		_intro_layer.add_child(bar)
+
+	_intro_speaker = Label.new()
+	_intro_speaker.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_intro_speaker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_intro_speaker.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	_intro_speaker.offset_bottom = -170.0
+	_intro_speaker.add_theme_font_size_override("font_size", 14)
+	_intro_speaker.add_theme_color_override("font_color", Color(0.78, 0.2, 0.16))
+	_intro_speaker.modulate.a = 0.0
+	_intro_speaker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_intro_layer.add_child(_intro_speaker)
+
 	_intro_label = Label.new()
 	_intro_label.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_intro_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_intro_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_intro_label.add_theme_font_size_override("font_size", 28)
-	_intro_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85))
+	_intro_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	_intro_label.offset_bottom = -110.0
+	_intro_label.offset_left = 120.0
+	_intro_label.offset_right = -120.0
+	_intro_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_intro_label.add_theme_font_size_override("font_size", 26)
+	_intro_label.add_theme_color_override("font_color", Color(0.86, 0.84, 0.78))
+	_intro_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	_intro_label.add_theme_constant_override("outline_size", 4)
 	_intro_label.modulate.a = 0.0
 	_intro_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_intro_layer.add_child(_intro_label)
 
+	# The audio for the scene: rain on the roof and the radio.
+	_intro_audio["rain"] = _make_intro_player(INTRO_RAIN_SFX, -20.0)
+	_intro_audio["static"] = _make_intro_player(RADIO_STATIC_SFX, -8.0)
+	_intro_audio["open"] = _make_intro_player(RADIO_OPEN_SFX, -6.0)
+	_intro_audio["lost"] = _make_intro_player(RADIO_LOST_SFX, -6.0)
+	_intro_audio["slam"] = _make_intro_player(DOOR_SLAM_SFX, 2.0)
+	_intro_audio["clang"] = _make_intro_player(DISTANT_CLANG_SFX, -9.0)
+
+
+func _make_intro_player(stream: AudioStream, volume_db: float) -> AudioStreamPlayer:
+	var audio := AudioStreamPlayer.new()
+	if stream is AudioStreamOggVorbis:
+		(stream as AudioStreamOggVorbis).loop = stream == INTRO_RAIN_SFX
+	audio.stream = stream
+	audio.bus = &"SFX"
+	audio.volume_db = volume_db
+	audio.process_mode = Node.PROCESS_MODE_PAUSABLE
+	_intro_layer.add_child(audio)
+	return audio
+
+
+func _intro_sound(sound_name: String) -> void:
+	if not _intro_skipped and _intro_audio.has(sound_name):
+		(_intro_audio[sound_name] as AudioStreamPlayer).play()
+
 
 func _intro_wait(seconds: float) -> void:
-	if _intro_skipped:
-		return
-	await get_tree().create_timer(seconds, false).timeout
+	var remaining := seconds
+	while remaining > 0.0 and not _intro_skipped:
+		await get_tree().process_frame
+		remaining -= get_process_delta_time()
 
 
-func _intro_line(text: String, hold: float) -> void:
+## One subtitle: fades in, holds, fades out. A speaker (e.g. DISPATCH) is shown
+## above the line in red and is accompanied by the radio keying sound.
+func _intro_line(text: String, hold: float, speaker := "") -> void:
 	if _intro_skipped:
 		return
 	_intro_label.text = text
-	var tween := _intro_label.create_tween()
-	tween.tween_property(_intro_label, "modulate:a", 1.0, 1.0)
+	_intro_speaker.text = speaker
+	if speaker != "":
+		_intro_sound("open")
+		_intro_label.add_theme_color_override("font_color", Color(0.75, 0.85, 0.78))
+	else:
+		_intro_label.add_theme_color_override("font_color", Color(0.86, 0.84, 0.78))
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(_intro_label, "modulate:a", 1.0, 0.7)
+	tween.tween_property(_intro_speaker, "modulate:a", 1.0 if speaker != "" else 0.0, 0.7)
 	await tween.finished
 	await _intro_wait(hold)
 	if _intro_skipped:
 		return
-	tween = _intro_label.create_tween()
-	tween.tween_property(_intro_label, "modulate:a", 0.0, 1.0)
+	tween = create_tween().set_parallel(true)
+	tween.tween_property(_intro_label, "modulate:a", 0.0, 0.6)
+	tween.tween_property(_intro_speaker, "modulate:a", 0.0, 0.6)
 	await tween.finished
+
+
+## Lightning outside the staff-entrance window: the room jumps in and out of
+## the dark in a couple of white flashes.
+func _intro_lightning(flashes := 2) -> void:
+	var window := _level_map.get_node_or_null("Props/EntranceWindow")
+	var material: StandardMaterial3D = null
+	if window and window.get("material_override") is StandardMaterial3D:
+		material = window.get("material_override") as StandardMaterial3D
+	for _flash in flashes:
+		if _intro_skipped:
+			break
+		if material:
+			material.emission_energy_multiplier = 7.0
+		await _intro_wait(0.07)
+		if material:
+			material.emission_energy_multiplier = 0.25
+		await _intro_wait(0.12)
+
+
+## The staff-entrance lamp turns red and stays red: the seal is engaged.
+func _lock_entrance_door() -> void:
+	var lamp := _level_map.get_node_or_null("Props/EntranceLamp")
+	if lamp and lamp.get("material_override") is StandardMaterial3D:
+		(lamp.get("material_override") as StandardMaterial3D).emission_energy_multiplier = 4.0
+	var glow := _level_map.get_node_or_null("Props/EntranceLight") as OmniLight3D
+	if glow:
+		glow.light_energy = 1.4
 
 
 func _play_intro() -> void:
 	var camera := player.camera
-	# Wake up on the floor: looking at the ceiling, tilted, then rise.
-	camera.rotation = Vector3(deg_to_rad(75.0), 0.0, deg_to_rad(18.0))
+	_intro_start_yaw = player.rotation.y
+	var door := Vector3(7.0, 0.0, 57.5)
+	var to_door := door - player.global_position
+	var door_yaw := atan2(-to_door.x, -to_door.z)
+	# Start looking down at your hands, a little unsteady.
+	camera.rotation = Vector3(deg_to_rad(-28.0), 0.0, deg_to_rad(4.0))
+	(_intro_audio["rain"] as AudioStreamPlayer).play()
 
-	await _intro_wait(0.8)
-	await _intro_line("Halverson Works went dark at 2:07 AM.", 1.8)
-	await _intro_line("Fourteen night-shift workers. Nobody answers the radio.", 2.0)
-	await _intro_line("Restore power. Release the gate seal. Get out.", 1.8)
+	# 1. Black screen, the dispatcher on the radio: why you are here.
+	await _intro_wait(1.2)
+	_intro_sound("static")
+	await _intro_wait(0.9)
+	await _intro_line("Halverson Works has not answered the radio since 02:07 this morning.", 3.0, "DISPATCH")
+	await _intro_line("Fourteen on the night shift. Boiler pressure alarms, then silence.", 3.0, "DISPATCH")
+	await _intro_line("You are the nearest safety inspector. Go in, find out what happened.", 3.2, "DISPATCH")
+	await _intro_line("Check in when you are through the main floor. Dispatch out.", 2.4, "DISPATCH")
+	_intro_sound("static")
+	await _intro_wait(0.7)
 
+	# 2. Fade up on the lobby: you have just stepped in out of the storm.
 	if not _intro_skipped:
-		var rise := camera.create_tween().set_parallel(true)
-		rise.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-		rise.tween_property(camera, "rotation:x", 0.0, 3.0)
-		rise.tween_property(camera, "rotation:z", 0.0, 3.0)
-		var fade := _intro_black.create_tween()
-		fade.tween_property(_intro_black, "modulate:a", 0.0, 2.5)
-		await rise.finished
+		var open_up := create_tween().set_parallel(true)
+		open_up.tween_property(_intro_black, "modulate:a", 0.0, 2.2)
+		open_up.tween_property(camera, "rotation:x", 0.0, 2.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		open_up.tween_property(camera, "rotation:z", 0.0, 2.6)
+		for index in 2:
+			var bar := _intro_layer.get_node("Bar%d" % index) as Control
+			if index == 0:
+				open_up.tween_property(bar, "offset_bottom", 0.0, 2.6)
+			else:
+				open_up.tween_property(bar, "offset_top", 0.0, 2.6)
+		await _intro_wait(1.2)
+	await _intro_line("04:52 AM. The staff entrance was unlocked.", 2.6)
+
+	# 3. Look around, then a distant clang from deep inside the plant.
+	if not _intro_skipped:
+		var scan := create_tween()
+		scan.tween_property(player, "rotation:y", _intro_start_yaw + 0.5, 1.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		scan.tween_property(player, "rotation:y", _intro_start_yaw - 0.5, 2.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		await _intro_wait(2.3)
+	_intro_sound("clang")
+	await _intro_wait(1.0)
+	await _intro_line("Something metal, far inside. Then nothing.", 2.4)
+
+	# 4. The door slams and locks behind you; the lights flicker in the lightning.
+	_intro_sound("slam")
+	_lock_entrance_door()
+	if not _intro_skipped:
+		var whip := create_tween()
+		whip.tween_property(player, "rotation:y", door_yaw, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		whip.parallel().tween_property(camera, "rotation:x", deg_to_rad(4.0), 0.55)
+	await _intro_lightning(3)
+	await _intro_wait(0.8)
+	await _intro_line("The door sealed behind you. No handle on this side.", 3.0)
+
+	# 5. The radio dies. You are on your own.
+	_intro_sound("open")
+	await _intro_line("Dispatch? Dispatch, I am inside. Do you copy?", 2.2, "YOU")
+	_intro_sound("lost")
+	await _intro_wait(1.6)
+	await _intro_line("Only static. The power is out, so the seal engaged on its own.", 3.0)
+	await _intro_line("Find out why the power failed. Find a way out.", 2.6)
+
+	# 6. Turn back toward the plant and take control.
+	if not _intro_skipped:
+		var turn_back := create_tween()
+		turn_back.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		turn_back.tween_property(player, "rotation:y", _intro_start_yaw, 1.6)
+		turn_back.parallel().tween_property(camera, "rotation:x", 0.0, 1.6)
+		await _intro_wait(1.6)
 	_finish_intro()
 
 
@@ -289,8 +451,14 @@ func _finish_intro() -> void:
 	if not is_instance_valid(_intro_layer):
 		return
 	player.camera.rotation = Vector3.ZERO
+	player.rotation.y = _intro_start_yaw
 	player.pitch = 0.0
 	player.controls_locked = false
+	$ObjectiveHUD.visible = true
+	_lock_entrance_door()
+	var window := _level_map.get_node_or_null("Props/EntranceWindow")
+	if window and window.get("material_override") is StandardMaterial3D:
+		(window.get("material_override") as StandardMaterial3D).emission_energy_multiplier = 0.25
 	_intro_layer.queue_free()
 	_intro_layer = null
 	if not game_ended:
@@ -301,8 +469,8 @@ func _skip_intro() -> void:
 	if _intro_skipped or _intro_layer == null:
 		return
 	_intro_skipped = true
-	_intro_black.modulate.a = 0.0
-	_intro_label.modulate.a = 0.0
+	for key in _intro_audio:
+		(_intro_audio[key] as AudioStreamPlayer).stop()
 	_finish_intro()
 
 
