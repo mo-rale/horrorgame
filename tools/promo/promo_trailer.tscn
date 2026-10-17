@@ -1,0 +1,750 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tools/promo/promo_director.gd" id="1_mns4a"]
+[ext_resource type="Script" path="res://tools/promo/promo_shot.gd" id="2_o83g6"]
+[ext_resource type="Script" path="res://tools/promo/promo_cue.gd" id="3_n7qov"]
+[ext_resource type="AudioStream" path="res://assets/sfx/menu/rain_loop.ogg" id="4_p82lk"]
+[ext_resource type="AudioStream" path="res://assets/sfx/menu/thunder.ogg" id="5_cac34"]
+[ext_resource type="AudioStream" path="res://assets/sfx/ambience/atlasaudio-horror-thriller-519592.mp3" id="6_611yg"]
+[ext_resource type="AudioStream" path="res://assets/sfx/level_ambience.mp3" id="7_3jo5c"]
+[ext_resource type="AudioStream" path="res://assets/sfx/valve/steam_release.wav" id="8_o7fto"]
+[ext_resource type="AudioStream" path="res://assets/sfx/valve/valve_turn.wav" id="9_ghfki"]
+[ext_resource type="AudioStream" path="res://assets/sfx/valve/metal_clank.ogg" id="10_4tbqp"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fuse/insert_click.wav" id="11_5w1pc"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fuse/spark.wav" id="12_6cxn1"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fuse/power_up.wav" id="13_pytoq"]
+[ext_resource type="AudioStream" path="res://assets/sfx/generator/starting_generator.mp3" id="14_ocfvh"]
+[ext_resource type="AudioStream" path="res://assets/sfx/generator/running_generator.mp3" id="15_ly672"]
+[ext_resource type="AudioStream" path="res://assets/sfx/player/heart_beat.mp3" id="16_uc0ba"]
+[ext_resource type="AudioStream" path="res://assets/sfx/enemy/enemySeen.mp3" id="17_ar6vt"]
+[ext_resource type="AudioStream" path="res://assets/sfx/enemy/creepyWhispiring2.mp3" id="18_hrecp"]
+[ext_resource type="AudioStream" path="res://assets/sfx/ambience/freesound_community-flashlight-clicking-on-105809.mp3" id="19_hk1ir"]
+[ext_resource type="AudioStream" path="res://assets/sfx/ambience/freesound_community-jumpscare-68730.mp3" id="20_xg78t"]
+[ext_resource type="AudioStream" path="res://assets/sfx/ambience/hellfamez-horror-metallic-screeches-183236.mp3" id="21_se7lp"]
+[ext_resource type="AudioStream" path="res://assets/sfx/main_menu.mp3" id="22_52vqm"]
+[ext_resource type="AudioStream" path="res://assets/sfx/ending/gate_close.ogg" id="23_pgbc3"]
+[ext_resource type="Script" path="res://tools/promo/promo_titles.gd" id="24_3lgfs"]
+[ext_resource type="FontFile" path="res://assets/fonts/Cinzel,Irish_Grover/Cinzel/static/Cinzel-SemiBold.ttf" id="25_3mw6b"]
+[ext_resource type="FontFile" path="res://assets/fonts/Cinzel,Irish_Grover/Cinzel/static/Cinzel-Bold.ttf" id="26_lu11b"]
+[ext_resource type="FontFile" path="res://assets/fonts/Cinzel,Irish_Grover/Cinzel/static/Cinzel-Regular.ttf" id="27_mxr5c"]
+[ext_resource type="FontFile" path="res://assets/fonts/Cinzel,Irish_Grover/Cinzel/static/Cinzel-Black.ttf" id="28_xo601"]
+[ext_resource type="Script" path="res://tools/promo/promo_key.gd" id="29_key"]
+[ext_resource type="Script" path="res://tools/promo/promo_foreman_key.gd" id="30_fkey"]
+
+[node name="PromoTrailer" type="Node" unique_id=488222595]
+script = ExtResource("1_mns4a")
+metadata/movie_file = "res://build/HalversonWorks_Promo.avi"
+
+[node name="Stage" type="Node" parent="." unique_id=1539714126]
+metadata/_edit_lock_ = true
+
+[node name="Shots" type="Node" parent="."]
+
+[node name="Went dark" type="Node3D" parent="Shots"]
+script = ExtResource("2_o83g6")
+duration = 3.5
+text_style = 1
+text = "Halverson Works went dark
+[color=#c8161a]at 2:07 AM.[/color]"
+
+[node name="Storm at the gate" type="Node3D" parent="Shots"]
+visible = false
+script = ExtResource("2_o83g6")
+kind = 1
+duration = 7.0
+fade_in = 0.8
+text_style = 2
+text = "Fourteen night-shift workers."
+text_in = 1.2
+text_out = 5.9
+handheld = 1.0
+
+[node name="Key0" type="Camera3D" parent="Shots/Storm at the gate"]
+transform = Transform3D(0.9760101, -0.007759568, -0.217587, 0, 0.9993647, -0.03563925, 0.2177253, 0.03478427, 0.97539, -1.6, 1.65, 4)
+fov = 58
+script = ExtResource("29_key")
+look_distance = 26.656
+
+[node name="Key1" type="Camera3D" parent="Shots/Storm at the gate"]
+transform = Transform3D(0.9776767, -0.008102822, -0.2099584, 0, 0.9992561, -0.0385638, 0.2101147, 0.03770293, 0.9769495, -0.9, 1.6, 0.8)
+fov = 58
+script = ExtResource("29_key")
+time = 7
+look_distance = 23.33795
+
+[node name="Radio" type="Node3D" parent="Shots"]
+visible = false
+script = ExtResource("2_o83g6")
+duration = 2.5
+text_style = 1
+text = "Nobody answers the radio."
+
+[node name="Lobby walk" type="Node3D" parent="Shots"]
+visible = false
+script = ExtResource("2_o83g6")
+kind = 2
+duration = 5.0
+fade_in = 0.3
+handheld = 1.5
+show_hand = true
+
+[node name="Key0" type="Camera3D" parent="Shots/Lobby walk"]
+transform = Transform3D(0.9954955, -0.000898836, 0.09480483, 0, 0.9999551, 0.009480483, -0.09480909, -0.009437778, 0.9954507, 0, 1.6, 56.5)
+script = ExtResource("29_key")
+look_distance = 10.54799
+
+[node name="Key1" type="Camera3D" parent="Shots/Lobby walk"]
+transform = Transform3D(0.9995018, 0.0006640106, -0.03155623, 0, 0.9997787, 0.02103749, 0.03156321, -0.021027, 0.9992806, 0.3, 1.6, 49.5)
+script = ExtResource("29_key")
+time = 5
+look_distance = 9.50684
+
+[node name="Valve A" type="Node3D" parent="Shots"]
+visible = false
+script = ExtResource("2_o83g6")
+kind = 2
+duration = 4.0
+text_style = 2
+text = "Close the valves."
+subtext = "Over-pressured pipes. 182 PSI and climbing."
+text_in = 0.3
+text_out = 3.4
+handheld = 0.8
+
+[node name="Key0" type="Camera3D" parent="Shots/Valve A"]
+transform = Transform3D(0.4406732, -0.02928648, 0.8971897, 0, 0.9994677, 0.03262508, -0.8976676, -0.014377, 0.4404386, -23.5, 1.8, 38.2)
+script = ExtResource("29_key")
+look_distance = 6.130253
+
+[node name="Key1" type="Camera3D" parent="Shots/Valve A"]
+transform = Transform3D(0.164399, -0.1793901, 0.9699444, 0, 0.9833236, 0.1818646, -0.9863939, -0.02989835, 0.1616574, -26.6, 1.45, 36.9)
+script = ExtResource("29_key")
+time = 4
+look_distance = 2.474369
+
+[node name="Fuse cabinet" type="Node3D" parent="Shots"]
+visible = false
+script = ExtResource("2_o83g6")
+kind = 2
+duration = 3.5
+text_style = 2
+text = "Find the fuses."
+subtext = "The electrician hid them for a reason."
+text_in = 0.3
+text_out = 2.9
+handheld = 0.8
+
+[node name="Key0" type="Camera3D" parent="Shots/Fuse cabinet"]
+transform = Transform3D(0.1945569, 0.06347971, -0.978835, 0, 0.9979037, 0.06471636, 0.9808912, -0.01259102, 0.1941491, 23.2, 1.7, 43.4)
+script = ExtResource("29_key")
+look_distance = 6.180817
+
+[node name="Key1" type="Camera3D" parent="Shots/Fuse cabinet"]
+transform = Transform3D(0.07525767, 0.1118559, -0.9908706, 0, 0.9936886, 0.112174, 0.9971641, -0.008441956, 0.07478269, 26.6, 1.5, 42.4)
+script = ExtResource("29_key")
+time = 3.5
+look_distance = 2.674416
+
+[node name="Generator" type="Node3D" parent="Shots"]
+visible = false
+script = ExtResource("2_o83g6")
+kind = 2
+duration = 3.5
+fade_out = 0.4
+text_style = 2
+text = "Restore the power."
+subtext = "The gate seal only releases while the generator runs."
+text_in = 0.3
+text_out = 2.9
+handheld = 0.6
+
+[node name="Key0" type="Camera3D" parent="Shots/Generator"]
+transform = Transform3D(0.8436615, 0.07342129, -0.5318314, 0, 0.9906047, 0.1367566, 0.5368755, -0.1153763, 0.835735, 3.5, 1.9, -1.5)
+script = ExtResource("29_key")
+look_distance = 6.581033
+
+[node name="Key1" type="Camera3D" parent="Shots/Generator"]
+transform = Transform3D(0.8320503, -0.06547316, 0.5508226, 0, 0.9930096, 0.1180334, -0.5547002, -0.09820974, 0.8262339, 9.8, 1.6, -2.8)
+script = ExtResource("29_key")
+time = 3.5
+look_distance = 5.083306
+
+[node name="He stops" type="Node3D" parent="Shots"]
+visible = false
+script = ExtResource("2_o83g6")
+duration = 2.5
+text_style = 1
+text = "He stops when watched."
+
+[node name="Foreman reveal" type="Node3D" parent="Shots"]
+visible = false
+script = ExtResource("2_o83g6")
+kind = 2
+duration = 6.0
+text_style = 3
+text = "Don't let him see you."
+text_in = 3.4
+text_out = 5.4
+handheld = 1.2
+flashlight_energy = 4.0
+flicker = PackedVector2Array(3.9, 4.05, 4.5, 4.6)
+show_foreman = true
+
+[node name="Key0" type="Camera3D" parent="Shots/Foreman reveal"]
+transform = Transform3D(0.52145, -0.03233631, 0.8526689, 0, 0.9992817, 0.0378964, -0.8532818, -0.01976108, 0.5210754, 0, 1.6, 24.5)
+script = ExtResource("29_key")
+look_distance = 10.55509
+
+[node name="Key1" type="Camera3D" parent="Shots/Foreman reveal"]
+transform = Transform3D(0.6689647, -0.0315422, 0.7426246, 0, 0.9990992, 0.04243569, -0.7432941, -0.02838798, 0.6683621, 0, 1.6, 24.3)
+script = ExtResource("29_key")
+time = 2.4
+look_distance = 9.426028
+
+[node name="Key2" type="Camera3D" parent="Shots/Foreman reveal"]
+transform = Transform3D(0.9670745, -0.006474588, -0.2544109, 0, 0.9996763, -0.02544109, 0.2544933, 0.02460343, 0.9667615, 0, 1.6, 24.2)
+script = ExtResource("29_key")
+time = 3
+easing = 3
+look_distance = 5.895973
+
+[node name="Key3" type="Camera3D" parent="Shots/Foreman reveal"]
+transform = Transform3D(0.9593655, -0.01060821, -0.2819668, 0, 0.999293, -0.03759558, 0.2821663, 0.0360679, 0.9586873, 0, 1.6, 23.6)
+script = ExtResource("29_key")
+time = 6
+look_distance = 5.319774
+
+[node name="Foreman0" type="Marker3D" parent="Shots/Foreman reveal"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.95, 18.5)
+gizmo_extents = 0.5
+script = ExtResource("30_fkey")
+
+[node name="Foreman walks" type="Node3D" parent="Shots"]
+visible = false
+script = ExtResource("2_o83g6")
+kind = 2
+duration = 5.0
+handheld = 2.0
+flashlight_energy = 4.0
+flicker = PackedVector2Array(1.2, 1.35, 2.6, 2.9, 3.6, 3.7, 4.3, 4.6)
+show_foreman = true
+
+[node name="Key0" type="Camera3D" parent="Shots/Foreman walks"]
+transform = Transform3D(1, 0, 0, 0, 0.99995, 0.0099995, 0, -0.0099995, 0.99995, 0, 1.6, 24)
+script = ExtResource("29_key")
+look_distance = 10.0005
+
+[node name="Key1" type="Camera3D" parent="Shots/Foreman walks"]
+transform = Transform3D(1, 0, 0, 0, 0.9999446, -0.01052573, 0, 0.01052573, 0.9999446, 0, 1.6, 25.5)
+script = ExtResource("29_key")
+time = 5
+look_distance = 9.500526
+
+[node name="Foreman0" type="Marker3D" parent="Shots/Foreman walks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.95, 14.5)
+gizmo_extents = 0.5
+script = ExtResource("30_fkey")
+
+[node name="Foreman1" type="Marker3D" parent="Shots/Foreman walks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 0.95, 22)
+gizmo_extents = 0.5
+script = ExtResource("30_fkey")
+time = 5
+
+[node name="Face" type="Node3D" parent="Shots"]
+visible = false
+script = ExtResource("2_o83g6")
+kind = 2
+duration = 1.4
+handheld = 3.0
+flashlight_energy = 3.0
+show_foreman = true
+
+[node name="Key0" type="Camera3D" parent="Shots/Face"]
+transform = Transform3D(1, 0, 0, 0, 0.9998243, 0.0187467, 0, -0.0187467, 0.9998243, 2, 1.98, 15.6)
+script = ExtResource("29_key")
+look_distance = 1.600281
+
+[node name="Key1" type="Camera3D" parent="Shots/Face"]
+transform = Transform3D(1, 0, 0, 0, 0.9988946, 0.0470068, 0, -0.0470068, 0.9988946, 2, 1.96, 14.85)
+script = ExtResource("29_key")
+time = 1.4
+easing = 3
+look_distance = 0.8509407
+
+[node name="Foreman0" type="Marker3D" parent="Shots/Face"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.95, 14)
+gizmo_extents = 0.5
+script = ExtResource("30_fkey")
+
+[node name="Cut to black" type="Node3D" parent="Shots"]
+visible = false
+script = ExtResource("2_o83g6")
+duration = 1.0
+
+[node name="Title over the gate" type="Node3D" parent="Shots"]
+visible = false
+script = ExtResource("2_o83g6")
+kind = 1
+duration = 7.0
+fade_in = 1.0
+fade_out = 0.8
+text_style = 4
+text_in = 1.0
+text_out = 99.0
+handheld = 0.5
+show_foreman = true
+
+[node name="Key0" type="Camera3D" parent="Shots/Title over the gate"]
+transform = Transform3D(0.9734172, -0.00720954, -0.2289258, 0, 0.9995045, -0.0314773, 0.2290393, 0.03064055, 0.9729348, -1, 1.65, 3)
+fov = 58
+script = ExtResource("29_key")
+look_distance = 17.47291
+
+[node name="Key1" type="Camera3D" parent="Shots/Title over the gate"]
+transform = Transform3D(0.9735746, -0.007955296, -0.2282307, 0, 0.9993931, -0.03483522, 0.2283693, 0.03391468, 0.9729837, -0.8, 1.62, 2.2)
+fov = 48
+script = ExtResource("29_key")
+time = 7
+look_distance = 16.64982
+
+[node name="Foreman0" type="Marker3D" parent="Shots/Title over the gate"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.3, 0.95, -4.5)
+gizmo_extents = 0.5
+script = ExtResource("30_fkey")
+
+[node name="End card" type="Node3D" parent="Shots"]
+visible = false
+script = ExtResource("2_o83g6")
+duration = 4.0
+text_style = 5
+text_out = 3.0
+
+[node name="Cues" type="Node" parent="."]
+
+[node name="Rain" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("4_p82lk")
+volume_db = -8.2
+script = ExtResource("3_n7qov")
+length = 13.6
+fade_in = 1.5
+fade_out = 1.5
+
+[node name="Thunder" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("5_cac34")
+volume_db = -3.9
+script = ExtResource("3_n7qov")
+at = 0.9
+length = 5.2
+fade_out = 1.0
+
+[node name="Music (hits at 13 s)" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("6_611yg")
+volume_db = -3.9
+script = ExtResource("3_n7qov")
+at = 5.2
+length = 26.0
+fade_in = 1.0
+fade_out = 1.5
+
+[node name="Plant ambience" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("7_3jo5c")
+volume_db = -9.9
+script = ExtResource("3_n7qov")
+at = 13.0
+length = 16.5
+fade_in = 0.5
+fade_out = 1.0
+
+[node name="Steam release" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("8_o7fto")
+volume_db = -4.9
+script = ExtResource("3_n7qov")
+at = 18.3
+length = 1.1
+fade_out = 0.2
+
+[node name="Valve turn" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("9_ghfki")
+volume_db = -3.9
+script = ExtResource("3_n7qov")
+at = 19.6
+length = 1.3
+fade_out = 0.2
+
+[node name="Valve clank" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("10_4tbqp")
+volume_db = -4.9
+script = ExtResource("3_n7qov")
+at = 21.0
+length = 0.43
+fade_out = 0.05
+
+[node name="Fuse click" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("11_5w1pc")
+volume_db = -3.0
+script = ExtResource("3_n7qov")
+at = 23.3
+length = 0.38
+fade_out = 0.05
+
+[node name="Fuse spark" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("12_6cxn1")
+volume_db = -4.9
+script = ExtResource("3_n7qov")
+at = 23.9
+length = 0.5
+fade_out = 0.1
+
+[node name="Power up" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("13_pytoq")
+volume_db = -6.1
+script = ExtResource("3_n7qov")
+at = 24.5
+length = 1.2
+fade_out = 0.5
+
+[node name="Generator start" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("14_ocfvh")
+volume_db = -4.9
+script = ExtResource("3_n7qov")
+at = 25.8
+length = 3.0
+fade_out = 0.3
+
+[node name="Generator running" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("15_ly672")
+volume_db = -7.4
+script = ExtResource("3_n7qov")
+at = 28.6
+length = 1.6
+fade_out = 1.2
+
+[node name="Heartbeat" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("16_uc0ba")
+volume_db = -9.0
+script = ExtResource("3_n7qov")
+at = 29.2
+length = 8.4
+fade_in = 1.0
+fade_out = 0.3
+
+[node name="Music bed under chase" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("6_611yg")
+volume_db = -16.2
+script = ExtResource("3_n7qov")
+at = 31.0
+from = 26.0
+length = 11.5
+fade_in = 0.5
+fade_out = 0.05
+
+[node name="He sees you" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("17_ar6vt")
+volume_db = -3.0
+script = ExtResource("3_n7qov")
+at = 33.9
+length = 4.0
+fade_out = 1.5
+
+[node name="Flashlight click" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("19_hk1ir")
+volume_db = -7.4
+script = ExtResource("3_n7qov")
+at = 35.4
+length = 0.6
+fade_out = 0.05
+
+[node name="Heartbeat (louder)" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("16_uc0ba")
+volume_db = -3.9
+script = ExtResource("3_n7qov")
+at = 37.5
+length = 5.0
+fade_out = 0.05
+
+[node name="Whispers" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("18_hrecp")
+volume_db = -4.9
+script = ExtResource("3_n7qov")
+at = 37.5
+length = 5.0
+fade_in = 0.5
+fade_out = 0.05
+
+[node name="Jumpscare" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("20_xg78t")
+volume_db = -3.0
+script = ExtResource("3_n7qov")
+at = 42.45
+length = 1.45
+fade_out = 0.05
+
+[node name="Screech" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("21_se7lp")
+volume_db = -6.1
+script = ExtResource("3_n7qov")
+at = 42.45
+length = 1.45
+fade_out = 0.05
+
+[node name="Rain (title)" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("4_p82lk")
+volume_db = -9.0
+script = ExtResource("3_n7qov")
+at = 44.9
+length = 11.0
+fade_in = 1.2
+fade_out = 2.0
+
+[node name="Menu theme" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("22_52vqm")
+volume_db = -8.2
+script = ExtResource("3_n7qov")
+at = 44.9
+length = 11.0
+fade_in = 2.0
+fade_out = 2.5
+
+[node name="Gate slam" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("23_pgbc3")
+volume_db = -3.0
+script = ExtResource("3_n7qov")
+at = 45.85
+length = 0.87
+fade_out = 0.05
+
+[node name="Thunder (title)" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("5_cac34")
+volume_db = -6.1
+script = ExtResource("3_n7qov")
+at = 46.3
+length = 5.2
+fade_out = 1.0
+
+[node name="Fade" type="CanvasLayer" parent="." unique_id=518548123]
+layer = 50
+
+[node name="Black" type="ColorRect" parent="Fade" unique_id=1391244629]
+unique_name_in_owner = true
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0)
+
+[node name="Titles" type="CanvasLayer" parent="." unique_id=969352424]
+layer = 51
+script = ExtResource("24_3lgfs")
+
+[node name="Frame1080" type="Control" parent="Titles" unique_id=1358078734]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+
+[node name="Card" type="RichTextLabel" parent="Titles/Frame1080" unique_id=130986967]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 160.0
+offset_top = 440.0
+offset_right = 1760.0
+offset_bottom = 760.0
+mouse_filter = 2
+theme_override_constants/line_separation = 18
+theme_override_fonts/normal_font = ExtResource("25_3mw6b")
+theme_override_font_sizes/normal_font_size = 62
+theme_override_colors/default_color = Color(0.87, 0.824, 0.769, 1)
+bbcode_enabled = true
+text = "[center]Halverson Works went dark
+[color=#c8161a]at 2:07 AM.[/color][/center]"
+fit_content = true
+scroll_active = false
+
+[node name="LowerThird" type="Control" parent="Titles/Frame1080" unique_id=1543575173]
+visible = false
+unique_name_in_owner = true
+anchors_preset = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+
+[node name="Bar" type="ColorRect" parent="Titles/Frame1080/LowerThird" unique_id=1180817471]
+layout_mode = 0
+offset_left = 134.0
+offset_top = 780.0
+offset_right = 394.0
+offset_bottom = 784.0
+color = Color(0.784, 0.086, 0.102, 1)
+
+[node name="Headline" type="Label" parent="Titles/Frame1080/LowerThird" unique_id=879555547]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 130.0
+offset_top = 790.0
+offset_right = 1630.0
+offset_bottom = 880.0
+theme_override_fonts/font = ExtResource("26_lu11b")
+theme_override_font_sizes/font_size = 64
+theme_override_colors/font_color = Color(0.87, 0.824, 0.769, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 3
+theme_override_constants/shadow_outline_size = 14
+text = "Close the valves."
+
+[node name="Subline" type="Label" parent="Titles/Frame1080/LowerThird" unique_id=1634985065]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 134.0
+offset_top = 880.0
+offset_right = 1634.0
+offset_bottom = 940.0
+theme_override_fonts/font = ExtResource("27_mxr5c")
+theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(0.667, 0.588, 0.549, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 3
+theme_override_constants/shadow_outline_size = 14
+text = "Over-pressured pipes. 182 PSI and climbing."
+
+[node name="LowCenter" type="Label" parent="Titles/Frame1080" unique_id=533010637]
+visible = false
+unique_name_in_owner = true
+layout_mode = 0
+offset_top = 850.0
+offset_right = 1920.0
+offset_bottom = 960.0
+theme_override_fonts/font = ExtResource("26_lu11b")
+theme_override_font_sizes/font_size = 70
+theme_override_colors/font_color = Color(0.784, 0.086, 0.102, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 3
+theme_override_constants/shadow_outline_size = 14
+text = "Don't let him see you."
+horizontal_alignment = 1
+
+[node name="TitleBlock" type="Control" parent="Titles/Frame1080" unique_id=240216891]
+visible = false
+unique_name_in_owner = true
+anchors_preset = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+
+[node name="Kicker" type="Label" parent="Titles/Frame1080/TitleBlock" unique_id=1778630877]
+layout_mode = 0
+offset_left = 150.0
+offset_top = 320.0
+offset_right = 1150.0
+offset_bottom = 380.0
+theme_override_fonts/font = ExtResource("26_lu11b")
+theme_override_font_sizes/font_size = 40
+theme_override_colors/font_color = Color(0.784, 0.086, 0.102, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 3
+theme_override_constants/shadow_outline_size = 14
+text = "A NIGHT SHIFT HORROR"
+
+[node name="Name1" type="Label" parent="Titles/Frame1080/TitleBlock" unique_id=196498177]
+layout_mode = 0
+offset_left = 140.0
+offset_top = 365.0
+offset_right = 1540.0
+offset_bottom = 555.0
+theme_override_fonts/font = ExtResource("28_xo601")
+theme_override_font_sizes/font_size = 150
+theme_override_colors/font_color = Color(0.784, 0.086, 0.102, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 3
+theme_override_constants/shadow_outline_size = 14
+text = "HALVERSON"
+
+[node name="Name2" type="Label" parent="Titles/Frame1080/TitleBlock" unique_id=592534716]
+layout_mode = 0
+offset_left = 140.0
+offset_top = 525.0
+offset_right = 1540.0
+offset_bottom = 715.0
+theme_override_fonts/font = ExtResource("28_xo601")
+theme_override_font_sizes/font_size = 150
+theme_override_colors/font_color = Color(0.784, 0.086, 0.102, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 3
+theme_override_constants/shadow_outline_size = 14
+text = "WORKS"
+
+[node name="Rule" type="ColorRect" parent="Titles/Frame1080/TitleBlock" unique_id=135738319]
+layout_mode = 0
+offset_left = 148.0
+offset_top = 735.0
+offset_right = 578.0
+offset_bottom = 739.0
+color = Color(0.59, 0.078, 0.086, 1)
+
+[node name="Tagline" type="Label" parent="Titles/Frame1080/TitleBlock" unique_id=429396199]
+layout_mode = 0
+offset_left = 150.0
+offset_top = 755.0
+offset_right = 1550.0
+offset_bottom = 825.0
+theme_override_fonts/font = ExtResource("25_3mw6b")
+theme_override_font_sizes/font_size = 44
+theme_override_colors/font_color = Color(0.87, 0.824, 0.769, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 3
+theme_override_constants/shadow_outline_size = 14
+text = "NIGHT SHIFT. NOBODY CLOCKED OUT."
+
+[node name="EndCard" type="VBoxContainer" parent="Titles/Frame1080" unique_id=855736912]
+visible = false
+unique_name_in_owner = true
+layout_mode = 0
+offset_top = 360.0
+offset_right = 1920.0
+offset_bottom = 720.0
+theme_override_constants/separation = 22
+alignment = 1
+
+[node name="EndName" type="Label" parent="Titles/Frame1080/EndCard" unique_id=2041060863]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("28_xo601")
+theme_override_font_sizes/font_size = 96
+theme_override_colors/font_color = Color(0.784, 0.086, 0.102, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 3
+theme_override_constants/shadow_outline_size = 14
+text = "HALVERSON WORKS"
+horizontal_alignment = 1
+
+[node name="EndLine" type="Label" parent="Titles/Frame1080/EndCard" unique_id=2075011119]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("27_mxr5c")
+theme_override_font_sizes/font_size = 40
+theme_override_colors/font_color = Color(0.87, 0.824, 0.769, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 3
+theme_override_constants/shadow_outline_size = 14
+text = "A first-person survival horror game"
+horizontal_alignment = 1
+
+[node name="EndCredits" type="Label" parent="Titles/Frame1080/EndCard" unique_id=462194075]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("27_mxr5c")
+theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(0.667, 0.588, 0.549, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 3
+theme_override_constants/shadow_outline_size = 14
+text = "In development  ·  Built with Godot 4.6  ·  PC"
+horizontal_alignment = 1
