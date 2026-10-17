@@ -210,6 +210,11 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(400, 46)
 text = "GRAPHICS:  HIGH"
 
+[node name="SkipIntroToggle" type="CheckButton" parent="Center/Content/SettingsPanel/DisplayPage"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(400, 46)
+text = "SKIP OPENING CUTSCENE"
+
 [node name="ControlsPage" type="VBoxContainer" parent="Center/Content/SettingsPanel"]
 unique_name_in_owner = true
 visible = false

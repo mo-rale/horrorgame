@@ -13,6 +13,7 @@ var brightness := 1.0
 var fullscreen := false
 ## 0 = low, 1 = medium, 2 = high. Controls fog, glow and shadow cost.
 var quality := 2
+var skip_intro := false
 const QUALITY_NAMES := ["LOW", "MEDIUM", "HIGH"]
 
 ## Rebindable keyboard actions: [InputMap action, label shown in the menu].
@@ -126,6 +127,11 @@ func set_quality(value: int) -> void:
 	_save_settings()
 
 
+func set_skip_intro(value: bool) -> void:
+	skip_intro = value
+	_save_settings()
+
+
 func cycle_quality() -> int:
 	set_quality((quality + 1) % 3)
 	return quality
@@ -202,6 +208,7 @@ func _load_settings() -> void:
 	)
 	fullscreen = bool(config.get_value("video", "fullscreen", fullscreen))
 	quality = clampi(int(config.get_value("video", "quality", quality)), 0, 2)
+	skip_intro = bool(config.get_value("game", "skip_intro", skip_intro))
 	for entry in REBINDABLE:
 		var saved := int(config.get_value("keys", entry[0], _default_keys.get(entry[0], KEY_NONE)))
 		_set_action_key(entry[0], saved)
@@ -217,6 +224,7 @@ func _save_settings() -> void:
 	config.set_value("video", "brightness", brightness)
 	config.set_value("video", "fullscreen", fullscreen)
 	config.set_value("video", "quality", quality)
+	config.set_value("game", "skip_intro", skip_intro)
 	for entry in REBINDABLE:
 		config.set_value("keys", entry[0], _action_keycode(entry[0]))
 	config.set_value("progress", "best_time", best_time)

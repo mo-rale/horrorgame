@@ -73,6 +73,7 @@ func _ready() -> void:
 			child.process_mode = Node.PROCESS_MODE_PAUSABLE
 
 	randomize()
+	play_intro = play_intro and not Settings.skip_intro
 	_run_started_msec = Time.get_ticks_msec()
 	load("res://scripts/story_note.gd").notes_read.clear()
 	var post_fx := CanvasLayer.new()
@@ -258,6 +259,23 @@ func _build_intro_overlay() -> void:
 			bar.anchor_bottom = 1.0
 			bar.offset_top = -70.0
 		_intro_layer.add_child(bar)
+
+	# A permanent skip prompt, so nobody has to guess the key.
+	var skip_hint := Label.new()
+	skip_hint.text = "[SPACE]  SKIP"
+	skip_hint.anchor_left = 1.0
+	skip_hint.anchor_right = 1.0
+	skip_hint.anchor_top = 1.0
+	skip_hint.anchor_bottom = 1.0
+	skip_hint.offset_left = -240.0
+	skip_hint.offset_right = -28.0
+	skip_hint.offset_top = -52.0
+	skip_hint.offset_bottom = -22.0
+	skip_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	skip_hint.add_theme_font_size_override("font_size", 15)
+	skip_hint.add_theme_color_override("font_color", Color(0.7, 0.66, 0.6, 0.85))
+	skip_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_intro_layer.add_child(skip_hint)
 
 	_intro_speaker = Label.new()
 	_intro_speaker.set_anchors_preset(Control.PRESET_FULL_RECT)

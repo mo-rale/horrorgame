@@ -53,6 +53,8 @@ func _ready() -> void:
 		func(value: float) -> void: Settings.set_brightness(value / 100.0)
 	)
 	fullscreen_toggle.toggled.connect(Settings.set_fullscreen)
+	%SkipIntroToggle.button_pressed = Settings.skip_intro
+	%SkipIntroToggle.toggled.connect(Settings.set_skip_intro)
 	_refresh_quality_text()
 	quality_button.pressed.connect(
 		func() -> void:
