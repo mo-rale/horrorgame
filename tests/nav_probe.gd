@@ -21,6 +21,8 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	frame += 1
 	var enemy := main.get_node("Enemy") as Enemy
+	if frame == 190:
+		enemy.awakened = true
 	if frame == 200 and style == 9:
 		enemy.visible = true
 		enemy.global_position = Vector3(-2.7, 1.45, 57.1)

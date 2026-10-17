@@ -33,6 +33,7 @@ func _process(_delta: float) -> void:
 		# Keep the main controller from ending the run on a catch during the test.
 		main.enemy.reached_player.disconnect(main._on_enemy_reached_player)
 		player.controls_locked = true
+		enemy.awakened = mode != "wake"
 		call("_setup_" + mode)
 	if frame == _shot_frame:
 		get_viewport().get_texture().get_image().save_png("user://hide_view.png")
@@ -147,6 +148,24 @@ func _step_patrol() -> void:
 		print("[Behave] patrol dbg: vel=%s target=%s finished=%s next=%s speed=%.2f state=%d" % [enemy.velocity, enemy.navigation_agent.target_position, enemy.navigation_agent.is_navigation_finished(), enemy.navigation_agent.get_next_path_position(), enemy._current_speed, enemy._state])
 	if frame == 64 + 120:
 		print("[Behave] patrol: moved to %s" % enemy.global_position)
+		get_tree().quit()
+
+
+# wake: the enemy stays away until the first valve is turned
+func _setup_wake() -> void:
+	player.global_position = Vector3(0, 0.1, 52)
+	enemy._stalking_cooldown = 0.0   # would normally trigger stalking at once
+
+
+func _step_wake() -> void:
+	if frame == 60 + 240:
+		print("[Behave] wake: before valve state=%d awakened=%s visible=%s (want 0 false false)" % [enemy._state, enemy.awakened, enemy.visible])
+		main.generator.open_pressure_valve("VALVE_A")
+	if frame == 60 + 245:
+		print("[Behave] wake: after valve awakened=%s cooldown=%.1f (want true, 10-16)" % [enemy.awakened, enemy._stalking_cooldown])
+		enemy._stalking_cooldown = 0.0
+	if frame == 60 + 400:
+		print("[Behave] wake: state=%d (want STALKING=3 or patrol/vanish after)" % enemy._state)
 		get_tree().quit()
 
 

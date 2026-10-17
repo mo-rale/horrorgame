@@ -656,6 +656,8 @@ func _on_fuse_changed(current_fuses: int, required_fuses: int) -> void:
 
 
 func _on_pressure_changed(current_valves: int, required_valves: int) -> void:
+	if current_valves >= 1:
+		enemy.awaken()
 	if current_valves >= required_valves:
 		enemy.set_phase(2)
 	pressure_label.text = "PRESSURE VALVES: %d / %d" % [current_valves, required_valves]

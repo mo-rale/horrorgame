@@ -21,6 +21,7 @@ func _process(delta: float) -> void:
 	player = main.get_node_or_null("player") as Player
 	if enemy == null or player == null or t < 4.0:
 		return
+	enemy.awakened = true
 	if step == 0:
 		step = 1
 		# The navmesh query is unreliable here, so skip placement and force the state.

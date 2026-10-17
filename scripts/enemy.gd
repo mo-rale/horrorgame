@@ -148,6 +148,12 @@ var _vanish_sequence_id := 0
 @export var patrol_duration_phase2 := 26.0
 @export var patrol_duration_phase3 := 40.0
 
+## It stays dormant until awaken() is called (the first pressure valve).
+@export var wake_on_first_valve := true
+@export var wake_delay_min := 10.0
+@export var wake_delay_max := 16.0
+var awakened := false
+
 ## Escalation: 1 = stalking only, 2 = valves closed (adds patrols),
 ## 3 = fuse box powered (shorter cooldowns, faster, more patrols).
 var phase := 1
@@ -207,6 +213,7 @@ func _ready() -> void:
 	if enemy_capsule:
 		_stalking_clearance_shape.radius = maxf(enemy_capsule.radius - 0.03, 0.1)
 		_stalking_clearance_shape.height = maxf(enemy_capsule.height - 0.1, 0.2)
+	awakened = not wake_on_first_valve
 	_stalking_cooldown = randf_range(
 		initial_stalking_delay_min,
 		maxf(initial_stalking_delay_max, initial_stalking_delay_min)
@@ -276,6 +283,10 @@ func disable_permanently() -> void:
 
 func _physics_process(delta: float) -> void:
 	if not _map_synchronized:
+		return
+	# Until the first valve is turned the plant is quiet: no stalking, no cues.
+	if not awakened:
+		velocity = Vector3.ZERO
 		return
 	_stalking_cooldown = maxf(_stalking_cooldown - delta, 0.0)
 	_detection_grace_timer = maxf(_detection_grace_timer - delta, 0.0)
@@ -987,6 +998,19 @@ func hear_noise(sound_position: Vector3, hearing_distance: float) -> void:
 		State.ROAMING, State.SEARCHING:
 			if global_position.distance_to(sound_position) <= radius * 2.0:
 				_enter_state(State.INVESTIGATING, {"sound_position": sound_position})
+
+
+func awaken() -> void:
+	# Turning the first valve is what draws it: a whisper from far off, then the
+	# first stalking event after a tense pause.
+	if awakened:
+		return
+	awakened = true
+	_stalking_cooldown = randf_range(wake_delay_min, maxf(wake_delay_max, wake_delay_min))
+	_ambient_cue_timer = 99.0
+	print("[Enemy] AWAKENED - first stalking in %.1f s" % _stalking_cooldown)
+	if is_instance_valid(player) and _map_synchronized:
+		_play_ambient_cue()
 
 
 func set_phase(new_phase: int) -> void:
