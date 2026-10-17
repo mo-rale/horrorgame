@@ -53,6 +53,12 @@ var starts_at := 0.0:
 ## Amount of hand-held wobble (0 = locked off).
 @export_range(0.0, 4.0, 0.1) var handheld := 0.0
 
+@export_group("Gate")
+## Seconds into the shot when lightning strikes (gate shots). The gate scene's own
+## random lightning is switched off, so every flash lands where you put it. Sound
+## goes with the flash: give a thunder cue a half second or so after it.
+@export var lightning := PackedFloat32Array()
+
 @export_group("Level")
 @export var flashlight := true
 @export var flashlight_energy := 1.82

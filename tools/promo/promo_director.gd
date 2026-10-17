@@ -27,6 +27,9 @@ const PLAYER_PARK := Vector3(0.0, 0.05, 60.0)
 @export var start_from: PromoShot
 ## Close the game when the trailer ends (needed for Movie Maker recordings).
 @export var quit_when_done := true
+## Hide the gas cans and fuses the game scatters at random, so a stray pickup
+## never wanders into a shot and every take looks the same.
+@export var hide_pickups := true
 ## Length of the whole trailer.
 @export_custom(PROPERTY_HINT_NONE, "suffix:s", PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY)
 var total_length := 0.0:
@@ -62,6 +65,7 @@ var _enemy: Node3D
 var _figure: Node3D
 var _cue_volume: Dictionary = {}
 var _cue_started: Dictionary = {}
+var _prev_local := -1.0
 var _mute_timer := 0.0
 var _rng := RandomNumberGenerator.new()
 var _limiter: AudioEffectHardLimiter
@@ -149,6 +153,7 @@ func _process(delta: float) -> void:
 		_update_camera(shot, local)
 		_update_foreman(shot, local, delta)
 		_update_flashlight(shot, local)
+		_update_lightning(shot, local)
 	_keep_game_quiet(delta)
 	_update_cues()
 
@@ -189,6 +194,7 @@ func _begin_shot(index: int) -> void:
 	_shot_index = index
 	var shot := _shots[index]
 	_shot_start = shot.starts_at
+	_prev_local = -1.0
 	_keys = shot.get_keys()
 	_foreman_keys = shot.get_foreman_keys()
 	_hide_text()
@@ -228,6 +234,11 @@ func _ensure_world(kind: int) -> void:
 		_enemy = _world.get_node("Enemy")
 		_cam = _player.get_node("head/Camera3D")
 		_enemy.get_node("Model").process_mode = Node.PROCESS_MODE_ALWAYS
+		if hide_pickups:
+			for node in _world.find_children("*", "Node3D", true, false):
+				var file := node.scene_file_path
+				if file.ends_with("gas_can.tscn") or file.ends_with("fuse.tscn"):
+					(node as Node3D).visible = false
 		if Engine.is_editor_hint():
 			# The preview brightens the level; keep that off main.tscn's own environment.
 			var world_env := _world.get_node("WorldEnvironment") as WorldEnvironment
@@ -239,6 +250,10 @@ func _ensure_world(kind: int) -> void:
 			_world.get_node("Set").set("_camera", null)
 		_cam = _world.get_node("Camera3D")
 		_figure = _world.find_child("Figure", true, false) as Node3D
+		if not Engine.is_editor_hint():
+			# The gate's own lightning is random; shots fire it on cue instead.
+			_world.set("_lightning_timer", 1.0e9)
+			(_world.get("_rng") as RandomNumberGenerator).seed = 3
 	_cam.current = true
 	_mute_timer = 0.0
 
@@ -345,6 +360,18 @@ func _update_foreman(shot: PromoShot, local: float, delta: float) -> void:
 	if _enemy and delta > 0.0:
 		# The model animates its walk from the body's velocity.
 		(_enemy as CharacterBody3D).velocity = (body.global_position - prev) / delta
+
+
+## Fires the gate's lightning at the times listed in the shot.
+func _update_lightning(shot: PromoShot, local: float) -> void:
+	if _world_kind != PromoShot.Kind.GATE or not is_instance_valid(_world):
+		return
+	for strike in shot.lightning:
+		if _prev_local < strike and local >= strike:
+			_world.call("_start_lightning")
+	# A strike books the next random one; push that off again.
+	_world.set("_lightning_timer", 1.0e9)
+	_prev_local = local
 
 
 ## Returns [position, the point he walks towards] at `time`. He walks in a

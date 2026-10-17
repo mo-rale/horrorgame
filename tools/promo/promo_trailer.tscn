@@ -53,6 +53,7 @@ script = ExtResource("2_o83g6")
 kind = 1
 duration = 7.0
 fade_in = 0.8
+lightning = PackedFloat32Array(0.4, 4.2)
 text_style = 2
 text = "Fourteen night-shift workers."
 text_in = 1.2
@@ -85,19 +86,21 @@ script = ExtResource("2_o83g6")
 kind = 2
 duration = 5.0
 fade_in = 0.3
-handheld = 1.5
+handheld = 1.2
 show_hand = true
 
 [node name="Key0" type="Camera3D" parent="Shots/Lobby walk"]
-transform = Transform3D(0.9954955, -0.000898836, 0.09480483, 0, 0.9999551, 0.009480483, -0.09480909, -0.009437778, 0.9954507, 0, 1.6, 56.5)
+transform = Transform3D(-0.5494063, -0.01434349, 0.8354322, 0, 0.9998526, 0.01716642, -0.8355554, 0.009431336, -0.5493253, -2.2, 1.6, 50.6)
 script = ExtResource("29_key")
-look_distance = 10.54799
+look_distance = 8.737992
+fov = 62
 
 [node name="Key1" type="Camera3D" parent="Shots/Lobby walk"]
-transform = Transform3D(0.9995018, 0.0006640106, -0.03155623, 0, 0.9997787, 0.02103749, 0.03156321, -0.021027, 0.9992806, 0.3, 1.6, 49.5)
+transform = Transform3D(-0.2195122, -0.02378829, 0.9753197, 0, 0.9997027, 0.02438299, -0.9756098, 0.005352364, -0.2194469, -9.7, 1.55, 55.9)
 script = ExtResource("29_key")
 time = 5
-look_distance = 9.50684
+look_distance = 2.05061
+fov = 34
 
 [node name="Valve A" type="Node3D" parent="Shots"]
 visible = false
@@ -112,15 +115,17 @@ text_out = 3.4
 handheld = 0.8
 
 [node name="Key0" type="Camera3D" parent="Shots/Valve A"]
-transform = Transform3D(0.4406732, -0.02928648, 0.8971897, 0, 0.9994677, 0.03262508, -0.8976676, -0.014377, 0.4404386, -23.5, 1.8, 38.2)
+transform = Transform3D(0.4244339, -0.06389158, 0.9032019, 0, 0.9975073, 0.07056265, -0.9054589, -0.02994918, 0.4233759, -26.2, 1.6, 38.1)
 script = ExtResource("29_key")
-look_distance = 6.130253
+look_distance = 3.542951
+fov = 32
 
 [node name="Key1" type="Camera3D" parent="Shots/Valve A"]
-transform = Transform3D(0.164399, -0.1793901, 0.9699444, 0, 0.9833236, 0.1818646, -0.9863939, -0.02989835, 0.1616574, -26.6, 1.45, 36.9)
+transform = Transform3D(0.4648339, -0.03915812, 0.8845316, 0, 0.9990215, 0.04422658, -0.8853979, -0.02055801, 0.4643791, -27.4, 1.4, 37.6)
 script = ExtResource("29_key")
 time = 4
-look_distance = 2.474369
+look_distance = 2.261084
+fov = 34
 
 [node name="Fuse cabinet" type="Node3D" parent="Shots"]
 visible = false
@@ -157,17 +162,20 @@ subtext = "The gate seal only releases while the generator runs."
 text_in = 0.3
 text_out = 2.9
 handheld = 0.6
+flashlight_energy = 1.5
 
 [node name="Key0" type="Camera3D" parent="Shots/Generator"]
-transform = Transform3D(0.8436615, 0.07342129, -0.5318314, 0, 0.9906047, 0.1367566, 0.5368755, -0.1153763, 0.835735, 3.5, 1.9, -1.5)
+transform = Transform3D(0.8320503, 0.03836941, -0.5533716, 0, 0.9976048, 0.06917145, 0.5547002, -0.05755412, 0.8300574, 3.8, 1.4, -2.2)
 script = ExtResource("29_key")
-look_distance = 6.581033
+look_distance = 5.782733
+fov = 54
 
 [node name="Key1" type="Camera3D" parent="Shots/Generator"]
-transform = Transform3D(0.8320503, -0.06547316, 0.5508226, 0, 0.9930096, 0.1180334, -0.5547002, -0.09820974, 0.8262339, 9.8, 1.6, -2.8)
+transform = Transform3D(0.9269468, 0.0288959, -0.3740784, 0, 0.9970298, 0.07701614, 0.3751928, -0.07138986, 0.9241936, 5.4, 1.45, -2.8)
 script = ExtResource("29_key")
 time = 3.5
-look_distance = 5.083306
+look_distance = 4.544502
+fov = 50
 
 [node name="He stops" type="Node3D" parent="Shots"]
 visible = false
@@ -191,28 +199,32 @@ flicker = PackedVector2Array(3.9, 4.05, 4.5, 4.6)
 show_foreman = true
 
 [node name="Key0" type="Camera3D" parent="Shots/Foreman reveal"]
-transform = Transform3D(0.52145, -0.03233631, 0.8526689, 0, 0.9992817, 0.0378964, -0.8532818, -0.01976108, 0.5210754, 0, 1.6, 24.5)
+transform = Transform3D(0.4228855, -0.03646679, 0.9054491, 0, 0.99919, 0.04024218, -0.9061831, -0.01701783, 0.4225429, 0, 1.6, 23.2)
 script = ExtResource("29_key")
-look_distance = 10.55509
+look_distance = 9.939819
+fov = 52
 
 [node name="Key1" type="Camera3D" parent="Shots/Foreman reveal"]
-transform = Transform3D(0.6689647, -0.0315422, 0.7426246, 0, 0.9990992, 0.04243569, -0.7432941, -0.02838798, 0.6683621, 0, 1.6, 24.3)
+transform = Transform3D(0.5812382, -0.037797, 0.8128552, 0, 0.9989207, 0.04644887, -0.8137335, -0.02699786, 0.5806108, 0, 1.6, 23)
 script = ExtResource("29_key")
 time = 2.4
-look_distance = 9.426028
+look_distance = 8.61162
+fov = 52
 
 [node name="Key2" type="Camera3D" parent="Shots/Foreman reveal"]
-transform = Transform3D(0.9670745, -0.006474588, -0.2544109, 0, 0.9996763, -0.02544109, 0.2544933, 0.02460343, 0.9667615, 0, 1.6, 24.2)
+transform = Transform3D(0.9465102, -0.01040643, -0.3225061, 0, 0.9994798, -0.03225061, 0.3226739, 0.03052553, 0.9460178, 0, 1.6, 22.9)
 script = ExtResource("29_key")
 time = 3
 easing = 3
-look_distance = 5.895973
+look_distance = 4.651075
+fov = 50
 
 [node name="Key3" type="Camera3D" parent="Shots/Foreman reveal"]
-transform = Transform3D(0.9593655, -0.01060821, -0.2819668, 0, 0.999293, -0.03759558, 0.2821663, 0.0360679, 0.9586873, 0, 1.6, 23.6)
+transform = Transform3D(0.9168348, -0.02592375, -0.3984243, 0, 0.9978899, -0.0649284, 0.3992668, 0.05952862, 0.9149002, 0.15, 1.6, 21.6)
 script = ExtResource("29_key")
 time = 6
-look_distance = 5.319774
+look_distance = 3.388348
+fov = 44
 
 [node name="Foreman0" type="Marker3D" parent="Shots/Foreman reveal"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.95, 18.5)
@@ -233,12 +245,14 @@ show_foreman = true
 transform = Transform3D(1, 0, 0, 0, 0.99995, 0.0099995, 0, -0.0099995, 0.99995, 0, 1.6, 24)
 script = ExtResource("29_key")
 look_distance = 10.0005
+fov = 52
 
 [node name="Key1" type="Camera3D" parent="Shots/Foreman walks"]
 transform = Transform3D(1, 0, 0, 0, 0.9999446, -0.01052573, 0, 0.01052573, 0.9999446, 0, 1.6, 25.5)
 script = ExtResource("29_key")
 time = 5
 look_distance = 9.500526
+fov = 52
 
 [node name="Foreman0" type="Marker3D" parent="Shots/Foreman walks"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.95, 14.5)
@@ -256,21 +270,23 @@ visible = false
 script = ExtResource("2_o83g6")
 kind = 2
 duration = 1.4
-handheld = 3.0
-flashlight_energy = 3.0
+handheld = 2.2
+flashlight_energy = 0.6
 show_foreman = true
 
 [node name="Key0" type="Camera3D" parent="Shots/Face"]
-transform = Transform3D(1, 0, 0, 0, 0.9998243, 0.0187467, 0, -0.0187467, 0.9998243, 2, 1.98, 15.6)
+transform = Transform3D(1, 0, 0, 0, 0.9853505, -0.1705414, 0, 0.1705414, 0.9853505, 2, 1.35, 16.6)
 script = ExtResource("29_key")
-look_distance = 1.600281
+look_distance = 2.638655
+fov = 46
 
 [node name="Key1" type="Camera3D" parent="Shots/Face"]
-transform = Transform3D(1, 0, 0, 0, 0.9988946, 0.0470068, 0, -0.0470068, 0.9988946, 2, 1.96, 14.85)
+transform = Transform3D(0.9975641, -0.06975647, 0, 0.06643775, 0.9501041, -0.3047757, 0.02126008, 0.3040333, 0.9524241, 2, 1.4, 15.5)
 script = ExtResource("29_key")
 time = 1.4
 easing = 3
-look_distance = 0.8509407
+look_distance = 0
+fov = 38
 
 [node name="Foreman0" type="Marker3D" parent="Shots/Face"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.95, 14)
@@ -287,6 +303,7 @@ visible = false
 script = ExtResource("2_o83g6")
 kind = 1
 duration = 7.0
+lightning = PackedFloat32Array(0.9, 3.0)
 fade_in = 1.0
 fade_out = 0.8
 text_style = 4
@@ -296,17 +313,17 @@ handheld = 0.5
 show_foreman = true
 
 [node name="Key0" type="Camera3D" parent="Shots/Title over the gate"]
-transform = Transform3D(0.9734172, -0.00720954, -0.2289258, 0, 0.9995045, -0.0314773, 0.2290393, 0.03064055, 0.9729348, -1, 1.65, 3)
+transform = Transform3D(0.9997233, 0.002815415, -0.02335381, 0, 0.9928115, 0.1196883, 0.0235229, -0.1196551, 0.9925368, -1, 1.65, 3)
 fov = 58
 script = ExtResource("29_key")
-look_distance = 17.47291
+look_distance = 17.12783
 
 [node name="Key1" type="Camera3D" parent="Shots/Title over the gate"]
-transform = Transform3D(0.9735746, -0.007955296, -0.2282307, 0, 0.9993931, -0.03483522, 0.2283693, 0.03391468, 0.9729837, -0.8, 1.62, 2.2)
+transform = Transform3D(0.9998286, 0.002178791, -0.0183867, 0, 0.9930522, 0.1176749, 0.01851534, -0.1176547, 0.9928819, -0.8, 1.62, 2.2)
 fov = 48
 script = ExtResource("29_key")
 time = 7
-look_distance = 16.64982
+look_distance = 16.31614
 
 [node name="Foreman0" type="Marker3D" parent="Shots/Title over the gate"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.3, 0.95, -4.5)
@@ -522,6 +539,30 @@ at = 46.3
 length = 5.2
 fade_out = 1.0
 
+[node name="Thunder (gate 1)" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("5_cac34")
+volume_db = -6.0
+script = ExtResource("3_n7qov")
+at = 4.4
+length = 4.0
+fade_out = 1.0
+
+[node name="Thunder (gate 2)" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("5_cac34")
+volume_db = -9.0
+script = ExtResource("3_n7qov")
+at = 8.2
+length = 2.3
+fade_out = 0.6
+
+[node name="Thunder (title 2)" type="AudioStreamPlayer" parent="Cues"]
+stream = ExtResource("5_cac34")
+volume_db = -8.0
+script = ExtResource("3_n7qov")
+at = 48.5
+length = 3.5
+fade_out = 1.0
+
 [node name="Fade" type="CanvasLayer" parent="." unique_id=518548123]
 layer = 50
 
@@ -631,8 +672,9 @@ horizontal_alignment = 1
 visible = false
 unique_name_in_owner = true
 anchors_preset = 0
+offset_top = 150.0
 offset_right = 1920.0
-offset_bottom = 1080.0
+offset_bottom = 1230.0
 mouse_filter = 2
 
 [node name="Kicker" type="Label" parent="Titles/Frame1080/TitleBlock" unique_id=1778630877]
