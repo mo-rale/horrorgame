@@ -15,6 +15,10 @@ var fullscreen := false
 var quality := 2
 var skip_intro := false
 const QUALITY_NAMES := ["LOW", "MEDIUM", "HIGH"]
+## Share of the window resolution the 3D scene is drawn at. The menus and HUD stay
+## sharp; below 100% the scene is upscaled with FSR. The biggest speed-up on weak GPUs.
+const RENDER_SCALES := [1.0, 0.85, 0.7, 0.5]
+var render_scale_index := 0
 
 ## Rebindable keyboard actions: [InputMap action, label shown in the menu].
 const REBINDABLE := [
@@ -127,6 +131,17 @@ func set_quality(value: int) -> void:
 	_save_settings()
 
 
+func set_render_scale(index: int) -> void:
+	render_scale_index = clampi(index, 0, RENDER_SCALES.size() - 1)
+	_apply_viewport_quality()
+	_save_settings()
+
+
+func cycle_render_scale() -> int:
+	set_render_scale((render_scale_index + 1) % RENDER_SCALES.size())
+	return render_scale_index
+
+
 func set_skip_intro(value: bool) -> void:
 	skip_intro = value
 	_save_settings()
@@ -208,6 +223,7 @@ func _load_settings() -> void:
 	)
 	fullscreen = bool(config.get_value("video", "fullscreen", fullscreen))
 	quality = clampi(int(config.get_value("video", "quality", quality)), 0, 2)
+	render_scale_index = clampi(int(config.get_value("video", "render_scale", render_scale_index)), 0, RENDER_SCALES.size() - 1)
 	skip_intro = bool(config.get_value("game", "skip_intro", skip_intro))
 	for entry in REBINDABLE:
 		var saved := int(config.get_value("keys", entry[0], _default_keys.get(entry[0], KEY_NONE)))
@@ -224,6 +240,7 @@ func _save_settings() -> void:
 	config.set_value("video", "brightness", brightness)
 	config.set_value("video", "fullscreen", fullscreen)
 	config.set_value("video", "quality", quality)
+	config.set_value("video", "render_scale", render_scale_index)
 	config.set_value("game", "skip_intro", skip_intro)
 	for entry in REBINDABLE:
 		config.set_value("keys", entry[0], _action_keycode(entry[0]))
@@ -246,6 +263,9 @@ func _apply_viewport_quality() -> void:
 		return
 	# MSAA and shadow filtering are the cheap, visible wins.
 	viewport.msaa_3d = [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X][quality]
+	var scale: float = RENDER_SCALES[render_scale_index]
+	viewport.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR if scale >= 1.0 else Viewport.SCALING_3D_MODE_FSR
+	viewport.scaling_3d_scale = scale
 	RenderingServer.directional_soft_shadow_filter_set_quality(
 		[RenderingServer.SHADOW_QUALITY_HARD, RenderingServer.SHADOW_QUALITY_SOFT_LOW, RenderingServer.SHADOW_QUALITY_SOFT_HIGH][quality]
 	)

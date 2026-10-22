@@ -12,6 +12,7 @@ const UiSounds := preload("res://scripts/ui_sounds.gd")
 @onready var brightness_slider: HSlider = %BrightnessSlider
 @onready var fullscreen_toggle: CheckButton = %FullscreenToggle
 @onready var quality_button: Button = %QualityButton
+var _scale_button: Button
 @onready var title_label: Label = $Center/Content/Title
 @onready var subtitle_label: Label = $Center/Content/Subtitle
 @onready var keybind_list: VBoxContainer = %KeybindList
@@ -60,6 +61,18 @@ func _ready() -> void:
 		func() -> void:
 			Settings.cycle_quality()
 			_refresh_quality_text()
+	)
+	# The render scale button is a copy of the graphics button, placed right under it.
+	_scale_button = quality_button.duplicate() as Button
+	_scale_button.name = "RenderScaleButton"
+	_scale_button.unique_name_in_owner = false
+	quality_button.get_parent().add_child(_scale_button)
+	quality_button.get_parent().move_child(_scale_button, quality_button.get_index() + 1)
+	_refresh_scale_text()
+	_scale_button.pressed.connect(
+		func() -> void:
+			Settings.cycle_render_scale()
+			_refresh_scale_text()
 	)
 	_build_keybind_rows()
 	%ResetKeysButton.pressed.connect(
@@ -174,6 +187,10 @@ func _select_tab(index: int) -> void:
 
 func _refresh_quality_text() -> void:
 	quality_button.text = "GRAPHICS:  %s" % Settings.QUALITY_NAMES[Settings.quality]
+
+
+func _refresh_scale_text() -> void:
+	_scale_button.text = "RENDER SCALE:  %d%%" % roundi(Settings.RENDER_SCALES[Settings.render_scale_index] * 100.0)
 
 
 func _show_best_run() -> void:

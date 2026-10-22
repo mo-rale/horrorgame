@@ -954,5 +954,4 @@ func start_random_screeches() -> void:
 			return
 
 		if !screeching.playing:
-			print("ABOUT TO PLAY: ",screeching)
 			screeching.play()
