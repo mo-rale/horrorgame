@@ -469,14 +469,14 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.92, -0.06)
 material_override = SubResource("StandardMaterial3D_3xmyb")
 mesh = SubResource("BoxMesh_dkycv")
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=2060972720]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=131494434]
 libraries/ = ExtResource("3_3xmyb")
 
-[node name="AmbientPlayer" type="AnimationPlayer" parent="." unique_id=841896127]
+[node name="AmbientPlayer" type="AnimationPlayer" parent="." unique_id=402141476]
 libraries/ = ExtResource("4_w1hcj")
 autoplay = &"ambient"
 
-[node name="AnimationTree" type="AnimationTree" parent="." unique_id=1356342316]
+[node name="AnimationTree" type="AnimationTree" parent="." unique_id=1392868551]
 tree_root = SubResource("AnimationNodeBlendTree_n64rb")
 anim_player = NodePath("../AnimationPlayer")
 parameters/States/Calm/blend_position = 0.0

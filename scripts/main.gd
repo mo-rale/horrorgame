@@ -10,6 +10,10 @@ const RADIO_LOST_SFX := preload("res://assets/sfx/intro/radio_lost.wav")
 const DOOR_SLAM_SFX := preload("res://assets/sfx/ending/gate_close.ogg")
 const DISTANT_CLANG_SFX := preload("res://assets/sfx/valve/metal_slam.ogg")
 const JUMPSCARE_FACE_DISTANCE := 0.72
+## When the punch lands, in seconds after the catch (matches the jumpscare clip in
+## tools/build_enemy_animations.gd), and when the screen is gone after it.
+const JUMPSCARE_HIT_TIME := 0.89
+const JUMPSCARE_END_TIME := 1.55
 const JUMPSCARE_SFX := preload("res://assets/sfx/ambience/freesound_community-jumpscare-68730.mp3")
 
 var _jumpscare_running := false
@@ -683,11 +687,34 @@ func _play_jumpscare() -> void:
 	# Hold on the face, shaking and screaming, for a beat before game over.
 	var elapsed := 0.0
 	var next_shake := 0.0
-	while elapsed < 1.3:
+	var hit := false
+	var jolt := 0.0
+	while elapsed < JUMPSCARE_END_TIME:
 		await get_tree().process_frame
-		elapsed += get_process_delta_time()
+		var delta := get_process_delta_time()
+		elapsed += delta
 		_aim_camera_at_face(head)
-		if elapsed >= next_shake:
+		if not hit and elapsed >= JUMPSCARE_HIT_TIME:
+			# The punch lands: the head snaps round, the screen flares and goes dark.
+			hit = true
+			jolt = 0.5
+			player.add_trauma(1.0)
+			var thud := AudioStreamPlayer.new()
+			thud.stream = DISTANT_CLANG_SFX
+			thud.bus = &"SFX"
+			thud.volume_db = 3.0
+			thud.pitch_scale = 0.6
+			add_child(thud)
+			thud.play()
+			thud.finished.connect(thud.queue_free)
+			flash.color = Color(0.9, 0.04, 0.03, 0.9)
+			var knockout := flash.create_tween()
+			knockout.tween_property(flash, "color", Color(0.0, 0.0, 0.0, 1.0), 0.5).set_ease(Tween.EASE_IN)
+		if jolt > 0.0:
+			# A sharp kick to the camera that dies away fast.
+			player.camera.rotation += Vector3(-jolt * 0.5, jolt * 0.9, jolt * 0.6)
+			jolt = maxf(0.0, jolt - delta * 2.4)
+		if not hit and elapsed >= next_shake:
 			player.add_trauma(0.5)
 			next_shake += 0.2
 	flash_layer.queue_free()

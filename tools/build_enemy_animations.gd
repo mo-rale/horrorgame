@@ -348,27 +348,53 @@ func _search_jog(p: float, _t: float) -> Dictionary:
 		swing, -swing, Vector2(0.9 + maxf(-swing, 0.0) * 0.5, 0.9 + maxf(swing, 0.0) * 0.5))
 
 
+func _ramp(t: float, from: float, to: float) -> float:
+	return clampf((t - from) / (to - from), 0.0, 1.0)
+
+
 func _jumpscare(p: float, t: float) -> Dictionary:
-	# Plays when he catches you. In 0.14 s (the length of the camera lunge) he snaps from
-	# a stalk into a scream: torso thrown forward, head jammed toward the lens, jaw
-	# stretched, arms clawing up at your face. Then he shakes until the screen goes.
-	var k := clampf(t / 0.14, 0.0, 1.0)
-	k = 1.0 - pow(1.0 - k, 3.0)
-	var shake := sin(40.0 * p) * 0.05 * k
+	# Plays when he catches you.
+	#   0.00-0.14  snaps from a stalk into a scream (the length of the camera lunge)
+	#   0.14-0.70  screams and shakes, head at the lens, arms clawing up
+	#   0.70-0.82  cocks the right fist back, torso winding away
+	#   0.82-0.90  PUNCH: the fist snaps straight at your face, torso twisting through
+	#   0.90-1.50  holds the follow-through, then sags (main.gd cuts to black before then)
+	# main.gd times the camera hit to HIT_TIME below.
+	var k := 1.0 - pow(1.0 - clampf(t / 0.14, 0.0, 1.0), 3.0)
+	var wind := _ramp(t, 0.70, 0.82)
+	wind = wind * wind * (3.0 - 2.0 * wind)
+	var strike := 1.0 - pow(1.0 - _ramp(t, 0.82, 0.90), 4.0)
+	var sag := _ramp(t, 1.0, 1.5)
+	var shake := (1.0 - wind) * (1.0 - strike)
+	var wobble := sin(40.0 * p) * 0.05 * k * shake
 	var start := _stalk_idle(0.0, 0.0)
+
+	var torso_turn := lerpf(0.5 * wind, -0.38, strike)
+	var torso_lean := deg_to_rad(-32.0) + deg_to_rad(-9.0) * strike
+	# The arms hang from a torso that is leaning about 40 degrees forward, so the angles
+	# below are about 40 degrees more than the arm's real direction (135 = horizontal).
+	var right_shoulder := lerpf(lerpf(deg_to_rad(105.0), deg_to_rad(-10.0), wind), deg_to_rad(135.0), strike)
+	right_shoulder = lerpf(right_shoulder, deg_to_rad(112.0), sag)
+	var right_elbow := lerpf(lerpf(0.55, 1.9, wind), 0.04, strike)
+	right_elbow = lerpf(right_elbow, 0.7, sag)
+	var right_side := lerpf(deg_to_rad(-28.0), deg_to_rad(-6.0), wind)
+	right_side = lerpf(right_side, deg_to_rad(-20.0), strike)
+	var left_shoulder := lerpf(deg_to_rad(105.0), deg_to_rad(80.0), wind)
 	var pose := _pose(
-		Vector3(deg_to_rad(-32.0) + sin(26.0 * p) * 0.03, sin(34.0 * p) * 0.05, sin(30.0 * p) * 0.05), -0.02,
-		Vector3(deg_to_rad(46.0) + shake, sin(46.0 * p) * 0.12 * k, sin(38.0 * p) * 0.14 * k),
-		Vector3(deg_to_rad(105.0) + sin(36.0 * p) * 0.12, 0.0, deg_to_rad(28.0)),
-		Vector3(deg_to_rad(105.0) - sin(36.0 * p) * 0.12, 0.0, deg_to_rad(-28.0)),
-		deg_to_rad(18.0), deg_to_rad(-14.0), Vector2(0.55 + sin(44.0 * p) * 0.12, 0.55 - sin(44.0 * p) * 0.12))
+		Vector3(torso_lean + sin(26.0 * p) * 0.03 * shake, torso_turn + sin(34.0 * p) * 0.05 * shake, sin(30.0 * p) * 0.05 * shake), -0.02,
+		Vector3(deg_to_rad(46.0) + deg_to_rad(9.0) * strike + wobble, sin(46.0 * p) * 0.12 * k * shake - torso_turn * 0.6, sin(38.0 * p) * 0.14 * k * shake),
+		Vector3(left_shoulder + sin(36.0 * p) * 0.12 * shake, 0.0, deg_to_rad(28.0)),
+		Vector3(right_shoulder + sin(36.0 * p) * 0.12 * shake * (1.0 - strike), 0.0, right_side),
+		deg_to_rad(18.0) + 0.1 * strike, deg_to_rad(-14.0) - 0.1 * strike,
+		Vector2(0.55 + sin(44.0 * p) * 0.12 * shake, right_elbow))
 	# Ease every joint from the stalk pose into the scream.
 	for path: String in pose:
 		var from_value: Variant = start[path]
 		pose[path] = from_value.lerp(pose[path], k) if from_value is Vector3 else pose[path]
-	# The mouth stretches wide, with a faint tremble.
+	# The mouth stretches wide with a faint tremble, and closes a little as he punches.
 	var mouth := _root.get_node("Torso/Head/Mouth") as Node3D
-	pose["Torso/Head/Mouth:scale"] = mouth.scale.lerp(mouth.scale * Vector3(1.5, 2.6, 1.6), k) * (1.0 + sin(52.0 * p) * 0.05 * k)
+	var open := lerpf(1.0, 0.55, strike)
+	pose["Torso/Head/Mouth:scale"] = mouth.scale.lerp(mouth.scale * Vector3(1.5, 2.6, 1.6), k * open) * (1.0 + sin(52.0 * p) * 0.05 * k * shake)
 	return pose
 
 
