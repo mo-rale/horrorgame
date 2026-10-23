@@ -8,7 +8,8 @@ extends SceneTree
 #                    AnimationTree adopts every clip of its player, and would
 #                    fight this one over the eye tracks)
 #   AnimationTree    a state machine of four moods, each a blend space over speed
-# and saves the scene again. The clips go to scenes/enemy_animations.tres, which
+# and saves the scene again. It first gives each arm an elbow (Torso/ArmX/Elbow,
+# splitting the arm into upper arm and forearm) if it has none yet. The clips go to scenes/enemy_animations.tres, which
 # can be opened and edited in Godot's Animation panel. The meshes and their
 # placement in the scene are left exactly as they are.
 
@@ -32,6 +33,7 @@ func _initialize() -> void:
 		if old:
 			_root.remove_child(old)
 			old.free()
+	_add_elbows()
 	var torso := _root.get_node("Torso") as Node3D
 	_torso_rest = torso.rotation
 	_torso_pos = torso.position
@@ -101,6 +103,65 @@ func _restore_uids(original_text: String) -> void:
 	file.close()
 
 
+# ── Elbows ───────────────────────────────────────────────────────────────────
+
+func _add_elbows() -> void:
+	for side in ["ArmLeft", "ArmRight"]:
+		var arm := _root.get_node("Torso/" + side) as Node3D
+		if arm.has_node("Elbow"):
+			continue
+		var upper := arm.get_node("Mesh") as MeshInstance3D
+		var half := 0.575
+		var radius := (upper.mesh as CapsuleMesh).radius
+		upper.name = "UpperArm"
+		var upper_mesh := CapsuleMesh.new()
+		upper_mesh.radius = radius
+		upper_mesh.height = half + 0.02
+		upper_mesh.radial_segments = 12
+		upper_mesh.rings = 4
+		upper.mesh = upper_mesh
+		upper.position = Vector3(0.0, -half * 0.5, 0.0)
+
+		var elbow := Node3D.new()
+		elbow.name = "Elbow"
+		elbow.position = Vector3(0.0, -half, 0.0)
+		arm.add_child(elbow)
+		elbow.owner = _root
+
+		var forearm := MeshInstance3D.new()
+		forearm.name = "Forearm"
+		var forearm_mesh := CapsuleMesh.new()
+		forearm_mesh.radius = radius * 0.9
+		forearm_mesh.height = half + 0.02
+		forearm_mesh.radial_segments = 12
+		forearm_mesh.rings = 4
+		forearm.mesh = forearm_mesh
+		forearm.material_override = upper.material_override
+		forearm.position = Vector3(0.0, -half * 0.5, 0.0)
+		elbow.add_child(forearm)
+		forearm.owner = _root
+
+		var joint := MeshInstance3D.new()
+		joint.name = "Joint"
+		var joint_mesh := SphereMesh.new()
+		joint_mesh.radius = radius * 1.15
+		joint_mesh.height = radius * 2.3
+		joint_mesh.radial_segments = 12
+		joint_mesh.rings = 6
+		joint.mesh = joint_mesh
+		joint.material_override = upper.material_override
+		elbow.add_child(joint)
+		joint.owner = _root
+
+		# The hand and fingers now hang from the elbow.
+		for child_name in ["Hand", "Finger0", "Finger1", "Finger2"]:
+			var part := arm.get_node(child_name) as Node3D
+			arm.remove_child(part)
+			elbow.add_child(part)
+			part.owner = _root
+			part.position.y += half
+
+
 # ── The tree ─────────────────────────────────────────────────────────────────
 
 func _build_tree() -> AnimationNodeBlendTree:
@@ -124,6 +185,9 @@ func _build_tree() -> AnimationNodeBlendTree:
 		moving.animation = mood[2]
 		space.add_blend_point(moving, mood[3])
 		machine.add_node(mood[0], space, Vector2(220.0, index * 110.0))
+	var scare := AnimationNodeAnimation.new()
+	scare.animation = "jumpscare"
+	machine.add_node("Jumpscare", scare, Vector2(480.0, 0.0))
 	var start := AnimationNodeStateMachineTransition.new()
 	start.advance_mode = AnimationNodeStateMachineTransition.ADVANCE_MODE_AUTO
 	machine.add_transition("Start", "Calm", start)
@@ -137,6 +201,12 @@ func _build_tree() -> AnimationNodeBlendTree:
 			transition.switch_mode = AnimationNodeStateMachineTransition.SWITCH_MODE_IMMEDIATE
 			transition.xfade_time = to_mood[4]
 			machine.add_transition(from_mood[0], to_mood[0], transition)
+		# Any mood can be cut short by the jumpscare, very quickly.
+		var to_scare := AnimationNodeStateMachineTransition.new()
+		to_scare.advance_mode = AnimationNodeStateMachineTransition.ADVANCE_MODE_ENABLED
+		to_scare.switch_mode = AnimationNodeStateMachineTransition.SWITCH_MODE_IMMEDIATE
+		to_scare.xfade_time = 0.04
+		machine.add_transition(from_mood[0], "Jumpscare", to_scare)
 
 	var tree := AnimationNodeBlendTree.new()
 	tree.add_node("States", machine, Vector2(0.0, 0.0))
@@ -162,13 +232,17 @@ func _clips() -> Array:
 		["chase_run", 0.62, true, _chase_run],
 		["search_idle", 3.6, true, _search_idle],
 		["search_jog", 1.6, true, _search_jog],
+		["jumpscare", 1.5, false, _jumpscare],
 	]
 
 
-## A pose: torso rotation and position, head, both arms, both legs (all rotations in radians).
+## A pose: torso rotation and position, head, both arms, both legs, and the two
+## elbows (x = left, y = right; positive bends the forearm forward). All in radians.
 func _pose(torso_turn: Vector3, torso_lift: float, head: Vector3, arm_left: Vector3, arm_right: Vector3,
-		leg_left: float, leg_right: float) -> Dictionary:
+		leg_left: float, leg_right: float, elbows := Vector2(0.25, 0.25)) -> Dictionary:
 	return {
+		"Torso/ArmLeft/Elbow:rotation": Vector3(elbows.x, 0.0, 0.0),
+		"Torso/ArmRight/Elbow:rotation": Vector3(elbows.y, 0.0, 0.0),
 		"Torso:rotation": _torso_rest + torso_turn,
 		"Torso:position": _torso_pos + Vector3(0.0, torso_lift, 0.0),
 		"Torso/Head:rotation": head,
@@ -204,7 +278,7 @@ func _calm_walk(p: float, _t: float) -> Dictionary:
 		Vector3(deg_to_rad(8.0) + cos(2.0 * p) * 0.04, 0.0, -sin(p) * 0.09),
 		Vector3(deg_to_rad(-12.0) - swing * 0.5, 0.0, deg_to_rad(6.0)),
 		Vector3(deg_to_rad(-12.0) + swing * 0.5, 0.0, deg_to_rad(-6.0)),
-		swing, -swing)
+		swing, -swing, Vector2(0.3 + maxf(-swing, 0.0) * 0.5, 0.3 + maxf(swing, 0.0) * 0.5))
 
 
 func _stalk_idle(p: float, _t: float) -> Dictionary:
@@ -215,7 +289,7 @@ func _stalk_idle(p: float, _t: float) -> Dictionary:
 		Vector3(deg_to_rad(-6.0) + sin(2.0 * p) * 0.03, 0.0, deg_to_rad(16.0) + sin(p) * 0.04 + tremor),
 		Vector3(deg_to_rad(30.0) + sin(2.0 * p) * 0.04 + tremor, 0.0, deg_to_rad(10.0)),
 		Vector3(deg_to_rad(30.0) + sin(2.0 * p) * 0.04 - tremor, 0.0, deg_to_rad(-10.0)),
-		deg_to_rad(5.0), deg_to_rad(-5.0))
+		deg_to_rad(5.0), deg_to_rad(-5.0), Vector2(1.0 + tremor * 8.0, 1.0 - tremor * 8.0))
 
 
 func _stalk_creep(p: float, _t: float) -> Dictionary:
@@ -226,7 +300,7 @@ func _stalk_creep(p: float, _t: float) -> Dictionary:
 		Vector3(deg_to_rad(-8.0), sin(p) * 0.05, deg_to_rad(16.0) - sin(p) * 0.03),
 		Vector3(deg_to_rad(28.0) - swing * 0.35, 0.0, deg_to_rad(9.0)),
 		Vector3(deg_to_rad(28.0) + swing * 0.35, 0.0, deg_to_rad(-9.0)),
-		swing + 0.1, -swing + 0.1)
+		swing + 0.1, -swing + 0.1, Vector2(0.9 + sin(p) * 0.2, 0.9 - sin(p) * 0.2))
 
 
 func _chase_idle(p: float, _t: float) -> Dictionary:
@@ -236,7 +310,7 @@ func _chase_idle(p: float, _t: float) -> Dictionary:
 		Vector3(deg_to_rad(-14.0) + sin(5.0 * p) * 0.05, 0.0, deg_to_rad(10.0) + sin(7.0 * p) * 0.06),
 		Vector3(deg_to_rad(60.0) + sin(8.0 * p) * 0.05, 0.0, deg_to_rad(18.0)),
 		Vector3(deg_to_rad(60.0) - sin(8.0 * p) * 0.05, 0.0, deg_to_rad(-18.0)),
-		deg_to_rad(8.0), deg_to_rad(-8.0))
+		deg_to_rad(8.0), deg_to_rad(-8.0), Vector2(1.1 + sin(8.0 * p) * 0.08, 1.1 - sin(8.0 * p) * 0.08))
 
 
 func _chase_run(p: float, _t: float) -> Dictionary:
@@ -247,7 +321,7 @@ func _chase_run(p: float, _t: float) -> Dictionary:
 		Vector3(deg_to_rad(-18.0), -sin(p) * 0.1, deg_to_rad(8.0) - sin(p) * 0.12),
 		Vector3(deg_to_rad(55.0) - swing * 0.6, 0.0, deg_to_rad(14.0)),
 		Vector3(deg_to_rad(55.0) + swing * 0.6, 0.0, deg_to_rad(-14.0)),
-		swing, -swing)
+		swing, -swing, Vector2(1.2 + swing * 0.35, 1.2 - swing * 0.35))
 
 
 func _search_idle(p: float, _t: float) -> Dictionary:
@@ -268,7 +342,31 @@ func _search_jog(p: float, _t: float) -> Dictionary:
 		Vector3(deg_to_rad(2.0), sin(p) * 0.8, sin(2.0 * p) * 0.05),
 		Vector3(deg_to_rad(-25.0) - swing * 0.6, 0.0, deg_to_rad(8.0)),
 		Vector3(deg_to_rad(-25.0) + swing * 0.6, 0.0, deg_to_rad(-8.0)),
-		swing, -swing)
+		swing, -swing, Vector2(0.9 + maxf(-swing, 0.0) * 0.5, 0.9 + maxf(swing, 0.0) * 0.5))
+
+
+func _jumpscare(p: float, t: float) -> Dictionary:
+	# Plays when he catches you. In 0.14 s (the length of the camera lunge) he snaps from
+	# a stalk into a scream: torso thrown forward, head jammed toward the lens, jaw
+	# stretched, arms clawing up at your face. Then he shakes until the screen goes.
+	var k := clampf(t / 0.14, 0.0, 1.0)
+	k = 1.0 - pow(1.0 - k, 3.0)
+	var shake := sin(40.0 * p) * 0.05 * k
+	var start := _stalk_idle(0.0, 0.0)
+	var pose := _pose(
+		Vector3(deg_to_rad(-32.0) + sin(26.0 * p) * 0.03, sin(34.0 * p) * 0.05, sin(30.0 * p) * 0.05), -0.02,
+		Vector3(deg_to_rad(-28.0) + shake, sin(46.0 * p) * 0.12 * k, sin(38.0 * p) * 0.14 * k),
+		Vector3(deg_to_rad(105.0) + sin(36.0 * p) * 0.12, 0.0, deg_to_rad(28.0)),
+		Vector3(deg_to_rad(105.0) - sin(36.0 * p) * 0.12, 0.0, deg_to_rad(-28.0)),
+		deg_to_rad(18.0), deg_to_rad(-14.0), Vector2(0.55 + sin(44.0 * p) * 0.12, 0.55 - sin(44.0 * p) * 0.12))
+	# Ease every joint from the stalk pose into the scream.
+	for path: String in pose:
+		var from_value: Variant = start[path]
+		pose[path] = from_value.lerp(pose[path], k) if from_value is Vector3 else pose[path]
+	# The mouth stretches wide, with a faint tremble.
+	var mouth := _root.get_node("Torso/Head/Mouth") as Node3D
+	pose["Torso/Head/Mouth:scale"] = mouth.scale.lerp(mouth.scale * Vector3(1.5, 2.6, 1.6), k) * (1.0 + sin(52.0 * p) * 0.05 * k)
+	return pose
 
 
 func _ambient() -> Animation:

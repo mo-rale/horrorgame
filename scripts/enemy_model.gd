@@ -30,7 +30,7 @@ var _mood := &"calm"
 const MOOD_OF_STATE := {&"stalking": &"stalk", &"chasing": &"chase", &"searching": &"search"}
 ## The tree's state for each mood, and the speed at which its walk or run clip
 ## plays at normal rate. Faster or slower than that and the clip is sped up or slowed.
-const STATE_OF_MOOD := {&"calm": "Calm", &"stalk": "Stalk", &"chase": "Chase", &"search": "Search"}
+const STATE_OF_MOOD := {&"calm": "Calm", &"stalk": "Stalk", &"chase": "Chase", &"search": "Search", &"jumpscare": "Jumpscare"}
 const NATURAL_SPEED := {&"calm": 2.0, &"stalk": 2.5, &"chase": 8.2, &"search": 5.0}
 
 
@@ -188,20 +188,32 @@ func _on_enemy_state_changed(state_name: StringName) -> void:
 
 ## Switches the animation mood: &"calm", &"stalk", &"chase" or &"search".
 func set_mood(mood: StringName) -> void:
-	if mood == _mood or _playback == null or not STATE_OF_MOOD.has(mood):
+	# Once he has caught you, nothing else interrupts the scream.
+	if mood == _mood or _playback == null or not STATE_OF_MOOD.has(mood) or _mood == &"jumpscare":
 		return
 	_mood = mood
 	_playback.travel(STATE_OF_MOOD[mood])
 
 
+## The catch: snaps into the scream pose and shakes. Called by main.gd's jumpscare.
+func play_jumpscare() -> void:
+	set_mood(&"jumpscare")
+	_tree.set("parameters/Pace/scale", 1.0)
+
+
 func _process(_delta: float) -> void:
+	if _mood == &"jumpscare":
+		return
 	if _tree == null:
 		return
 	var speed := 0.0
 	if _body:
 		speed = Vector2(_body.velocity.x, _body.velocity.z).length()
 	# Every mood's blend space reads the same speed, so a switch mid-stride is smooth.
-	for state_name: String in STATE_OF_MOOD.values():
+	for mood: StringName in STATE_OF_MOOD:
+		if mood == &"jumpscare":
+			continue
+		var state_name: String = STATE_OF_MOOD[mood]
 		_tree.set("parameters/States/%s/blend_position" % state_name, speed)
 	# Match the stride to the ground speed so the feet do not skate.
 	var pace := 1.0

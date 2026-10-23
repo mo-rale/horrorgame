@@ -74,11 +74,23 @@ height = 0.1
 radial_segments = 16
 rings = 8
 
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_5607o"]
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_3xmyb"]
 radius = 0.045
-height = 1.15
+height = 0.595
 radial_segments = 12
 rings = 4
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_sosg7"]
+radius = 0.0405
+height = 0.595
+radial_segments = 12
+rings = 4
+
+[sub_resource type="SphereMesh" id="SphereMesh_thq1j"]
+radius = 0.05175
+height = 0.1035
+radial_segments = 12
+rings = 6
 
 [sub_resource type="SphereMesh" id="SphereMesh_pu0wu"]
 radius = 0.055
@@ -104,11 +116,23 @@ height = 0.13
 radial_segments = 12
 rings = 4
 
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_ks3aq"]
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_4mgl5"]
 radius = 0.045
-height = 1.15
+height = 0.595
 radial_segments = 12
 rings = 4
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_p3q6j"]
+radius = 0.0405
+height = 0.595
+radial_segments = 12
+rings = 4
+
+[sub_resource type="SphereMesh" id="SphereMesh_up4dw"]
+radius = 0.05175
+height = 0.1035
+radial_segments = 12
+rings = 6
 
 [sub_resource type="SphereMesh" id="SphereMesh_yj6mt"]
 radius = 0.055
@@ -152,75 +176,81 @@ rings = 4
 [sub_resource type="BoxMesh" id="BoxMesh_dkycv"]
 size = Vector3(0.13, 0.1, 0.26)
 
-[sub_resource type="AnimationNodeTimeScale" id="AnimationNodeTimeScale_u2he6"]
+[sub_resource type="AnimationNodeTimeScale" id="AnimationNodeTimeScale_3xmyb"]
 
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_sosg7"]
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_w1hcj"]
 animation = &"calm_idle"
 
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_thq1j"]
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_u2he6"]
 animation = &"calm_walk"
 
-[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_4mgl5"]
-blend_point_0/node = SubResource("AnimationNodeAnimation_sosg7")
+[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_sosg7"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_w1hcj")
 blend_point_0/pos = 0.0
-blend_point_1/node = SubResource("AnimationNodeAnimation_thq1j")
+blend_point_1/node = SubResource("AnimationNodeAnimation_u2he6")
 blend_point_1/pos = 2.0
 min_space = 0.0
 max_space = 10.0
 
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_p3q6j"]
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_thq1j"]
 animation = &"chase_idle"
 
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_up4dw"]
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_4mgl5"]
 animation = &"chase_run"
 
-[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_gbtjr"]
-blend_point_0/node = SubResource("AnimationNodeAnimation_p3q6j")
+[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_p3q6j"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_thq1j")
 blend_point_0/pos = 0.0
-blend_point_1/node = SubResource("AnimationNodeAnimation_up4dw")
+blend_point_1/node = SubResource("AnimationNodeAnimation_4mgl5")
 blend_point_1/pos = 8.2
 min_space = 0.0
 max_space = 10.0
 
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_v7mkj"]
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_up4dw"]
+animation = &"jumpscare"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_gbtjr"]
 animation = &"search_idle"
 
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_b7md3"]
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_v7mkj"]
 animation = &"search_jog"
 
-[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_ckr01"]
-blend_point_0/node = SubResource("AnimationNodeAnimation_v7mkj")
+[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_b7md3"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_gbtjr")
 blend_point_0/pos = 0.0
-blend_point_1/node = SubResource("AnimationNodeAnimation_b7md3")
+blend_point_1/node = SubResource("AnimationNodeAnimation_v7mkj")
 blend_point_1/pos = 5.0
 min_space = 0.0
 max_space = 10.0
 
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_5607o"]
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_ckr01"]
 animation = &"stalk_idle"
 
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_pu0wu"]
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_5607o"]
 animation = &"stalk_creep"
 
-[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_p8mf5"]
-blend_point_0/node = SubResource("AnimationNodeAnimation_5607o")
+[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_pu0wu"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_ckr01")
 blend_point_0/pos = 0.0
-blend_point_1/node = SubResource("AnimationNodeAnimation_pu0wu")
+blend_point_1/node = SubResource("AnimationNodeAnimation_5607o")
 blend_point_1/pos = 2.5
 min_space = 0.0
 max_space = 10.0
 
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_okbu6"]
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_p8mf5"]
 advance_mode = 2
 
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_tm4ku"]
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_okbu6"]
 xfade_time = 0.5
 
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_ks3aq"]
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_tm4ku"]
 xfade_time = 0.12
 
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_yj6mt"]
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_ks3aq"]
 xfade_time = 0.4
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_yj6mt"]
+xfade_time = 0.04
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_xnbo7"]
 xfade_time = 0.4
@@ -232,38 +262,49 @@ xfade_time = 0.12
 xfade_time = 0.4
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_tmbp6"]
-xfade_time = 0.4
+xfade_time = 0.04
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_tvpjb"]
-xfade_time = 0.5
+xfade_time = 0.4
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_pu134"]
-xfade_time = 0.4
+xfade_time = 0.5
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_nv41k"]
 xfade_time = 0.4
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_juado"]
-xfade_time = 0.5
+xfade_time = 0.04
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_jgpit"]
+xfade_time = 0.4
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_akhpy"]
+xfade_time = 0.5
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_xyq87"]
 xfade_time = 0.12
 
-[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_akhpy"]
-states/Calm/node = SubResource("AnimationNodeBlendSpace1D_4mgl5")
-states/Calm/position = Vector2(220, 0)
-states/Chase/node = SubResource("AnimationNodeBlendSpace1D_gbtjr")
-states/Chase/position = Vector2(220, 220)
-states/Search/node = SubResource("AnimationNodeBlendSpace1D_ckr01")
-states/Search/position = Vector2(220, 330)
-states/Stalk/node = SubResource("AnimationNodeBlendSpace1D_p8mf5")
-states/Stalk/position = Vector2(220, 110)
-transitions = ["Start", "Calm", SubResource("AnimationNodeStateMachineTransition_okbu6"), "Calm", "Stalk", SubResource("AnimationNodeStateMachineTransition_tm4ku"), "Calm", "Chase", SubResource("AnimationNodeStateMachineTransition_ks3aq"), "Calm", "Search", SubResource("AnimationNodeStateMachineTransition_yj6mt"), "Stalk", "Calm", SubResource("AnimationNodeStateMachineTransition_xnbo7"), "Stalk", "Chase", SubResource("AnimationNodeStateMachineTransition_n8cv5"), "Stalk", "Search", SubResource("AnimationNodeStateMachineTransition_ij5bp"), "Chase", "Calm", SubResource("AnimationNodeStateMachineTransition_tmbp6"), "Chase", "Stalk", SubResource("AnimationNodeStateMachineTransition_tvpjb"), "Chase", "Search", SubResource("AnimationNodeStateMachineTransition_pu134"), "Search", "Calm", SubResource("AnimationNodeStateMachineTransition_nv41k"), "Search", "Stalk", SubResource("AnimationNodeStateMachineTransition_juado"), "Search", "Chase", SubResource("AnimationNodeStateMachineTransition_jgpit")]
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_ggrr4"]
+xfade_time = 0.04
 
-[sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_xyq87"]
-nodes/States/node = SubResource("AnimationNodeStateMachine_akhpy")
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_dkycv"]
+states/Calm/node = SubResource("AnimationNodeBlendSpace1D_sosg7")
+states/Calm/position = Vector2(220, 0)
+states/Chase/node = SubResource("AnimationNodeBlendSpace1D_p3q6j")
+states/Chase/position = Vector2(220, 220)
+states/Jumpscare/node = SubResource("AnimationNodeAnimation_up4dw")
+states/Jumpscare/position = Vector2(480, 0)
+states/Search/node = SubResource("AnimationNodeBlendSpace1D_b7md3")
+states/Search/position = Vector2(220, 330)
+states/Stalk/node = SubResource("AnimationNodeBlendSpace1D_pu0wu")
+states/Stalk/position = Vector2(220, 110)
+transitions = ["Start", "Calm", SubResource("AnimationNodeStateMachineTransition_p8mf5"), "Calm", "Stalk", SubResource("AnimationNodeStateMachineTransition_okbu6"), "Calm", "Chase", SubResource("AnimationNodeStateMachineTransition_tm4ku"), "Calm", "Search", SubResource("AnimationNodeStateMachineTransition_ks3aq"), "Calm", "Jumpscare", SubResource("AnimationNodeStateMachineTransition_yj6mt"), "Stalk", "Calm", SubResource("AnimationNodeStateMachineTransition_xnbo7"), "Stalk", "Chase", SubResource("AnimationNodeStateMachineTransition_n8cv5"), "Stalk", "Search", SubResource("AnimationNodeStateMachineTransition_ij5bp"), "Stalk", "Jumpscare", SubResource("AnimationNodeStateMachineTransition_tmbp6"), "Chase", "Calm", SubResource("AnimationNodeStateMachineTransition_tvpjb"), "Chase", "Stalk", SubResource("AnimationNodeStateMachineTransition_pu134"), "Chase", "Search", SubResource("AnimationNodeStateMachineTransition_nv41k"), "Chase", "Jumpscare", SubResource("AnimationNodeStateMachineTransition_juado"), "Search", "Calm", SubResource("AnimationNodeStateMachineTransition_jgpit"), "Search", "Stalk", SubResource("AnimationNodeStateMachineTransition_akhpy"), "Search", "Chase", SubResource("AnimationNodeStateMachineTransition_xyq87"), "Search", "Jumpscare", SubResource("AnimationNodeStateMachineTransition_ggrr4")]
+
+[sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_n64rb"]
+nodes/States/node = SubResource("AnimationNodeStateMachine_dkycv")
 nodes/States/position = Vector2(0, 0)
-nodes/Pace/node = SubResource("AnimationNodeTimeScale_u2he6")
+nodes/Pace/node = SubResource("AnimationNodeTimeScale_3xmyb")
 nodes/Pace/position = Vector2(300, 0)
 node_connections = [&"output", 0, &"Pace", &"Pace", 0, &"States"]
 
@@ -325,56 +366,80 @@ omni_range = 3.0
 [node name="ArmLeft" type="Node3D" parent="Torso" unique_id=1138900471]
 transform = Transform3D(0.9950254, -0.09962129, 0, 0.09602699, 0.9591252, 0.26619074, -0.026518265, -0.26486653, 0.96392035, -0.3, 0.62, 0)
 
-[node name="Mesh" type="MeshInstance3D" parent="Torso/ArmLeft" unique_id=1091780211]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.575, 0)
+[node name="UpperArm" type="MeshInstance3D" parent="Torso/ArmLeft" unique_id=1091780211]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2875, 0)
 material_override = SubResource("StandardMaterial3D_3xmyb")
-mesh = SubResource("CapsuleMesh_5607o")
+mesh = SubResource("CapsuleMesh_3xmyb")
 
-[node name="Hand" type="MeshInstance3D" parent="Torso/ArmLeft" unique_id=1012675544]
-transform = Transform3D(1, 0, 0, 0, 1.3, 0, 0, 0, 0.6, 0, -1.17, 0)
+[node name="Elbow" type="Node3D" parent="Torso/ArmLeft" unique_id=764777157]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.575, 0)
+
+[node name="Forearm" type="MeshInstance3D" parent="Torso/ArmLeft/Elbow" unique_id=912687568]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2875, 0)
+material_override = SubResource("StandardMaterial3D_3xmyb")
+mesh = SubResource("CapsuleMesh_sosg7")
+
+[node name="Joint" type="MeshInstance3D" parent="Torso/ArmLeft/Elbow" unique_id=689503202]
+material_override = SubResource("StandardMaterial3D_3xmyb")
+mesh = SubResource("SphereMesh_thq1j")
+
+[node name="Hand" type="MeshInstance3D" parent="Torso/ArmLeft/Elbow" unique_id=1012675544]
+transform = Transform3D(1, 0, 0, 0, 1.3, 0, 0, 0, 0.6, 0, -0.59499997, 0)
 material_override = SubResource("StandardMaterial3D_3xmyb")
 mesh = SubResource("SphereMesh_pu0wu")
 
-[node name="Finger0" type="MeshInstance3D" parent="Torso/ArmLeft" unique_id=656851528]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.028, -1.29, 0)
+[node name="Finger0" type="MeshInstance3D" parent="Torso/ArmLeft/Elbow" unique_id=656851528]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.028, -0.715, 0)
 material_override = SubResource("StandardMaterial3D_3xmyb")
 mesh = SubResource("CapsuleMesh_p8mf5")
 
-[node name="Finger1" type="MeshInstance3D" parent="Torso/ArmLeft" unique_id=863730830]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.29, 0)
+[node name="Finger1" type="MeshInstance3D" parent="Torso/ArmLeft/Elbow" unique_id=863730830]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.715, 0)
 material_override = SubResource("StandardMaterial3D_3xmyb")
 mesh = SubResource("CapsuleMesh_okbu6")
 
-[node name="Finger2" type="MeshInstance3D" parent="Torso/ArmLeft" unique_id=505190526]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.028, -1.29, 0)
+[node name="Finger2" type="MeshInstance3D" parent="Torso/ArmLeft/Elbow" unique_id=505190526]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.028, -0.715, 0)
 material_override = SubResource("StandardMaterial3D_3xmyb")
 mesh = SubResource("CapsuleMesh_tm4ku")
 
 [node name="ArmRight" type="Node3D" parent="Torso" unique_id=2139959751]
 transform = Transform3D(0.9950254, 0.09962129, 0, -0.098510966, 0.9839354, 0.1488844, 0.014832056, -0.14814375, 0.9888546, 0.3, 0.62, 0)
 
-[node name="Mesh" type="MeshInstance3D" parent="Torso/ArmRight" unique_id=17438736]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.575, 0)
+[node name="UpperArm" type="MeshInstance3D" parent="Torso/ArmRight" unique_id=17438736]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2875, 0)
 material_override = SubResource("StandardMaterial3D_3xmyb")
-mesh = SubResource("CapsuleMesh_ks3aq")
+mesh = SubResource("CapsuleMesh_4mgl5")
 
-[node name="Hand" type="MeshInstance3D" parent="Torso/ArmRight" unique_id=1046706303]
-transform = Transform3D(1, 0, 0, 0, 1.3, 0, 0, 0, 0.6, 0, -1.17, 0)
+[node name="Elbow" type="Node3D" parent="Torso/ArmRight" unique_id=624421590]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.575, 0)
+
+[node name="Forearm" type="MeshInstance3D" parent="Torso/ArmRight/Elbow" unique_id=46360724]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2875, 0)
+material_override = SubResource("StandardMaterial3D_3xmyb")
+mesh = SubResource("CapsuleMesh_p3q6j")
+
+[node name="Joint" type="MeshInstance3D" parent="Torso/ArmRight/Elbow" unique_id=26296764]
+material_override = SubResource("StandardMaterial3D_3xmyb")
+mesh = SubResource("SphereMesh_up4dw")
+
+[node name="Hand" type="MeshInstance3D" parent="Torso/ArmRight/Elbow" unique_id=1046706303]
+transform = Transform3D(1, 0, 0, 0, 1.3, 0, 0, 0, 0.6, 0, -0.59499997, 0)
 material_override = SubResource("StandardMaterial3D_3xmyb")
 mesh = SubResource("SphereMesh_yj6mt")
 
-[node name="Finger0" type="MeshInstance3D" parent="Torso/ArmRight" unique_id=813842318]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.028, -1.29, 0)
+[node name="Finger0" type="MeshInstance3D" parent="Torso/ArmRight/Elbow" unique_id=813842318]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.028, -0.715, 0)
 material_override = SubResource("StandardMaterial3D_3xmyb")
 mesh = SubResource("CapsuleMesh_xnbo7")
 
-[node name="Finger1" type="MeshInstance3D" parent="Torso/ArmRight" unique_id=448605139]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.29, 0)
+[node name="Finger1" type="MeshInstance3D" parent="Torso/ArmRight/Elbow" unique_id=448605139]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.715, 0)
 material_override = SubResource("StandardMaterial3D_3xmyb")
 mesh = SubResource("CapsuleMesh_n8cv5")
 
-[node name="Finger2" type="MeshInstance3D" parent="Torso/ArmRight" unique_id=1442377875]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.028, -1.29, 0)
+[node name="Finger2" type="MeshInstance3D" parent="Torso/ArmRight/Elbow" unique_id=1442377875]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.028, -0.715, 0)
 material_override = SubResource("StandardMaterial3D_3xmyb")
 mesh = SubResource("CapsuleMesh_ij5bp")
 
@@ -404,15 +469,15 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.92, -0.06)
 material_override = SubResource("StandardMaterial3D_3xmyb")
 mesh = SubResource("BoxMesh_dkycv")
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1659741821]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=2060972720]
 libraries/ = ExtResource("3_3xmyb")
 
-[node name="AmbientPlayer" type="AnimationPlayer" parent="." unique_id=660197431]
+[node name="AmbientPlayer" type="AnimationPlayer" parent="." unique_id=841896127]
 libraries/ = ExtResource("4_w1hcj")
 autoplay = &"ambient"
 
-[node name="AnimationTree" type="AnimationTree" parent="." unique_id=592600040]
-tree_root = SubResource("AnimationNodeBlendTree_xyq87")
+[node name="AnimationTree" type="AnimationTree" parent="." unique_id=1356342316]
+tree_root = SubResource("AnimationNodeBlendTree_n64rb")
 anim_player = NodePath("../AnimationPlayer")
 parameters/States/Calm/blend_position = 0.0
 parameters/States/Chase/blend_position = 0.0

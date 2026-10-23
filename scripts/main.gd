@@ -610,6 +610,9 @@ func _play_jumpscare() -> void:
 	enemy.set_physics_process(false)
 	enemy.visible = true
 	enemy.stop_all_sounds()
+	var model := enemy.get_node_or_null("Model")
+	if model and model.has_method("play_jumpscare"):
+		model.play_jumpscare()
 
 	# Turn the player to face the enemy, then slam its face into the camera.
 	var to_enemy := enemy.global_position - player.global_position
