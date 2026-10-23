@@ -218,6 +218,9 @@ func _build_tree() -> AnimationNodeBlendTree:
 
 
 # ── The clips ────────────────────────────────────────────────────────────────
+# NOTE on head angles: the head's pitch adds to the torso's lean, so a hunched torso
+# needs the head tilted back up or he stares at the floor (check with the pitch of the
+# face direction: about 0 to -8 degrees means he is looking at you).
 # Each entry: name, length in seconds, whether to loop, a function (phase, time)
 # returning the pose. The phase runs 0 to TAU over the clip, so anything built from
 # whole multiples of it loops without a seam.
@@ -286,7 +289,7 @@ func _stalk_idle(p: float, _t: float) -> Dictionary:
 	var tremor := sin(10.0 * p) * 0.012
 	return _pose(
 		Vector3(deg_to_rad(-14.0), 0.0, deg_to_rad(2.0) * sin(p)), -0.05,
-		Vector3(deg_to_rad(-6.0) + sin(2.0 * p) * 0.03, 0.0, deg_to_rad(16.0) + sin(p) * 0.04 + tremor),
+		Vector3(deg_to_rad(18.0) + sin(2.0 * p) * 0.03, 0.0, deg_to_rad(16.0) + sin(p) * 0.04 + tremor),
 		Vector3(deg_to_rad(30.0) + sin(2.0 * p) * 0.04 + tremor, 0.0, deg_to_rad(10.0)),
 		Vector3(deg_to_rad(30.0) + sin(2.0 * p) * 0.04 - tremor, 0.0, deg_to_rad(-10.0)),
 		deg_to_rad(5.0), deg_to_rad(-5.0), Vector2(1.0 + tremor * 8.0, 1.0 - tremor * 8.0))
@@ -297,7 +300,7 @@ func _stalk_creep(p: float, _t: float) -> Dictionary:
 	var swing := sin(p) * 0.45
 	return _pose(
 		Vector3(deg_to_rad(-16.0), 0.0, sin(p) * 0.04), -0.05 + 0.015 * cos(2.0 * p),
-		Vector3(deg_to_rad(-8.0), sin(p) * 0.05, deg_to_rad(16.0) - sin(p) * 0.03),
+		Vector3(deg_to_rad(18.0), sin(p) * 0.05, deg_to_rad(16.0) - sin(p) * 0.03),
 		Vector3(deg_to_rad(28.0) - swing * 0.35, 0.0, deg_to_rad(9.0)),
 		Vector3(deg_to_rad(28.0) + swing * 0.35, 0.0, deg_to_rad(-9.0)),
 		swing + 0.1, -swing + 0.1, Vector2(0.9 + sin(p) * 0.2, 0.9 - sin(p) * 0.2))
@@ -307,7 +310,7 @@ func _chase_idle(p: float, _t: float) -> Dictionary:
 	# Held in place and shaking, arms up, head thrust forward.
 	return _pose(
 		Vector3(deg_to_rad(-20.0) + sin(8.0 * p) * 0.02, 0.0, sin(6.0 * p) * 0.03), -0.03,
-		Vector3(deg_to_rad(-14.0) + sin(5.0 * p) * 0.05, 0.0, deg_to_rad(10.0) + sin(7.0 * p) * 0.06),
+		Vector3(deg_to_rad(26.0) + sin(5.0 * p) * 0.05, 0.0, deg_to_rad(10.0) + sin(7.0 * p) * 0.06),
 		Vector3(deg_to_rad(60.0) + sin(8.0 * p) * 0.05, 0.0, deg_to_rad(18.0)),
 		Vector3(deg_to_rad(60.0) - sin(8.0 * p) * 0.05, 0.0, deg_to_rad(-18.0)),
 		deg_to_rad(8.0), deg_to_rad(-8.0), Vector2(1.1 + sin(8.0 * p) * 0.08, 1.1 - sin(8.0 * p) * 0.08))
@@ -318,7 +321,7 @@ func _chase_run(p: float, _t: float) -> Dictionary:
 	var swing := sin(p) * 1.05
 	return _pose(
 		Vector3(deg_to_rad(-24.0) + cos(2.0 * p) * 0.04, sin(p) * 0.08, sin(p) * 0.09), -0.03 + 0.05 * cos(2.0 * p),
-		Vector3(deg_to_rad(-18.0), -sin(p) * 0.1, deg_to_rad(8.0) - sin(p) * 0.12),
+		Vector3(deg_to_rad(30.0), -sin(p) * 0.1, deg_to_rad(8.0) - sin(p) * 0.12),
 		Vector3(deg_to_rad(55.0) - swing * 0.6, 0.0, deg_to_rad(14.0)),
 		Vector3(deg_to_rad(55.0) + swing * 0.6, 0.0, deg_to_rad(-14.0)),
 		swing, -swing, Vector2(1.2 + swing * 0.35, 1.2 - swing * 0.35))
@@ -339,7 +342,7 @@ func _search_jog(p: float, _t: float) -> Dictionary:
 	var swing := sin(2.0 * p) * 0.8
 	return _pose(
 		Vector3(deg_to_rad(-10.0), sin(p - 0.5) * 0.12, sin(2.0 * p) * 0.06), 0.03 * cos(4.0 * p),
-		Vector3(deg_to_rad(2.0), sin(p) * 0.8, sin(2.0 * p) * 0.05),
+		Vector3(deg_to_rad(16.0), sin(p) * 0.8, sin(2.0 * p) * 0.05),
 		Vector3(deg_to_rad(-25.0) - swing * 0.6, 0.0, deg_to_rad(8.0)),
 		Vector3(deg_to_rad(-25.0) + swing * 0.6, 0.0, deg_to_rad(-8.0)),
 		swing, -swing, Vector2(0.9 + maxf(-swing, 0.0) * 0.5, 0.9 + maxf(swing, 0.0) * 0.5))
@@ -355,7 +358,7 @@ func _jumpscare(p: float, t: float) -> Dictionary:
 	var start := _stalk_idle(0.0, 0.0)
 	var pose := _pose(
 		Vector3(deg_to_rad(-32.0) + sin(26.0 * p) * 0.03, sin(34.0 * p) * 0.05, sin(30.0 * p) * 0.05), -0.02,
-		Vector3(deg_to_rad(-28.0) + shake, sin(46.0 * p) * 0.12 * k, sin(38.0 * p) * 0.14 * k),
+		Vector3(deg_to_rad(46.0) + shake, sin(46.0 * p) * 0.12 * k, sin(38.0 * p) * 0.14 * k),
 		Vector3(deg_to_rad(105.0) + sin(36.0 * p) * 0.12, 0.0, deg_to_rad(28.0)),
 		Vector3(deg_to_rad(105.0) - sin(36.0 * p) * 0.12, 0.0, deg_to_rad(-28.0)),
 		deg_to_rad(18.0), deg_to_rad(-14.0), Vector2(0.55 + sin(44.0 * p) * 0.12, 0.55 - sin(44.0 * p) * 0.12))
