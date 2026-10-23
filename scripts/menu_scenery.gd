@@ -137,18 +137,18 @@ func _glow(color: Color, energy: float) -> StandardMaterial3D:
 	return material
 
 
-func _box(size: Vector3, position: Vector3, material: Material, parent: Node3D = self) -> MeshInstance3D:
+func _box(size: Vector3, at: Vector3, material: Material, parent: Node3D = self) -> MeshInstance3D:
 	var mesh := BoxMesh.new()
 	mesh.size = size
 	var instance := MeshInstance3D.new()
 	instance.mesh = mesh
 	instance.material_override = material
-	instance.position = position
+	instance.position = at
 	parent.add_child(instance)
 	return instance
 
 
-func _cylinder(top: float, bottom: float, height: float, position: Vector3, material: Material, parent: Node3D = self) -> MeshInstance3D:
+func _cylinder(top: float, bottom: float, height: float, at: Vector3, material: Material, parent: Node3D = self) -> MeshInstance3D:
 	var mesh := CylinderMesh.new()
 	mesh.top_radius = top
 	mesh.bottom_radius = bottom
@@ -157,7 +157,7 @@ func _cylinder(top: float, bottom: float, height: float, position: Vector3, mate
 	var instance := MeshInstance3D.new()
 	instance.mesh = mesh
 	instance.material_override = material
-	instance.position = position
+	instance.position = at
 	parent.add_child(instance)
 	return instance
 
@@ -267,9 +267,9 @@ func _build_factory() -> void:
 	_box(Vector3(0.3, 0.3, 0.3), Vector3(-1.0, 4.9, 6.3), _glow(Color(1.0, 0.1, 0.05), 3.0), factory)
 
 
-func _add_smoke(position: Vector3, texture: Texture2D, parent: Node3D) -> void:
+func _add_smoke(at: Vector3, texture: Texture2D, parent: Node3D) -> void:
 	var smoke := CPUParticles3D.new()
-	smoke.position = position
+	smoke.position = at
 	smoke.amount = 40
 	smoke.lifetime = 9.0
 	smoke.preprocess = 9.0

@@ -195,7 +195,7 @@ func _on_gas_detect_area_body_entered(body: Node) -> void:
 		body.use(self)
 
 # Called when a body exits the gas detection area
-func _on_gas_detect_area_body_exited(body: Node) -> void:
+func _on_gas_detect_area_body_exited(_body: Node) -> void:
 	# Optional: Handle when fuel leaves the area
 	pass
 

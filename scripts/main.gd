@@ -338,7 +338,14 @@ func _intro_sound(sound_name: String) -> void:
 func _intro_wait(seconds: float) -> void:
 	var remaining := seconds
 	while remaining > 0.0 and not _intro_skipped:
+		# Restart or quit to menu mid-intro frees this scene; end the intro quietly.
+		if not is_inside_tree():
+			_intro_skipped = true
+			return
 		await get_tree().process_frame
+		if not is_inside_tree():
+			_intro_skipped = true
+			return
 		remaining -= get_process_delta_time()
 
 

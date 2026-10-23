@@ -89,7 +89,7 @@ func _material(texture: Texture2D, tint: Color, metallic := 0.08, roughness := 0
 	return material
 
 
-func _add_cylinder(radius: float, length: float, position: Vector3, material: Material, along_z := false, parent: Node3D = self) -> MeshInstance3D:
+func _add_cylinder(radius: float, length: float, at: Vector3, material: Material, along_z := false, parent: Node3D = self) -> MeshInstance3D:
 	var mesh := CylinderMesh.new()
 	mesh.top_radius = radius
 	mesh.bottom_radius = radius
@@ -98,20 +98,20 @@ func _add_cylinder(radius: float, length: float, position: Vector3, material: Ma
 	var instance := MeshInstance3D.new()
 	instance.mesh = mesh
 	instance.material_override = material
-	instance.position = position
+	instance.position = at
 	if along_z:
 		instance.rotation.x = PI * 0.5
 	parent.add_child(instance)
 	return instance
 
 
-func _add_box(size: Vector3, position: Vector3, material: Material, parent: Node3D = self) -> MeshInstance3D:
+func _add_box(size: Vector3, at: Vector3, material: Material, parent: Node3D = self) -> MeshInstance3D:
 	var mesh := BoxMesh.new()
 	mesh.size = size
 	var instance := MeshInstance3D.new()
 	instance.mesh = mesh
 	instance.material_override = material
-	instance.position = position
+	instance.position = at
 	parent.add_child(instance)
 	return instance
 

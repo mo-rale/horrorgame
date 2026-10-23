@@ -79,18 +79,18 @@ func _prepare_runtime() -> void:
 
 # ── Model ────────────────────────────────────────────────────────────────────
 
-func _box(size: Vector3, position: Vector3, material: Material, parent: Node3D = self) -> MeshInstance3D:
+func _box(size: Vector3, at: Vector3, material: Material, parent: Node3D = self) -> MeshInstance3D:
 	var mesh := BoxMesh.new()
 	mesh.size = size
 	var instance := MeshInstance3D.new()
 	instance.mesh = mesh
 	instance.material_override = material
-	instance.position = position
+	instance.position = at
 	parent.add_child(instance)
 	return instance
 
 
-func _cylinder(radius: float, height: float, position: Vector3, material: Material, parent: Node3D = self) -> MeshInstance3D:
+func _cylinder(radius: float, height: float, at: Vector3, material: Material, parent: Node3D = self) -> MeshInstance3D:
 	var mesh := CylinderMesh.new()
 	mesh.top_radius = radius
 	mesh.bottom_radius = radius
@@ -99,7 +99,7 @@ func _cylinder(radius: float, height: float, position: Vector3, material: Materi
 	var instance := MeshInstance3D.new()
 	instance.mesh = mesh
 	instance.material_override = material
-	instance.position = position
+	instance.position = at
 	parent.add_child(instance)
 	return instance
 

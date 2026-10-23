@@ -61,7 +61,7 @@ func _ready() -> void:
 
 func play(sound_name: String) -> void:
 	var player := _players.get(sound_name) as AudioStreamPlayer
-	if player:
+	if player and player.is_inside_tree():
 		player.pitch_scale = randf_range(0.96, 1.04) if sound_name in ["hover", "click"] else 1.0
 		player.play()
 
