@@ -22,6 +22,7 @@ var _collision_base_volume_db := 0.0
 func _ready() -> void:
 	add_to_group("grabable")
 	add_to_group("gas_can")
+	continuous_cd = true
 	outline.visible = false
 	label.visible = false
 	collision_shape_3d.disabled = false

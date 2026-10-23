@@ -757,9 +757,10 @@ func drop_object() -> void:
 	grabbed_object.freeze = false
 	grabbed_object.gravity_scale = 1.0
 	
-	# Apply a small throw force
-	var throw_force = -global_transform.basis.z * 5.0 + Vector3.UP * 2.0
-	grabbed_object.apply_central_impulse(throw_force)
+	# A small toss. It sets the velocity directly: an impulse divided by mass made
+	# the light fuse (0.35 kg) fly three times faster than the gas can, fast enough
+	# to skip through walls.
+	grabbed_object.linear_velocity = -global_transform.basis.z * 5.0 + Vector3.UP * 2.0
 	
 	# Clear the meta and reference
 	if grabbed_object.has_meta("original_parent"):

@@ -18,6 +18,8 @@ var _glow_light: OmniLight3D
 func _ready() -> void:
 	add_to_group("grabable")
 	add_to_group("fuse")
+	# Thin and easy to throw: continuous collision keeps it from tunnelling through walls.
+	continuous_cd = true
 	label.visible = false
 
 	# The cartridge model lives in the scene; the script only builds it when the
