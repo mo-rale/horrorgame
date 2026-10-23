@@ -3,6 +3,8 @@ class_name Enemy
 
 # ── Signals ──────────────────────────────────────────────────────────────
 signal reached_player
+## Tells the model which mood to animate: "dormant", "stalking", "chasing" and so on.
+signal state_changed(state_name: StringName)
 
 # ── States ───────────────────────────────────────────────────────────────
 enum State { DORMANT, ROAMING, INVESTIGATING, STALKING, VANISHING, CHASING, SEARCHING }
@@ -389,6 +391,7 @@ func _enter_state(new_state: State, data := {}) -> void:
 		if is_instance_valid(player):
 			player.end_stalking_anxiety()
 	_state = new_state
+	state_changed.emit(StringName(State.keys()[new_state].to_lower()))
 	
 	match _state:
 		State.DORMANT:

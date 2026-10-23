@@ -1,8 +1,13 @@
 extends Node3D
-# Stalker figure with a little procedural animation. The enemy faces -Z, feet
-# near y = -0.95. The body lives in the scene (scenes/enemy_model.tscn); the
-# script only rebuilds it if the nodes are missing (tools/bake_scenes.gd uses
-# that to create the scene).
+# Stalker figure. The enemy faces -Z, feet near y = -0.95. The body and its
+# animation live in the scene (scenes/enemy_model.tscn): an AnimationPlayer holds
+# the clips (scenes/enemy_animations.tres) and an AnimationTree blends them. This
+# script only feeds the tree, and rebuilds the body if its nodes are missing
+# (tools/bake_scenes.gd uses that); tools/build_enemy_animations.gd adds the
+# animation nodes to the baked scene.
+#
+# The tree has one state machine with four moods, each a blend space over speed
+# (idle > walk > run):  Calm, Stalk, Chase, Search.
 
 const SKIN_TEXTURE := preload("res://assets/SBS - Horror Texture Pack 128x128/128x128/Stains/Horror_Stain_09-128x128.png")
 
@@ -16,8 +21,17 @@ var _leg_left: Node3D
 var _leg_right: Node3D
 var _strips: Array[Node3D] = []
 var _body: CharacterBody3D
-var _time := 0.0
-var _walk_phase := 0.0
+var _tree: AnimationTree
+var _playback: AnimationNodeStateMachinePlayback
+var _mood := &"calm"
+
+## Enemy state name -> mood. Anything not listed (dormant, roaming, investigating,
+## vanishing) is the calm walk.
+const MOOD_OF_STATE := {&"stalking": &"stalk", &"chasing": &"chase", &"searching": &"search"}
+## The tree's state for each mood, and the speed at which its walk or run clip
+## plays at normal rate. Faster or slower than that and the clip is sped up or slowed.
+const STATE_OF_MOOD := {&"calm": "Calm", &"stalk": "Stalk", &"chase": "Chase", &"search": "Search"}
+const NATURAL_SPEED := {&"calm": 2.0, &"stalk": 2.5, &"chase": 8.2, &"search": 5.0}
 
 
 func _ready() -> void:
@@ -37,8 +51,13 @@ func _ready() -> void:
 				_strips.append(strip)
 	else:
 		_build_body()
-	# Randomise so duplicated enemies would not move in lockstep.
-	_time = randf() * 10.0
+	_tree = get_node_or_null("AnimationTree") as AnimationTree
+	if _tree:
+		_tree.active = true
+		_playback = _tree.get("parameters/States/playback") as AnimationNodeStateMachinePlayback
+		var enemy := get_parent()
+		if enemy and enemy.has_signal("state_changed"):
+			enemy.connect("state_changed", _on_enemy_state_changed)
 
 
 func _build_body() -> void:
@@ -163,35 +182,32 @@ func _build_clothes() -> void:
 	_head.add_child(mouth)
 
 
-func _process(delta: float) -> void:
-	_time += delta
+func _on_enemy_state_changed(state_name: StringName) -> void:
+	set_mood(MOOD_OF_STATE.get(state_name, &"calm"))
+
+
+## Switches the animation mood: &"calm", &"stalk", &"chase" or &"search".
+func set_mood(mood: StringName) -> void:
+	if mood == _mood or _playback == null or not STATE_OF_MOOD.has(mood):
+		return
+	_mood = mood
+	_playback.travel(STATE_OF_MOOD[mood])
+
+
+func _process(_delta: float) -> void:
+	if _tree == null:
+		return
 	var speed := 0.0
 	if _body:
 		speed = Vector2(_body.velocity.x, _body.velocity.z).length()
-	var walking := clampf(speed / 3.0, 0.0, 1.0)
-	_walk_phase += delta * (3.0 + speed * 1.4)
-
-	var swing := sin(_walk_phase) * 0.7 * walking
-	_leg_left.rotation.x = swing
-	_leg_right.rotation.x = -swing
-	# Arms hang loose and drag behind the stride with a slow idle sway.
-	var idle := sin(_time * 1.3) * 0.06
-	_arm_left.rotation.x = deg_to_rad(-12.0) - swing * 0.5 + idle
-	_arm_right.rotation.x = deg_to_rad(-12.0) + swing * 0.5 - idle
-	_arm_left.rotation.z = deg_to_rad(6.0) + sin(_time * 0.9) * 0.04
-	_arm_right.rotation.z = deg_to_rad(-6.0) - sin(_time * 0.9) * 0.04
-	_torso.rotation.z = sin(_walk_phase * 0.5) * 0.06 * walking
-
-	# Slow, wrong-looking head tilt with an occasional twitch.
-	var twitch := 0.0
-	if fmod(_time, 4.7) < 0.12:
-		twitch = sin(_time * 90.0) * 0.12
-	_head.rotation.z = sin(_time * 0.6) * 0.22 + twitch
-	_head.rotation.x = deg_to_rad(8.0) + sin(_time * 0.4) * 0.05
-	for index in _strips.size():
-		_strips[index].rotation.x = sin(_time * 1.7 + index) * 0.1 + swing * 0.25 * (1.0 if index % 2 == 0 else -1.0)
-	# Eyes pulse faintly.
-	_eye_material.emission_energy_multiplier = 3.5 + sin(_time * 5.0) * 0.8
+	# Every mood's blend space reads the same speed, so a switch mid-stride is smooth.
+	for state_name: String in STATE_OF_MOOD.values():
+		_tree.set("parameters/States/%s/blend_position" % state_name, speed)
+	# Match the stride to the ground speed so the feet do not skate.
+	var pace := 1.0
+	if speed > 0.3:
+		pace = clampf(speed / NATURAL_SPEED[_mood], 0.6, 2.4)
+	_tree.set("parameters/Pace/scale", pace)
 
 
 func _make_limb(limb_name: String, parent: Node3D, pivot_position: Vector3, radius: float, length: float) -> Node3D:
