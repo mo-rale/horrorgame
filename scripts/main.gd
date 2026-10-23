@@ -1,6 +1,6 @@
 extends Node3D
 
-const LIGHT_SWITCH_SFX := preload("res://assets/sfx/effects/light_switch.mp3")
+const LIGHT_SWITCH_SFX := preload("res://assets/sfx/effects/light_switch.ogg")
 const GATE_OPEN_SFX := preload("res://assets/sfx/effects/gate_open.mp3")
 const UiSounds := preload("res://scripts/ui_sounds.gd")
 const INTRO_RAIN_SFX := preload("res://assets/sfx/menu/rain_loop.ogg")
@@ -14,6 +14,7 @@ const JUMPSCARE_FACE_DISTANCE := 0.72
 ## tools/build_enemy_animations.gd), and when the screen is gone after it.
 const JUMPSCARE_HIT_TIME := 0.89
 const JUMPSCARE_END_TIME := 1.55
+const FLESH_IMPACT_SFX := preload("res://assets/sfx/effects/flesh_impact.mp3")
 const JUMPSCARE_SFX := preload("res://assets/sfx/ambience/freesound_community-jumpscare-68730.mp3")
 
 var _jumpscare_running := false
@@ -700,10 +701,9 @@ func _play_jumpscare() -> void:
 			jolt = 0.5
 			player.add_trauma(1.0)
 			var thud := AudioStreamPlayer.new()
-			thud.stream = DISTANT_CLANG_SFX
+			thud.stream = FLESH_IMPACT_SFX
 			thud.bus = &"SFX"
-			thud.volume_db = 3.0
-			thud.pitch_scale = 0.6
+			thud.volume_db = 4.0
 			add_child(thud)
 			thud.play()
 			thud.finished.connect(thud.queue_free)

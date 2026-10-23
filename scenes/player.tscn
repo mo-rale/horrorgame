@@ -2,10 +2,10 @@
 
 [ext_resource type="Script" uid="uid://c7xjtdghq15x4" path="res://scripts/player.gd" id="1_3vyb7"]
 [ext_resource type="PackedScene" uid="uid://cyfa6jpmhimcc" path="res://assets/objects/low_poly_flashlight.glb" id="2_dqkch"]
-[ext_resource type="AudioStream" uid="uid://cwal04uoyu0bd" path="res://assets/ambience/data_pion-st3-footstep-sfx-323056.mp3" id="2_g2els"]
-[ext_resource type="AudioStream" uid="uid://bo74dd80m0me7" path="res://assets/ambience/freesound_community-flashlight-clicking-on-105809.mp3" id="2_qhqgy"]
+[ext_resource type="AudioStream" uid="uid://cwal04uoyu0bd" path="res://assets/sfx/ambience/data_pion-st3-footstep-sfx-323056.mp3" id="2_g2els"]
+[ext_resource type="AudioStream" uid="uid://bo74dd80m0me7" path="res://assets/sfx/ambience/freesound_community-flashlight-clicking-on-105809.mp3" id="2_qhqgy"]
 [ext_resource type="AudioStream" uid="uid://c2y2h2gds0ofb" path="res://assets/sfx/player/picking-item-sound.mp3" id="5_qlg0r"]
-[ext_resource type="AudioStream" uid="uid://bps5eylbfqs6s" path="res://assets/sfx/player/heart_beat.mp3" id="6_heartbeat"]
+[ext_resource type="AudioStream" path="res://assets/sfx/player/heart_beat.ogg" id="6_heartbeat"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_0s3u6"]
 
@@ -13,6 +13,8 @@
 
 [node name="player" type="CharacterBody3D" unique_id=1957953495 groups=["player"]]
 script = ExtResource("1_3vyb7")
+stamina_drain_per_second = 18.0
+stamina_regen_per_second = 12.0
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1572381078]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9948734, 0)
@@ -69,16 +71,16 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5262731, -0.5471415)
 stream = ExtResource("5_qlg0r")
 volume_db = -8.0
 
-[node name="heartbeat" type="AudioStreamPlayer" parent="."]
+[node name="heartbeat" type="AudioStreamPlayer" parent="." unique_id=1008025497]
 stream = ExtResource("6_heartbeat")
-volume_db = -8.0
+volume_db = 0.211
 
-[node name="AnxietyHUD" type="CanvasLayer" parent="."]
+[node name="AnxietyHUD" type="CanvasLayer" parent="." unique_id=166848327]
 unique_name_in_owner = true
 layer = 25
 visible = false
 
-[node name="AnxietyPanel" type="PanelContainer" parent="AnxietyHUD"]
+[node name="AnxietyPanel" type="PanelContainer" parent="AnxietyHUD" unique_id=1306120079]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -89,41 +91,41 @@ offset_bottom = 116.0
 grow_horizontal = 0
 mouse_filter = 2
 
-[node name="Margin" type="MarginContainer" parent="AnxietyHUD/AnxietyPanel"]
+[node name="Margin" type="MarginContainer" parent="AnxietyHUD/AnxietyPanel" unique_id=2116854702]
 layout_mode = 2
 theme_override_constants/margin_left = 14
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 14
 theme_override_constants/margin_bottom = 10
 
-[node name="Content" type="VBoxContainer" parent="AnxietyHUD/AnxietyPanel/Margin"]
+[node name="Content" type="VBoxContainer" parent="AnxietyHUD/AnxietyPanel/Margin" unique_id=590703070]
 layout_mode = 2
 theme_override_constants/separation = 5
 
-[node name="Header" type="HBoxContainer" parent="AnxietyHUD/AnxietyPanel/Margin/Content"]
+[node name="Header" type="HBoxContainer" parent="AnxietyHUD/AnxietyPanel/Margin/Content" unique_id=1635916779]
 layout_mode = 2
 
-[node name="Title" type="Label" parent="AnxietyHUD/AnxietyPanel/Margin/Content/Header"]
+[node name="Title" type="Label" parent="AnxietyHUD/AnxietyPanel/Margin/Content/Header" unique_id=1104926314]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.82, 0.18, 0.16, 1)
 theme_override_font_sizes/font_size = 17
 text = "ANXIETY"
 
-[node name="AnxietyValueLabel" type="Label" parent="AnxietyHUD/AnxietyPanel/Margin/Content/Header"]
+[node name="AnxietyValueLabel" type="Label" parent="AnxietyHUD/AnxietyPanel/Margin/Content/Header" unique_id=867842838]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
 theme_override_font_sizes/font_size = 16
 text = "0%"
 
-[node name="AnxietyBar" type="ProgressBar" parent="AnxietyHUD/AnxietyPanel/Margin/Content"]
+[node name="AnxietyBar" type="ProgressBar" parent="AnxietyHUD/AnxietyPanel/Margin/Content" unique_id=849922474]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(298, 24)
 layout_mode = 2
 show_percentage = false
 
-[node name="CalmButton" type="Button" parent="AnxietyHUD"]
+[node name="CalmButton" type="Button" parent="AnxietyHUD" unique_id=751726540]
 unique_name_in_owner = true
 visible = false
 offset_right = 230.0

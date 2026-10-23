@@ -5,8 +5,8 @@
 [ext_resource type="AudioStream" uid="uid://cvoq83aj73x3" path="res://assets/sfx/ambience/freesound_community-jumpscare-68730.mp3" id="4_5uy6h"]
 [ext_resource type="AudioStream" uid="uid://b5307ijbvw7jo" path="res://assets/sfx/enemy/creepy_whispiring.mp3" id="5_xwavj"]
 [ext_resource type="AudioStream" uid="uid://bc73iqh7ocvoe" path="res://assets/sfx/enemy/creepyWhispiring2.mp3" id="6_nenq2"]
-[ext_resource type="AudioStream" uid="uid://bqdw12u8q1yu6" path="res://assets/sfx/enemy/enemyStalking.mp3" id="7_stalk"]
-[ext_resource type="AudioStream" uid="uid://cnlmvjrhkpfbv" path="res://assets/sfx/enemy/enemySeen.mp3" id="8_seen"]
+[ext_resource type="AudioStream" path="res://assets/sfx/enemy/enemyStalking.ogg" id="7_stalk"]
+[ext_resource type="AudioStream" path="res://assets/sfx/enemy/enemySeen.ogg" id="8_seen"]
 [ext_resource type="PackedScene" path="res://scenes/enemy_model.tscn" id="9_model"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_md484"]

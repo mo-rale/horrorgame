@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bkn488cj872fy"]
 
 [ext_resource type="Script" uid="uid://ggxv70u8wcc4" path="res://scripts/main_menu.gd" id="1_menu"]
-[ext_resource type="AudioStream" uid="uid://bxa7eyr7lgeua" path="res://assets/sfx/main_menu.mp3" id="2_menu_music"]
+[ext_resource type="AudioStream" path="res://assets/sfx/main_menu.ogg" id="2_menu_music"]
 [ext_resource type="PackedScene" uid="uid://it3jj1eehpj0" path="res://scenes/main_menu_scenery.tscn" id="3_scenery"]
 
 [ext_resource type="FontFile" path="res://assets/fonts/Cinzel,Irish_Grover/Cinzel/static/Cinzel-Bold.ttf" id="4_title_font"]

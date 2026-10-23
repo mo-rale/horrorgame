@@ -15,7 +15,7 @@ const INSERT_SFX := preload("res://assets/sfx/fuse/insert_click.wav")
 const SPARK_SFX := preload("res://assets/sfx/fuse/spark.wav")
 const POWER_SFX := preload("res://assets/sfx/fuse/power_up.wav")
 const HUM_SFX := preload("res://assets/sfx/fuse/transformer_hum.wav")
-const ERROR_SFX := preload("res://assets/sfx/generator/error (mp3cut.net).mp3")
+const ERROR_SFX := preload("res://assets/sfx/generator/error.ogg")
 
 const SLOT_COLORS := {
 	"RED": Color(1.0, 0.06, 0.04),

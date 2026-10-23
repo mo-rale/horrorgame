@@ -1,15 +1,14 @@
 [gd_scene format=3 uid="uid://it3jj1eehpj0"]
 
-[ext_resource type="Script" path="res://scripts/menu_weather.gd" id="1_weather"]
-[ext_resource type="Script" path="res://scripts/menu_scenery.gd" id="2_scenery"]
-[ext_resource type="Texture2D" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Stone/Horror_Stone_01-128x128.png" id="3_ig8jf"]
-[ext_resource type="Texture2D" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Stone/Horror_Stone_07-128x128.png" id="4_8avvj"]
-[ext_resource type="Texture2D" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Brick/Horror_Brick_11-128x128.png" id="5_6t1fq"]
-[ext_resource type="Texture2D" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Metal/Horror_Metal_09-128x128.png" id="6_t0onv"]
-[ext_resource type="Script" path="res://scripts/flicker_light.gd" id="7_tj8xs"]
-[ext_resource type="Texture2D" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Metal/Horror_Metal_02-128x128.png" id="8_i6flx"]
-[ext_resource type="PackedScene" path="res://scenes/enemy_model.tscn" id="9_w2vid"]
-[ext_resource type="Script" path="res://scripts/enemy_model.gd" id="10_in1sm"]
+[ext_resource type="Script" uid="uid://ccehxugwwrdj0" path="res://scripts/menu_weather.gd" id="1_weather"]
+[ext_resource type="Script" uid="uid://bmqk6ny8cs16l" path="res://scripts/menu_scenery.gd" id="2_scenery"]
+[ext_resource type="Texture2D" uid="uid://dshmmxq5xcga1" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Stone/Horror_Stone_01-128x128.png" id="3_ig8jf"]
+[ext_resource type="Texture2D" uid="uid://cmjklf2gubtbj" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Stone/Horror_Stone_07-128x128.png" id="4_8avvj"]
+[ext_resource type="Texture2D" uid="uid://1xlrodegq8p1" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Brick/Horror_Brick_11-128x128.png" id="5_6t1fq"]
+[ext_resource type="Texture2D" uid="uid://t0jgq2eo5xtg" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Metal/Horror_Metal_09-128x128.png" id="6_t0onv"]
+[ext_resource type="Script" uid="uid://76isxk80bs3n" path="res://scripts/flicker_light.gd" id="7_tj8xs"]
+[ext_resource type="Texture2D" uid="uid://dggyyol7vsuy6" path="res://assets/SBS - Horror Texture Pack 128x128/128x128/Metal/Horror_Metal_02-128x128.png" id="8_i6flx"]
+[ext_resource type="PackedScene" uid="uid://b0vddfsjvnfo" path="res://scenes/enemy_model.tscn" id="9_w2vid"]
 [ext_resource type="AudioStream" path="res://assets/sfx/menu/rain_loop.ogg" id="11_2nw2q"]
 [ext_resource type="AudioStream" path="res://assets/sfx/menu/thunder.ogg" id="12_edu28"]
 
@@ -961,7 +960,7 @@ material_override = SubResource("StandardMaterial3D_la8a5")
 mesh = SubResource("PlaneMesh_jhgcq")
 
 [node name="Box" type="MeshInstance3D" parent="Set" unique_id=1569611318]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0.015, -12)
+transform = Transform3D(0.99853384, 0, -0.0541311, 0, 1, 0, 0.0541311, 0, 0.99853384, 8.062991, 0.015, -12)
 material_override = SubResource("StandardMaterial3D_6rs58")
 mesh = SubResource("BoxMesh_nc2o7")
 
@@ -1179,7 +1178,7 @@ material_override = SubResource("StandardMaterial3D_khiuf")
 mesh = SubResource("BoxMesh_qcb3t")
 
 [node name="Window28" type="MeshInstance3D" parent="Set/Factory" unique_id=784424135]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 9.3, 6.02)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 6.4225516, 6.132368)
 material_override = SubResource("StandardMaterial3D_7snni")
 mesh = SubResource("BoxMesh_v6t1j")
 
@@ -1209,7 +1208,7 @@ material_override = SubResource("StandardMaterial3D_g5ilp")
 mesh = SubResource("BoxMesh_wdifi")
 
 [node name="Sign" type="Label3D" parent="Set/Factory" unique_id=942213469]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 7.2, 6.3)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 9.377821, 6.299999)
 pixel_size = 0.014
 double_sided = false
 modulate = Color(0.95, 0.35, 0.28, 0.12)
@@ -2011,17 +2010,14 @@ transform = Transform3D(-0.493146, 0.86015815, 0.13013454, 0.80009204, 0.3897133
 material_override = SubResource("StandardMaterial3D_avyoo")
 mesh = SubResource("CylinderMesh_ipeu7")
 
-[node name="Figure" type="Node3D" parent="Set" unique_id=473696517 instance=ExtResource("9_w2vid")]
-transform = Transform3D(-0.9391921, 0, 0.3433921, 0, 1, 0, -0.3433921, 0, -0.9391921, 10.5, 0.95, -29)
-script = ExtResource("10_in1sm")
+[node name="Figure" parent="Set" unique_id=473696517 instance=ExtResource("9_w2vid")]
+transform = Transform3D(-0.9391921, 0, 0.3433921, 0, 1, 0, -0.3433921, 0, -0.9391921, 3.5405588, 0.95, -7.2302814)
 
 [node name="Rain" type="AudioStreamPlayer" parent="Set" unique_id=744298558]
 stream = ExtResource("11_2nw2q")
 volume_db = -13.0
 autoplay = true
-bus = &"SFX"
 
 [node name="Thunder" type="AudioStreamPlayer" parent="Set" unique_id=1592850096]
 stream = ExtResource("12_edu28")
 volume_db = -3.0
-bus = &"SFX"

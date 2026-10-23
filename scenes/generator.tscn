@@ -2,10 +2,10 @@
 
 [ext_resource type="Script" uid="uid://dk24kbb7ga4ku" path="res://scripts/generator.gd" id="1_rqoq6"]
 [ext_resource type="Texture2D" uid="uid://b8wq2oxwnasux" path="res://assets/objects/generator_Material Base Color.jpg" id="2_4pjfl"]
-[ext_resource type="AudioStream" uid="uid://dmenmprhbae6i" path="res://assets/sfx/generator/starting_generator.mp3" id="3_kgmdj"]
-[ext_resource type="AudioStream" uid="uid://c0b54ycw4q3bv" path="res://assets/sfx/generator/running_generator.mp3" id="4_ionxw"]
+[ext_resource type="AudioStream" path="res://assets/sfx/generator/starting_generator.ogg" id="3_kgmdj"]
+[ext_resource type="AudioStream" path="res://assets/sfx/generator/running_generator.ogg" id="4_ionxw"]
 [ext_resource type="FontFile" uid="uid://cso68x84qqbg6" path="res://assets/fonts/Cinzel,Irish_Grover/Irish_Grover/IrishGrover-Regular.ttf" id="5_4pjfl"]
-[ext_resource type="AudioStream" uid="uid://muw5negr8b1d" path="res://assets/sfx/generator/error (mp3cut.net).mp3" id="6_kgmdj"]
+[ext_resource type="AudioStream" path="res://assets/sfx/generator/error.ogg" id="6_kgmdj"]
 [ext_resource type="AudioStream" uid="uid://myvw14c6talr" path="res://assets/sfx/generator/chrisiex1-correct-156911.mp3" id="7_ionxw"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rqoq6"]

@@ -131,6 +131,8 @@ func _ready():
 		heartbeat.stream = heartbeat.stream.duplicate()
 		if heartbeat.stream is AudioStreamMP3:
 			(heartbeat.stream as AudioStreamMP3).loop = true
+		elif heartbeat.stream is AudioStreamOggVorbis:
+			(heartbeat.stream as AudioStreamOggVorbis).loop = true
 
 	# Keep this player's collider independent if the scene is instantiated
 	# more than once, then remember the standing dimensions.
